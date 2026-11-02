@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "iron-meridian",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/serve.js", "8765"],
+      "port": 8765
+    },
+    {
+      "name": "iron-meridian-8766",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/serve.js", "8766"],
+      "port": 8766
+    },
+    {
+      "name": "iron-meridian-8767",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/serve.js", "8767"],
+      "port": 8767
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Iron Meridian – Modell-Galerie</title>
+<!-- Development tool: renders every unit model for both factions at several sizes. Not part of the game. -->
+<style>
+  body { margin: 0; background: #2d3b2f; color: #dde; font: 12px system-ui, sans-serif; }
+  .bar { padding: 8px 12px; background: #1b2420; position: sticky; top: 0; z-index: 1; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 6px; padding: 8px; }
+  .cell { background: #4a5a40; border-radius: 6px; padding: 4px; text-align: center; }
+  .cell.sea { background: #1f4a66; }
+  .cell.air { background: #6f7f5c; }
+  canvas { display: block; margin: 0 auto; }
+  b { display: block; }
+  small { opacity: 0.75; }
+</style>
+</head>
+<body>
+<div class="bar">Größe: <select id="sz"><option>24</option><option>36</option><option selected>56</option><option>90</option></select>
+  Richtung: <select id="hd"><option value="0">rechts</option><option value="3.14">links</option></select></div>
+<div class="grid" id="g"></div>
+<script src="../js/data/units.js"></script>
+<script>const Render = { dpr: window.devicePixelRatio || 1, models: true };</script>
+<script src="../js/render/models.js"></script>
+<script src="../js/render/models-land.js"></script>
+<script src="../js/render/models-east-land.js"></script>
+<script src="../js/render/models-air.js"></script>
+<script src="../js/render/models-sea.js"></script>
+<script>
+  // URL parameters: ?only=mbt,ifv or ?only=land|air|sea, ?sz=90
+  const Q = new URLSearchParams(location.search);
+  if (Q.get('sz')) { const o = document.createElement('option'); o.textContent = Q.get('sz'); document.getElementById('sz').append(o); document.getElementById('sz').value = Q.get('sz'); }
+  function draw() {
+    const s = +document.getElementById('sz').value, hd = +document.getElementById('hd').value, g = document.getElementById('g');
+    g.innerHTML = '';
+    Models.cache.clear();
+    const only = (Q.get('only') || '').split(',').filter(Boolean);
+    for (const t of Object.keys(UNIT_TYPES)) {
+      if (only.length && !only.includes(t) && !only.includes(UNIT_TYPES[t].dom)) continue;
+      const T = UNIT_TYPES[t], d = document.createElement('div');
+      d.className = 'cell ' + T.dom;
+      const cv = document.createElement('canvas'), W = Math.max(250, s * 6), H = s * 2.6;
+      cv.width = W * Render.dpr; cv.height = H * Render.dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      const ctx = cv.getContext('2d'); ctx.scale(Render.dpr, Render.dpr);
+      Models.draw(ctx, t, 'P', W * 0.27, H * 0.55, s, hd);
+      Models.draw(ctx, t, 'E', W * 0.73, H * 0.55, s, hd);
+      d.appendChild(cv);
+      d.insertAdjacentHTML('beforeend', `<b>${t}</b><small>${T.mw || ''} | ${T.me || ''}</small>`);
+      g.appendChild(d);
+    }
+  }
+  document.getElementById('sz').onchange = draw; document.getElementById('hd').onchange = draw;
+  draw();
+</script>
+</body>
+</html>

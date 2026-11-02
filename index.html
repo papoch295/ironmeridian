@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b141b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="description" content="IRON MERIDIAN – globales Echtzeit-Strategiespiel mit Pause (Alpha).">
+  <title>Iron Meridian</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="map" aria-label="Weltkarte"></canvas>
+
+  <!-- Loading -->
+  <section id="loading" class="screen">
+    <div class="brand"><div class="brand-mark"></div><h1 data-t="title"></h1><p data-t="subtitle"></p></div>
+    <div class="progress"><div id="loadBar"></div></div>
+    <p id="loadText" class="muted" data-t="loading"></p>
+  </section>
+
+  <!-- Main menu -->
+  <section id="menu" class="screen" hidden>
+    <div class="menu-col">
+      <div class="brand left"><div class="brand-mark"></div><h1 data-t="title"></h1><p data-t="subtitle"></p></div>
+      <nav class="menu-buttons">
+        <button class="btn primary" id="mNew" data-t="newGame"></button>
+        <button class="btn" id="mCont" data-t="cont"></button>
+        <button class="btn" id="mLoad" data-t="load"></button>
+        <button class="btn" id="mTut" data-t="tutorial"></button>
+        <button class="btn" id="mHelp" data-t="help"></button>
+        <button class="btn" id="mSettings" data-t="settings"></button>
+      </nav>
+      <p class="version"><span data-t="alpha"></span> 0.1 · Natural Earth</p>
+    </div>
+  </section>
+
+  <!-- Scenario setup -->
+  <section id="setup" class="screen" hidden>
+    <div class="setup-wrap">
+      <div class="setup-col panel-glass" id="setupNations">
+        <h2 data-t="chooseCountry"></h2>
+        <input id="setupSearch" class="input" type="search" autocomplete="off">
+        <div id="blocList" class="scroll"></div>
+      </div>
+      <div class="setup-col panel-glass" id="setupDetail">
+        <div id="setupInfo"></div>
+        <h3 data-t="chooseEnemy"></h3>
+        <div id="enemyList" class="scroll chips-list"></div>
+        <h3 data-t="difficulty"></h3>
+        <div class="seg" id="diffSeg">
+          <button data-diff="easy" data-t="easy"></button><button data-diff="normal" data-t="normal"></button><button data-diff="hard" data-t="hard"></button>
+        </div>
+        <p id="diffDesc" class="muted small"></p>
+        <div class="row end">
+          <button class="btn" id="setupBack" data-t="back"></button>
+          <button class="btn primary" id="setupStart" data-t="start"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- In-game HUD -->
+  <div id="hud" hidden>
+    <header id="topbar">
+      <div class="tb-group" id="tbNation"></div>
+      <div class="tb-group res-group">
+        <div class="res" id="resM" data-title="money"></div>
+        <div class="res" id="resI" data-title="industry"></div>
+        <div class="res" id="resO" data-title="oil"></div>
+      </div>
+      <div class="tb-group time-group">
+        <button class="ibtn" id="btnPause" aria-label="Pause"></button>
+        <div class="seg small" id="speedSeg"><button data-speed="1">1×</button><button data-speed="2">2×</button><button data-speed="4">4×</button></div>
+        <div id="clock"></div>
+      </div>
+      <div class="tb-group right">
+        <button class="ibtn" id="btnObj" aria-label="Ziele"></button>
+        <button class="ibtn" id="btnMenu" aria-label="Menü"></button>
+      </div>
+    </header>
+    <div id="pausedTag" data-t="paused"></div>
+    <div id="objBox" class="panel-glass" hidden></div>
+    <div id="log"></div>
+    <div id="toasts"></div>
+    <aside id="panel" class="panel-glass" hidden></aside>
+    <div id="hint" hidden></div>
+    <nav id="cmdbar" hidden></nav>
+    <div id="quick" class="panel-glass"><button data-q="land"></button><button data-q="air"></button><button data-q="sea"></button><button data-q="idle"></button><div id="groups"></div></div>
+    <div id="miniWrap" class="panel-glass"><canvas id="mini" width="480" height="244"></canvas></div>
+    <div id="tut" class="panel-glass" hidden></div>
+  </div>
+
+  <!-- Modal dialogs -->
+  <div id="modal" hidden><div class="modal-box panel-glass" role="dialog" aria-modal="true"><div id="modalBody"></div></div></div>
+
+  <script src="js/data/world.js"></script>
+  <script src="js/data/scenario.js"></script>
+  <script src="js/data/units.js"></script>
+  <script src="js/core/util.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/core/geo.js"></script>
+  <script src="js/core/path.js"></script>
+  <script src="js/core/game.js"></script>
+  <script src="js/core/sim.js"></script>
+  <script src="js/core/ai.js"></script>
+  <script src="js/render/symbols.js"></script>
+  <script src="js/render/models.js"></script>
+  <script src="js/render/models-land.js"></script>
+  <script src="js/render/models-east-land.js"></script>
+  <script src="js/render/models-air.js"></script>
+  <script src="js/render/models-sea.js"></script>
+  <script src="js/render/renderer.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/ui/icons.js"></script>
+  <script src="js/ui/ui.js"></script>
+  <script src="js/ui/panels.js"></script>
+  <script src="js/ui/screens.js"></script>
+  <script src="js/ui/input.js"></script>
+  <script src="js/crash.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

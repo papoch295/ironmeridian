@@ -1,0 +1,17 @@
+# Abhängigkeiten und Build-Ausgaben (Capacitor/Android, später)
+node_modules/
+www/
+android/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Persönliche Claude-Einstellungen
+.claude/settings.local.json
+
+# System- und Editordateien
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

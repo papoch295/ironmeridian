@@ -1,0 +1,149 @@
+// Error handling and the built-in self test.
+// Crash: any uncaught error pauses the game, writes an emergency save and shows a dialog instead of a frozen screen.
+// SelfTest: index.html?selftest[=runs][&min=game-minutes] plays several AI-vs-idle games in fast forward and checks
+// for errors, broken values and a lossless save/load round trip. Result in the on-screen panel and window.SELFTEST.
+'use strict';
+
+const Crash = {
+  shown: false,
+  errors: [],
+
+  init() {
+    window.addEventListener('error', (e) => this.report(e.error || e.message));
+    window.addEventListener('unhandledrejection', (e) => this.report(e.reason));
+  },
+
+  report(err) {
+    const msg = (err && (err.stack || err.message)) || String(err);
+    console.error('[Iron Meridian]', err);
+    this.errors.push(msg);
+    if (SelfTest.active) { SelfTest.errors.push(msg); return; }
+    if (this.shown) return;
+    this.shown = true;
+    const S = Game.state;
+    if (S) S.paused = true;
+    const show = (saved) => this.dialog(msg, saved);
+    if (S && !S.over) {
+      try { Saves.save(t('rescue') + ' – ' + Saves.defaultName(), 'rescue').then(show, () => show(false)); } catch (e) { show(false); }
+    } else show(false);
+  },
+
+  dialog(msg, saved) {
+    const body = `<h2>${U.esc(t('errTitle'))}</h2><p>${U.esc(t(saved ? 'errSaved' : 'errNoGame'))}</p>
+      <div class="crash-msg">${U.esc(msg.split('\n').slice(0, 4).join('\n'))}</div>
+      <div class="row end" style="margin-top:14px"><button class="btn" data-a="menu">${U.esc(t('mainMenu'))}</button>
+      <button class="btn primary" data-a="cont">${U.esc(t('errCont'))}</button></div>`;
+    try {
+      Screens.modal(body);
+      Screens.bindModal({
+        cont: () => { this.shown = false; Screens.closeModal(); if (typeof UI !== 'undefined') UI.renderTime(); },
+        menu: () => { this.shown = false; Screens.menu(); },
+      });
+    } catch (e) {
+      // The UI itself is broken (e.g. during loading): last-resort message.
+      alert(t('errTitle') + '\n\n' + msg.split('\n')[0]);
+      this.shown = false;
+    }
+  },
+};
+
+const SelfTest = {
+  active: false,
+  errors: [],
+  results: [],
+
+  log(line) {
+    console.log('[SelfTest] ' + line);
+    let el = document.getElementById('selftest');
+    if (!el) { el = document.createElement('div'); el.id = 'selftest'; el.className = 'panel-glass'; document.body.appendChild(el); }
+    el.textContent += line + '\n';
+  },
+
+  // Run the simulation for `secs` game seconds in slices so the page stays responsive.
+  simulate(secs) {
+    return new Promise((res) => {
+      const S = Game.state, end = S.t + secs;
+      const slice = () => {
+        const t0 = performance.now();
+        try {
+          while (S.t < end && !S.over && performance.now() - t0 < 40) Sim.step(Sim.DT);
+        } catch (e) { this.errors.push((e && e.stack) || String(e)); res(); return; }
+        if (S.t < end && !S.over) setTimeout(slice, 0); else res();
+      };
+      slice();
+    });
+  },
+
+  // Values that must never become NaN/Infinity or point to nothing.
+  check() {
+    const S = Game.state, bad = [];
+    for (const sd of ['P', 'E']) for (const r of ['m', 'i', 'o']) if (!Number.isFinite(S.side[sd][r])) bad.push(`Ressource ${sd}.${r} = ${S.side[sd][r]}`);
+    for (const u of S.units) {
+      if (!UNIT_TYPES[u.t]) bad.push(`Einheit ${u.id}: unbekannter Typ ${u.t}`);
+      if (!Number.isFinite(u.x) || !Number.isFinite(u.y)) bad.push(`Einheit ${u.id} (${u.t}): Position ${u.x},${u.y}`);
+      if (!Number.isFinite(u.hp)) bad.push(`Einheit ${u.id} (${u.t}): hp ${u.hp}`);
+      if (!Game.byId.has(u.id)) bad.push(`Einheit ${u.id}: fehlt im Index`);
+    }
+    S.prov.forEach((pr, pid) => {
+      if (pr.o !== null && pr.o !== 'P' && pr.o !== 'E') bad.push(`Provinz ${pid}: Besitzer ${pr.o}`);
+      if (!Number.isFinite(pr.def)) bad.push(`Provinz ${pid}: Verteidigung ${pr.def}`);
+    });
+    return bad.slice(0, 10);
+  },
+
+  // Save, reload and compare: the reloaded state must be identical to the saved one.
+  async roundTrip() {
+    const before = JSON.stringify(Game.state);
+    if (!(await Saves.save('Selbsttest', 'selftest'))) return 'Speichern fehlgeschlagen';
+    const r = await Saves.load('selftest');
+    await Saves.remove('selftest');
+    if (r !== true) return 'Laden fehlgeschlagen: ' + r;
+    const after = JSON.parse(JSON.stringify(Game.state)), ref = JSON.parse(before);
+    after.paused = ref.paused;
+    return JSON.stringify(after) === JSON.stringify(ref) ? null : 'geladener Stand weicht vom gespeicherten ab';
+  },
+
+  async run() {
+    const q = new URLSearchParams(location.search);
+    const runs = Math.max(1, parseInt(q.get('selftest'), 10) || 3), minutes = parseFloat(q.get('min')) || 20;
+    const countries = BLOCS.flatMap((b) => b.members).filter((k) => Geo.byKey[k]);
+    const diffs = ['easy', 'normal', 'hard'];
+    this.active = true;
+    this.log(`Selbsttest: ${runs} Partien à ${minutes} Spielminuten`);
+    let allOk = true;
+    for (let i = 0; i < runs; i++) {
+      this.errors = [];
+      const country = countries[Math.floor(Math.random() * countries.length)];
+      const own = BLOCS.find((b) => b.members.includes(country));
+      const foes = BLOCS.filter((b) => b.id !== own.id && b.members.some((k) => Geo.byKey[k]));
+      const near = foes.filter((b) => Screens.blocTouches(own, b));
+      const enemy = (near.length ? near : foes)[Math.floor(Math.random() * (near.length || foes.length))];
+      const diff = diffs[i % 3];
+      const t0 = performance.now();
+      let problems = [];
+      try {
+        Game.newGame({ country, enemyBloc: enemy.id, difficulty: diff });
+        Screens.enterHud();
+        Game.state.paused = true; // the main loop must not step the game in parallel
+        await this.simulate(minutes * 60);
+        problems = this.check();
+        const rt = await this.roundTrip();
+        if (rt) problems.push('Speichern/Laden: ' + rt);
+      } catch (e) { this.errors.push((e && e.stack) || String(e)); }
+      const S = Game.state;
+      problems = problems.concat(this.errors.map((m) => 'Fehler: ' + m.split('\n').slice(0, 2).join(' | ')));
+      const ok = !problems.length;
+      allOk = allOk && ok;
+      const res = { country, enemy: enemy.id, diff, ok, problems, t: S && Math.round(S.t), over: S && S.over,
+        units: S && { P: Game.countUnits('P'), E: Game.countUnits('E') }, prov: S && { P: Game.countProv('P'), E: Game.countProv('E') },
+        ms: Math.round(performance.now() - t0) };
+      this.results.push(res);
+      this.log(`${ok ? 'OK  ' : 'FEHL'} #${i + 1} ${country} vs. ${enemy.id} (${diff}): t=${res.t}s, Einheiten ${res.units.P}/${res.units.E}, Provinzen ${res.prov.P}/${res.prov.E}${res.over ? ', Ende: ' + res.over : ''}, ${(res.ms / 1000).toFixed(1)} s`);
+      for (const p of problems) this.log('     ' + p);
+    }
+    this.active = false;
+    window.SELFTEST = { ok: allOk, results: this.results };
+    this.log(allOk ? 'ERGEBNIS: alles in Ordnung' : 'ERGEBNIS: Probleme gefunden');
+    Screens.menu();
+  },
+};

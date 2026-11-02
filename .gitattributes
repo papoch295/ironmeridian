@@ -1,0 +1,6 @@
+# Text files keep LF line endings on every system (the game is served to browsers and Android as-is).
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary

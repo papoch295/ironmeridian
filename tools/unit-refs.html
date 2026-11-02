@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iron Meridian – Stil-Referenzen</title>
+<style>
+  body { margin: 0; background: #1b211d; color: #e6e9e2; font: 14px/1.4 system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: #121714; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+  header h1 { font-size: 16px; margin: 0; flex: 1 1 100%; }
+  label { font-size: 13px; color: #b7bdb2; }
+  select { font: inherit; }
+  main { padding: 12px 16px 40px; max-width: 1200px; margin: 0 auto; }
+  .style { background: #26302a; border-radius: 8px; margin: 0 0 14px; padding: 12px 14px; }
+  .style h2 { margin: 0 0 2px; font-size: 16px; display: flex; gap: 10px; align-items: center; }
+  .style h2 b { background: #e6e9e2; color: #1b211d; border-radius: 50%; width: 26px; height: 26px; display: inline-grid; place-items: center; font-size: 14px; }
+  .style p { margin: 0 0 10px; color: #b7bdb2; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cell { background: var(--bg, #4a5a3e); border-radius: 6px; text-align: center; padding: 4px 4px 6px; }
+  .cell span { display: block; font-size: 11px; color: #e6e9e2; opacity: .8; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Einheiten-Referenzen: vier Stilrichtungen zum Vergleich</h1>
+  <label>Fraktion <select id="fac"><option value="W">West (blau)</option><option value="E">Ost (rot)</option></select></label>
+  <label>Größe <select id="size"><option value="200">Groß</option><option value="130">Mittel</option><option value="70">Kartengröße</option></select></label>
+  <label>Hintergrund <select id="bg"><option value="#4a5a3e">Karte (Land)</option><option value="#2c4a63">Karte (Meer)</option><option value="#1f2522">Dunkel</option></select></label>
+</header>
+<main id="out"></main>
+<script>
+// Nur Skizzen zum Vergleich der Stilrichtungen; nicht Teil des Spiels.
+const STYLES = [
+  { id: 'A', name: 'Spielfigur (Chibi)', desc: 'Übertriebene Proportionen (großer Turm, kurze Wanne, großer Kopf), dicke Konturen, kräftige Farben und Glanzlicht, wie Brettspielfiguren auf runden Sockeln.',
+    sx: .82, sy: 1.15, big: 1.35, gun: .72, wheel: 1.25, head: 1.7, line: 3, lineCol: '#161a10', shade: 'gloss', camo: false, panel: false, sat: 1.3, base: 'disc' },
+  { id: 'B', name: 'Miniatur (realistisch)', desc: 'Echte Proportionen, weiche Schattierung, Plattenlinien und Tarnmuster, wie bemalte Tabletop-Modelle auf Gras-Sockel.',
+    sx: 1, sy: 1, big: 1, gun: 1, wheel: 1, head: 1, line: 1.1, lineCol: '#1d2118', shade: 'grad', camo: true, panel: true, sat: 1, base: 'plinth' },
+  { id: 'C', name: 'Taktisch flach', desc: 'Flache Silhouetten ohne Kontur, wenige Farbtöne, nur ein Ring in Fraktionsfarbe. Sehr ruhig und auf kleinem Bildschirm gut lesbar.',
+    sx: 1, sy: 1, big: 1.05, gun: .95, wheel: 1, head: 1.25, line: 0, lineCol: '#000', shade: 'flat', camo: false, panel: false, sat: .85, base: 'ring' },
+  { id: 'D', name: 'Comic / Cel-Shading', desc: 'Harte Licht- und Schattenkanten, kräftige Linien, leicht stilisiert mit einfachem Tarnmuster. Mittelweg zwischen A und B, auf Sechseck-Sockeln.',
+    sx: .92, sy: 1.07, big: 1.15, gun: .85, wheel: 1.1, head: 1.3, line: 2.4, lineCol: '#141711', shade: 'cel', camo: true, panel: false, sat: 1.1, base: 'hex' },
+];
+
+const FACTIONS = {
+  W: { accent: '#2f6fd6', body: '#5d6b3c', dark: '#2e3226', uni: '#6a7448', helm: '#56603a', jet: '#8d979e', ship: '#8f989d', camo2: '#6b5a3a' },
+  E: { accent: '#c8322f', body: '#77713f', dark: '#33302a', uni: '#7a7550', helm: '#5f6b3a', jet: '#7f93a6', ship: '#7d8a92', camo2: '#4b5a34' },
+};
+
+const UNITS = [['mbt', 'Kampfpanzer'], ['inf', 'Infanterie'], ['arty', 'Artillerie'], ['jet', 'Kampfjet'], ['ship', 'Fregatte']];
+
+// --- Farben ---
+const hx = c => [1, 3, 5].map(i => parseInt(c.substr(i, 2), 16));
+const toHex = a => '#' + a.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+const mix = (c, d, t) => { const a = hx(c), b = hx(d); return toHex(a.map((v, i) => v + (b[i] - v) * t)); };
+const L = (c, t) => mix(c, '#ffffff', t), D = (c, t) => mix(c, '#000000', t);
+const sat = (c, k) => { const a = hx(c), m = (a[0] + a[1] + a[2]) / 3; return toHex(a.map(v => m + (v - m) * k)); };
+
+// --- Pfade ---
+function poly(pts) { const p = new Path2D(); pts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y)); p.closePath(); return p; }
+function rr(x, y, w, h, r) {
+  const p = new Path2D(); r = Math.min(r, w / 2, h / 2);
+  p.moveTo(x + r, y); p.arcTo(x + w, y, x + w, y + h, r); p.arcTo(x + w, y + h, x, y + h, r);
+  p.arcTo(x, y + h, x, y, r); p.arcTo(x, y, x + w, y, r); p.closePath(); return p;
+}
+function circ(x, y, r) { const p = new Path2D(); p.arc(x, y, r, 0, Math.PI * 2); return p; }
+function ell(x, y, rx, ry) { const p = new Path2D(); p.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); return p; }
+
+// Füllt einen Pfad im Stil der aktuellen Richtung (Schattierung, Tarnung, Kontur).
+function paint(R, p, col, y0, y1, o = {}) {
+  const { ctx, st } = R;
+  col = sat(col, st.sat);
+  ctx.save();
+  if (st.shade === 'grad' || st.shade === 'gloss') {
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, L(col, st.shade === 'gloss' ? .35 : .2)); g.addColorStop(.5, col); g.addColorStop(1, D(col, st.shade === 'gloss' ? .25 : .35));
+    ctx.fillStyle = g;
+  } else ctx.fillStyle = col;
+  ctx.fill(p);
+  ctx.clip(p);
+  const h = y1 - y0;
+  if (o.camo && st.camo) {
+    const n = st.shade === 'cel' ? 4 : 8;
+    for (let i = 0; i < n; i++) {
+      ctx.fillStyle = i % 2 ? D(col, .3) : sat(mix(col, R.fac.camo2, .55), st.sat);
+      ctx.beginPath();
+      ctx.ellipse(-52 + i * (110 / n) + (i % 3) * 4, y0 + h * ((i * 37 % 100) / 100), 6 + (i % 3) * 2, h * .28, .3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  if (st.shade === 'cel') {
+    ctx.fillStyle = D(col, .32); ctx.fillRect(-200, y0 + h * .58, 400, 400);
+    ctx.fillStyle = L(col, .28); ctx.fillRect(-200, y0 - 1, 400, h * .2 + 1);
+  }
+  if (st.shade === 'gloss' && !o.noGloss) {
+    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(-200, y0 + h * .1, 400, Math.max(.8, h * .16));
+  }
+  ctx.restore();
+  if (st.line > 0 && !o.noLine) {
+    ctx.lineWidth = st.line / R.K; ctx.strokeStyle = st.lineCol; ctx.lineJoin = 'round'; ctx.stroke(p);
+  }
+}
+function panel(R, segs) {
+  if (!R.st.panel) return;
+  const { ctx } = R;
+  ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = .7 / R.K;
+  segs.forEach(([a, b, c, d]) => { ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke(); });
+  ctx.restore();
+}
+
+// --- Sockel ---
+function flag(R, x, top, shape) {
+  const { fac: F } = R;
+  paint(R, rr(x - 1, top, 2, -top + 2, .8), '#2a2a2a', top, 0, { noGloss: true });
+  paint(R, shape === 'sq' ? rr(x + 1, top, 15, 9, 1) : poly([[x + 1, top], [x + 17, top + 4.5], [x + 1, top + 9]]), F.accent, top, top + 9);
+}
+function base(R) {
+  const { ctx, st, fac: F } = R;
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fill(ell(3, 6, 58, 11));
+  if (st.base === 'disc') {
+    paint(R, ell(0, 6, 56, 11), D(F.accent, .45), -5, 17, { noGloss: true });
+    paint(R, ell(0, 2, 56, 11), F.accent, -9, 13);
+    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fill(ell(0, 2, 47, 8.5));
+    flag(R, -46, -50);
+  } else if (st.base === 'plinth') {
+    paint(R, ell(0, 7, 58, 11), '#2b2a24', -4, 18);
+    paint(R, ell(0, 3, 58, 11), '#4d4a3a', -8, 14);
+    paint(R, ell(0, 2, 55, 9.5), '#5f6b3f', -7, 11);
+    ctx.fillStyle = 'rgba(40,50,25,.6)';
+    for (let i = 0; i < 14; i++) ctx.fillRect(-48 + i * 7.3, 1 + (i * 53 % 7) - 3, 1.2, 1.2);
+    paint(R, rr(38, 7, 12, 5, 1), F.accent, 7, 12);
+  } else if (st.base === 'ring') {
+    ctx.save(); ctx.strokeStyle = F.accent; ctx.lineWidth = 3 / R.K * 1.4; ctx.stroke(ell(0, 2, 54, 10)); ctx.restore();
+    ctx.fillStyle = F.accent; ctx.fill(poly([[-56, -6], [-48, -6], [-52, 0]]));
+  } else if (st.base === 'hex') {
+    const hex = dy => poly([0, 1, 2, 3, 4, 5].map(k => [Math.cos(k * Math.PI / 3) * 57, dy + Math.sin(k * Math.PI / 3) * 11]));
+    paint(R, hex(7), D(F.accent, .5), -4, 18, { noGloss: true });
+    paint(R, hex(2), F.accent, -9, 13);
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fill(poly([0, 1, 2, 3, 4, 5].map(k => [Math.cos(k * Math.PI / 3) * 46, 2 + Math.sin(k * Math.PI / 3) * 8])));
+    flag(R, -50, -48, 'sq');
+  }
+}
+
+// --- Einheiten (Blick nach rechts, Boden bei y = 0) ---
+const DRAW = {
+  mbt(R) {
+    const { ctx, st, fac: F, east } = R, b = F.body;
+    paint(R, rr(-47, -11, 94, 11, 5.5), F.dark, -11, 0);
+    const wr = 4.3 * st.wheel;
+    for (let i = 0; i < 6; i++) { const x = -36 + i * 14.4; paint(R, circ(x, -5.5, wr), '#62675a', -10, 0); paint(R, circ(x, -5.5, wr * .4), '#33362e', -8, -3, { noLine: true }); }
+    const hull = east ? poly([[-49, -10], [-46, -20], [34, -20], [50, -12], [46, -10]]) : poly([[-49, -10], [-45, -21], [37, -21], [51, -13], [47, -10]]);
+    paint(R, hull, b, -21, -10, { camo: true });
+    panel(R, [[-44, -15, 44, -15], [10, -21, 12, -10]]);
+    ctx.save(); ctx.translate(-2, -21); ctx.scale(st.big, st.big); ctx.translate(2, 21);
+    const gl = 48 * st.gun;
+    paint(R, rr(14, -29.5, gl, 3.4, 1.2), D(b, .15), -30, -26);
+    paint(R, rr(14 + gl - 6, -30.6, 6, 5.6, 1), D(b, .25), -31, -25);
+    if (east) {
+      const t = new Path2D(); t.moveTo(-24, -21); t.quadraticCurveTo(-23, -34, 2, -33); t.quadraticCurveTo(19, -32, 20, -21); t.closePath();
+      paint(R, t, L(b, .06), -34, -21, { camo: true });
+      for (let j = 0; j < 4; j++) paint(R, rr(-2 + j * 5, -29, 4, 4.5, .6), D(b, .12), -29, -24.5);
+      paint(R, rr(-12, -36, 8, 3.2, 1.5), D(b, .1), -36, -33);
+    } else {
+      paint(R, poly([[-28, -21], [-24, -31], [8, -33], [22, -27], [20, -21]]), L(b, .06), -33, -21, { camo: true });
+      panel(R, [[-24, -26, 20, -26]]);
+      paint(R, rr(-14, -35.5, 9, 3, 1), D(b, .1), -35.5, -32.5);
+      paint(R, rr(1, -35.5, 6, 3, 1), D(b, .2), -35.5, -32.5);
+      paint(R, rr(-28, -29, 4, 7, 1), D(b, .15), -29, -22);
+    }
+    ctx.restore();
+  },
+
+  inf(R) {
+    const { ctx } = R;
+    [[-24, 0, .92], [24, 0, .92], [0, 3, 1]].forEach(([x, y, s]) => {
+      ctx.save(); ctx.translate(x, y); ctx.scale(s, s); soldier(R); ctx.restore();
+    });
+  },
+
+  arty(R) {
+    const { ctx, st, fac: F } = R, b = F.body;
+    paint(R, poly([[-6, -9], [-44, -1], [-44, 2], [-4, -5]]), D(b, .2), -9, 2);
+    paint(R, rr(-49, -3, 6, 7, 1), F.dark, -3, 4);
+    ctx.save(); ctx.translate(-2, -16); ctx.rotate(-.42);
+    const gl = 60 * st.gun;
+    paint(R, rr(-8, 1.6, 26, 3.6, 1.2), D(b, .25), 1.6, 5.2);
+    paint(R, rr(-12, -2.2, gl, 4.4, 1.5), D(b, .1), -2.2, 2.2);
+    paint(R, rr(gl - 20, -3.4, 8, 6.8, 1.2), D(b, .3), -3.4, 3.4);
+    ctx.restore();
+    paint(R, poly([[-11, -7], [-8, -21], [7, -21], [9, -7]]), b, -21, -7, { camo: true });
+    const wr = 8 * st.wheel;
+    paint(R, circ(-2, -wr, wr), '#2b2d27', -2 * wr, 0);
+    paint(R, circ(-2, -wr, wr * .45), '#6a6e60', -wr * 1.4, -wr * .6);
+    if (st.head > 1.2) { ctx.save(); ctx.translate(-30, 0); ctx.scale(.8, .8); soldier(R, true); ctx.restore(); }
+  },
+
+  jet(R) {
+    const { ctx, st, fac: F, east } = R, j = F.jet;
+    paint(R, rr(-1.2, -26, 2.4, 26, 1), '#3a3d36', -26, 0, { noGloss: true });
+    ctx.save(); ctx.translate(0, -30);
+    if (east) paint(R, poly([[-40, -3], [-29, -3], [-34, -19], [-41, -19]]), D(j, .25), -19, -3);
+    paint(R, poly([[-46, -3], [-34, -3], [-40, -21], [-47, -21]]), j, -21, -3);
+    paint(R, poly([[-50, -3], [-44, -7.5], [8, -8], [26, -7], [52, -1], [28, 3.5], [-44, 3.5]]), j, -8, 3.5, { camo: st.camo && east });
+    panel(R, [[-30, -8, -30, 3], [6, -8, 6, 3], [-44, -1, 40, -1]]);
+    paint(R, rr(-55, -3.5, 7, 6.5, 1.8), '#2e302c', -3.5, 3);
+    paint(R, poly([[-4, -1.5], [12, -1.5], [12, 3.5], [-6, 3.5]]), D(j, .3), -1.5, 3.5);
+    paint(R, ell(20, -7.5, 11 * (st.big > 1.1 ? 1.15 : 1), 4 * (st.big > 1.1 ? 1.3 : 1)), '#8fd0f0', -12, -3.5);
+    paint(R, rr(-28, 9, 18, 2.4, 1.2), '#d8dad4', 9, 11.4);
+    paint(R, poly([[-20, 1], [6, 1], [-24, 14], [-34, 14]]), D(j, .1), 1, 14);
+    paint(R, poly([[-48, 1], [-38, 1], [-46, 8], [-52, 8]]), D(j, .1), 1, 8);
+    paint(R, east ? poly([[-43, -15], [-39, -13], [-43, -11]]) : circ(-41, -13, 2.6), F.accent, -16, -10, { noLine: true });
+    ctx.restore();
+  },
+
+  ship(R) {
+    const { ctx, st, fac: F, east } = R, s = F.ship;
+    ctx.fillStyle = 'rgba(160,200,230,.35)'; ctx.fill(ell(0, -2, 58, 4));
+    paint(R, rr(0.6, -48, 2, 16, .5), '#2c2f30', -48, -32, { noGloss: true });
+    paint(R, rr(-4, -43, 12, 1.6, .5), '#2c2f30', -43, -41, { noGloss: true });
+    paint(R, ell(1.6, -48, 4.5, 1.8), '#cfd3d3', -50, -46);
+    paint(R, rr(-26, -23, 36, 11, 1.5), L(s, .08), -23, -12);
+    paint(R, rr(-6, -32, 17, 10, 1.5), L(s, .12), -32, -22);
+    paint(R, rr(-4, -29.5, 13, 2.2, .6), '#25343d', -29.5, -27, { noLine: true });
+    paint(R, rr(-22, -30, 8, 7, 1.2), D(s, .1), -30, -23);
+    if (east) { ctx.save(); ctx.translate(-42, -14); ctx.rotate(-.25); paint(R, rr(0, -4, 13, 4, 1), D(s, .15), -4, 0); paint(R, rr(0, -8.5, 13, 4, 1), D(s, .15), -8.5, -4.5); ctx.restore(); }
+    const hull = poly([[-55, -4], [-53, -13], [40, -13], [57, -19], [51, -3], [-51, -3]]);
+    paint(R, hull, s, -19, -3);
+    panel(R, [[-50, -9, 50, -9]]);
+    paint(R, rr(-52, -6, 102, 2.6, .5), D(s, .5), -6, -3.4, { noLine: true });
+    if (!east) paint(R, rr(14, -15, 9, 2, .5), D(s, .25), -15, -13);
+    ctx.save(); ctx.translate(28, -13); ctx.scale(st.big, st.big);
+    paint(R, rr(9, -3.8, 15 * st.gun, 1.8, .6), D(s, .3), -3.8, -2);
+    paint(R, east ? rr(-1, -5.5, 11, 5.5, 2) : poly([[-1, 0], [0, -5], [8, -5], [11, 0]]), L(s, .05), -5.5, 0);
+    ctx.restore();
+  },
+};
+
+function soldier(R, kneel) {
+  const { ctx, st, fac: F, east } = R, h = st.head;
+  if (kneel) { paint(R, rr(-4, -8, 9, 8, 2), D(F.uni, .15), -8, 0); }
+  else {
+    paint(R, rr(-4, -13, 3.4, 13, 1.2), D(F.uni, .15), -13, 0);
+    paint(R, rr(.6, -13, 3.4, 13, 1.2), D(F.uni, .15), -13, 0);
+    paint(R, rr(-4.6, -2.6, 4.6, 2.6, 1), '#23241f', -2.6, 0);
+    paint(R, rr(.4, -2.6, 4.8, 2.6, 1), '#23241f', -2.6, 0);
+  }
+  ctx.save(); if (kneel) ctx.translate(0, 6);
+  paint(R, rr(-9.5, -25, 5, 11, 1.5), D(F.uni, .12), -25, -14);
+  paint(R, rr(-5, -26, 10, 14, 2.5), F.uni, -26, -12, { camo: true });
+  const hy = -26 - 3.6 * h;
+  paint(R, circ(.6, hy, 3.8 * h), '#d9a57a', hy - 4 * h, hy + 4 * h, { noGloss: true });
+  const hp = new Path2D();
+  if (east) { hp.ellipse(0, hy - .6 * h, 5 * h, 4.4 * h, 0, Math.PI, 0); hp.lineTo(5 * h, hy + .6 * h); hp.lineTo(-5 * h, hy + .6 * h); }
+  else { hp.arc(0, hy - .4 * h, 4.7 * h, Math.PI, 0); hp.lineTo(5.6 * h, hy - .1 * h); hp.lineTo(-5.4 * h, hy - .1 * h); }
+  hp.closePath();
+  paint(R, hp, F.helm, hy - 5 * h, hy);
+  paint(R, rr(-2, -21.5, 19, 2.2, .8), '#2a2b26', -21.5, -19.3);
+  paint(R, rr(-1, -23.5, 9, 3, 1.4), F.uni, -23.5, -20.5);
+  ctx.restore();
+}
+
+function drawUnit(canvas, type, st, facKey) {
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height, K = W / 150;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
+  ctx.translate(W / 2, H * .78); ctx.scale(K, K);
+  const R = { ctx, st, K, fac: FACTIONS[facKey], east: facKey === 'E' };
+  base(R);
+  ctx.save(); ctx.scale(st.sx, st.sy); DRAW[type](R); ctx.restore();
+}
+
+function render() {
+  const fac = document.getElementById('fac').value;
+  const w = +document.getElementById('size').value;
+  const bg = document.getElementById('bg').value;
+  const dpr = window.devicePixelRatio || 1;
+  const out = document.getElementById('out');
+  out.innerHTML = '';
+  STYLES.forEach(st => {
+    const sec = document.createElement('section'); sec.className = 'style';
+    sec.innerHTML = `<h2><b>${st.id}</b>${st.name}</h2><p>${st.desc}</p>`;
+    const row = document.createElement('div'); row.className = 'row';
+    UNITS.forEach(([type, label]) => {
+      const cell = document.createElement('div'); cell.className = 'cell'; cell.style.setProperty('--bg', bg);
+      const c = document.createElement('canvas');
+      c.style.width = w + 'px'; c.style.height = Math.round(w * .62) + 'px';
+      c.width = Math.round(w * dpr); c.height = Math.round(w * .62 * dpr);
+      cell.appendChild(c);
+      if (w > 90) cell.insertAdjacentHTML('beforeend', `<span>${label}</span>`);
+      row.appendChild(cell);
+      drawUnit(c, type, st, fac);
+    });
+    sec.appendChild(row); out.appendChild(sec);
+  });
+}
+['fac', 'size', 'bg'].forEach(id => document.getElementById(id).addEventListener('change', render));
+render();
+</script>
+</body>
+</html>
