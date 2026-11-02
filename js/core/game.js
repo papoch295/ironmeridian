@@ -269,12 +269,26 @@ const Game = {
   },
   income(side) { return this.incomeAll()[side] || { m: 0, i: 0, o: 0 }; },
 
+  // Upkeep per minute of every faction's units (scaled like the income of AI factions hostile to the player).
+  upkeepAll() {
+    const all = {};
+    for (const u of this.state.units) {
+      const c = UNIT_TYPES[u.t].cost, k = all[u.s] || (all[u.s] = { m: 0, o: 0 });
+      k.m += c.m * UPKEEP.m; k.o += c.o * UPKEEP.o;
+    }
+    for (const sd in all) { const d = this.eK(sd, 'inc'); all[sd].m *= d; all[sd].o *= d; }
+    return all;
+  },
+
+  // s.gross = province income, s.upk = upkeep, s.inc = net income per minute. Upkeep that cannot be paid
+  // leaves the treasury at zero, so nothing new can be built until the army shrinks or the economy grows.
   economyTick(dtMin) {
-    const all = this.incomeAll();
+    const all = this.incomeAll(), upk = this.upkeepAll();
     for (const sd in this.state.side) {
-      const s = this.state.side[sd], inc = all[sd] || { m: 0, i: 0, o: 0 };
-      s.inc = inc;
-      s.m += inc.m * dtMin; s.i += inc.i * dtMin; s.o += inc.o * dtMin;
+      const s = this.state.side[sd], g = all[sd] || { m: 0, i: 0, o: 0 }, k = upk[sd] || { m: 0, o: 0 };
+      s.gross = g; s.upk = k;
+      s.inc = { m: g.m - k.m, i: g.i, o: g.o - k.o };
+      s.m = Math.max(0, s.m + s.inc.m * dtMin); s.i += s.inc.i * dtMin; s.o = Math.max(0, s.o + s.inc.o * dtMin);
     }
   },
 

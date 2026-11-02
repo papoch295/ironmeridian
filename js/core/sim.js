@@ -107,11 +107,11 @@ const Sim = {
       else if (o.k === 'load') moveOk = this.loadStep(u, o);
     }
     if (moveOk && u.path) {
-      let spd = T.spd;
+      let spd = T.spd * MOVE_SCALE;
       if (T.dom === 'land') {
         if (u.emb) spd = 0.1;
         else if (o && o.k === 'fast') spd *= 1.4;
-        if (o && o.cap && !u.emb) spd = Math.min(spd, o.cap * (o.k === 'fast' ? 1.4 : 1));
+        if (o && o.cap && !u.emb) spd = Math.min(spd, o.cap * MOVE_SCALE * (o.k === 'fast' ? 1.4 : 1));
         if (T.cls === 'soft' && u.sup > 50) spd *= 0.55;
         if (u.rout) spd *= 1.15;
       }
@@ -129,6 +129,8 @@ const Sim = {
         if (u.emb && !wasEmb) u.sup = 0;
       }
     } else u.mv = false;
+    // Entrenchment builds up while the unit stands still and is lost as soon as it moves.
+    if (T.dom === 'land') u.dig = u.mv || u.emb || u.rout ? 0 : Math.min(1, (u.dig || 0) + dt / DIG.time);
     for (const id of u.cargo) { const c = Game.unit(id); if (c) { c.x = u.x; c.y = u.y; } }
     const fast = o && o.k === 'fast';
     if (!fast && !u.emb && !u.rout && u.stance !== 'hold') this.fire(u, T);
@@ -308,8 +310,10 @@ const Sim = {
     if (attacker) dmg *= Game.eK(attacker.s);
     if (cls === 'soft' && this.inCover(t)) dmg *= 0.7;
     if (t.emb) dmg *= 1.5;
+    const dig = t.dig ? DIG.max * t.dig * (w.indirect ? 0.5 : 1) : 0;
+    dmg *= 1 - dig;
     t.hp -= dmg;
-    t.sup = Math.min(100, t.sup + (w.sup || 5) * (cls === 'soft' ? 1 : 0.5));
+    t.sup = Math.min(100, t.sup + (w.sup || 5) * (cls === 'soft' ? 1 : 0.5) * (1 - dig));
     t.lastHit = S.t;
     if (attacker) t.lastAtk = attacker.id;
     if (t.hp <= 0) this.kill(t, attacker);
@@ -609,7 +613,7 @@ const Sim = {
       if (atk) pr.calm = 0; else pr.calm = (pr.calm || 0) + dt;
       if (atk && !def && pr.def <= 0) {
         if (!pr.cap || pr.cap.s !== atkSide) pr.cap = { s: atkSide, p: 0 };
-        pr.cap.p += dt * capPower / (6 + 3 * pr.lvl);
+        pr.cap.p += dt * capPower / CAPTURE_TIME(pr.lvl);
         if (pr.cap.p >= 1) this.capture(pid, atkSide);
       } else if (pr.cap) {
         pr.cap.p -= dt * 0.05;

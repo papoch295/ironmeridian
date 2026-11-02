@@ -165,6 +165,14 @@ const WEAPON_NAMES = {
 const MAX_LEVEL = 5;
 const UPGRADE_COST = (lvl) => ({ m: 400 * lvl, i: 200 * lvl, t: 25 * lvl });
 // Global multiplier for all recruitment and construction times.
-const TIME_SCALE = 0.5;
+const TIME_SCALE = 0.7;
+// Tactical pace: ground and naval units move slower than their nominal speed; provinces take longer to capture.
+const MOVE_SCALE = 0.75;
+const CAPTURE_TIME = (lvl) => 10 + 5 * lvl;
+// Upkeep per minute as a share of the unit's purchase price (money and oil). Large armies cost their economy.
+const UPKEEP = { m: 0.02, o: 0.05 };
+// Entrenchment: a land unit that stands still digs in over DIG.time seconds and then takes DIG.max less damage
+// (indirect fire ignores half of it, so artillery preparation pays off).
+const DIG = { time: 75, max: 0.4 };
 // Province vision radius by radar level (0 = no radar).
 const RADAR_RANGE = [1.1, 3, 5, 8];

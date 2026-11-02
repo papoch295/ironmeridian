@@ -337,7 +337,11 @@ const UI = {
     for (const [id, k] of [['#resM', 'm'], ['#resI', 'i'], ['#resO', 'o']]) {
       const el = $(id);
       el.querySelector('.v').textContent = U.fmt(s[k]);
-      el.querySelector('.inc').textContent = '+' + U.fmt(s.inc[k]) + t('perMin');
+      // Net income after upkeep; the tooltip splits it into income and upkeep.
+      const inc = el.querySelector('.inc'), n = s.inc[k];
+      inc.textContent = (n < 0 ? '−' : '+') + U.fmt(Math.abs(n)) + t('perMin');
+      inc.classList.toggle('neg', n < 0);
+      el.title = s.gross ? t('incTip', U.fmt(s.gross[k]), U.fmt(s.upk[k] || 0)) : '';
     }
     this.renderTime();
   },
@@ -466,7 +470,8 @@ const UI = {
       this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
       Render.ping(x, y, 'attack');
     });
-    Game.on('unloaded', (u) =>this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));
+    Game.on('aiRetreat', ({ k, x, y }) => this.log(t('evRetreat', countryName(Geo.byKey[k])), 'good', x, y));
+    Game.on('unloaded', (u) => this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));
     Game.on('noPath', () => this.toast(t('evNoPath'), 'bad'));
     Game.on('crash', (u) => this.log(t('evCrash', unitName(u.t)), 'warn', u.x, u.y));
     Game.on('rout', (u) => { if (this.sel.has(u.id)) this.log(t('evRout', unitName(u.t)), 'warn', u.x, u.y); });

@@ -487,6 +487,13 @@ const Render = {
         rr(sx - bw / 2 - 1, by - 1, bw + 2, 5, 2.5); ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fill();
         if (f > 0) { rr(sx - bw / 2, by, Math.max(2, bw * f), 3, 1.5); ctx.fillStyle = f > 0.6 ? '#8fd16a' : f > 0.3 ? '#e2b33c' : '#e2553c'; ctx.fill(); }
       }
+      // Entrenchment: a sandbag arc in front of the unit grows while it digs in.
+      const dg = T.dom === 'land' ? c.units.reduce((a, x) => a + (x.dig || 0), 0) / n : 0;
+      if (dg > 0.15) {
+        ctx.beginPath(); ctx.ellipse(sx, gy, s * 0.95, s * 0.32, 0, Math.PI * (0.5 - 0.45 * dg), Math.PI * (0.5 + 0.45 * dg));
+        ctx.strokeStyle = 'rgba(20,14,6,0.7)'; ctx.lineWidth = 5; ctx.stroke();
+        ctx.strokeStyle = `rgba(206,180,118,${0.5 + 0.5 * dg})`; ctx.lineWidth = 3; ctx.stroke();
+      }
       if (n === 1 && u.sup > 20 && T.cls === 'soft') { rr(sx - bw / 2, by + 5, bw * u.sup / 100, 2, 1); ctx.fillStyle = 'rgba(255,214,90,0.9)'; ctx.fill(); }
       if (n > 1) {
         const tx = sx + s * 0.8, ty = sy - s * 0.58, txt = String(n);

@@ -320,6 +320,12 @@ Schritt 3 erledigt: feste Offensiven im Takt der Schwierigkeit (Leicht alle 8, N
 Sammeln an einer Grenzprovinz (2,5 / 2 / 1¼ Minuten), dann gemeinsamer Angriff; eine Hauptachse, die bis zum Fall des
 Ziels gleich bleibt, plus kleiner Nebenangriff; dazwischen nur Verteidigung. Sehen eigene oder verbündete Einheiten bzw.
 Radar das Sammeln, kommt die Meldung „Aufklärung: … sammelt Truppen“ und ein roter Pfeil Sammelort → Ziel.
+Schritt 4 erledigt: Tempo langsamer (Bewegung ×0,75, Eroberung 10 + 5 s je Stufe, Bauzeiten ×0,7), **Unterhalt**
+(2 % des Preises in Geld und 5 % des Öls pro Minute, Anzeige netto mit Aufschlüsselung im Tooltip; KI rekrutiert nur, was
+sie bezahlen kann), **Eingraben** (bis −40 % Schaden nach 75 s Stillstand, Artillerie ignoriert die Hälfte; Sandsack-Bogen
+unter der Einheit), **KI-Kampfgruppen** (1–4 gemischte Gruppen à 5–9 Einheiten statt einem Schwarm) mit Phasen
+Aufklärung → Artillerie-Vorbereitung → Sturm → Halten und **Rückzug** bei mehr als 55 % Verlusten (Meldung an den Spieler).
+Werte zum Feintuning: `MOVE_SCALE`, `CAPTURE_TIME`, `UPKEEP`, `DIG` in `js/data/units.js`.
 Web: Das Spiel läuft unter **https://papoch295.github.io/ironmeridian/** (GitHub Pages, aktualisiert sich bei jedem Push).
 
 **Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
@@ -330,8 +336,8 @@ nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt n
 | 1. Fundament | GitHub-Konto (du) + Repository (ich), Spielstände mit Namen, **Löschen**, IndexedDB, Migration nach Updates, rotierende Autosaves, Fehlerfang, automatischer Testlauf, Hochformat-Fehler | #10–#13, #26, #37, #39 | erledigt |
 | 2. Mehr-Seiten-Kern | beliebig viele Fraktionen, **freie Länderwahl** (alle außer Zwergstaaten wie Vatikan), **Jeder gegen jeden** mit Bündnissen, neutrale Länder angreifbar und Nachbarn reagieren, KI je Fraktion | #1–#5, #21 | erledigt |
 | 3. KI-Angriffsmuster | **feste Angriffsmuster** (Achsen, Zeitpunkte), einfache Vorwarnung durch Aufklärung | #16, #17 | erledigt |
-| **4. Taktisches Gameplay (P0)** | **Unterhalt**, **langsameres Tempo**, **Eingraben**; KI mit **Kampfgruppen**, **Angriff in Phasen**, **Rückzug bei Verlusten** | #55–#60 | als Nächstes |
-| **5. Einfachere Führung (P0)** | **Kampfgruppen-Vorlagen** (eine Gruppe mit einem Tippen), **Gruppen-Haltungen** per Knopf, **automatische Rollen** in der Gruppe, **Armee-Übersicht** | #67–#70 | offen |
+| **4. Taktisches Gameplay (P0)** | **Unterhalt**, **langsameres Tempo**, **Eingraben**; KI mit **Kampfgruppen**, **Angriff in Phasen**, **Rückzug bei Verlusten** | #55–#60 | erledigt |
+| **5. Einfachere Führung (P0)** | **Kampfgruppen-Vorlagen** (eine Gruppe mit einem Tippen), **Gruppen-Haltungen** per Knopf, **automatische Rollen** in der Gruppe, **Armee-Übersicht** | #67–#70 | als Nächstes |
 | 6. Web live | ~~Veröffentlichung, Link für die Prüfer~~ (GitHub Pages läuft); fehlt noch: Service Worker für Offline und saubere Updates | 5.1, 7 | teilweise |
 | 7. Tutorial | interaktives Tutorial in einfacher Fassung (Hervorhebungen, Schritt erst nach Aktion), erklärt Kampfgruppen und Haltungen | #28 | offen |
 | 8. Punktesieg | Partie endet mit Punktesieg statt Aufräumen bis zur letzten Einheit | #52 | offen |

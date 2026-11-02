@@ -161,6 +161,7 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .res .v { font-size: 15px; font-weight: 700; min-width: 44px; line-height: 1; }
 .res .inc { font-size: 10px; color: var(--good); line-height: 1; letter-spacing: .02em; }
 .res .v, .res .inc { display: block; }
+.res .inc.neg { color: var(--bad, #e2553c); }
 .res .num { display: flex; flex-direction: column; gap: 3px; }
 .time-group { margin-left: 6px; padding-left: 12px; border-left: 1px solid var(--line); }
 #clock { font-size: 11px; color: var(--muted); letter-spacing: .06em; white-space: nowrap; font-variant-numeric: tabular-nums; line-height: 1.25; }

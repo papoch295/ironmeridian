@@ -88,7 +88,9 @@ const AI = {
       if (!blds.length) continue;
       const b = blds[Math.floor(Math.random() * blds.length)];
       const key = this.pickWeighted(AI_MIX[b], (k) => !Game.canQueue(pid, 'unit', k));
-      if (key && side.m - UNIT_TYPES[key].cost.m > 500) Game.queue(pid, 'unit', key);
+      // Only recruit what the economy can keep paying for (net income stays positive with the new unit).
+      const c = key && UNIT_TYPES[key].cost;
+      if (key && side.m - c.m > 500 && (!side.inc || (side.inc.m - c.m * UPKEEP.m > 0 && side.inc.o - c.o * UPKEEP.o > -2))) Game.queue(pid, 'unit', key);
       if (pr.b.silo && pr.msl.srbm < 3 && !Game.canQueue(pid, 'msl', 'srbm') && side.m > 3000) Game.queue(pid, 'msl', 'srbm');
       if (pr.b.silo >= 3 && pr.msl.icbm < 1 && S.diff === 'hard' && !Game.canQueue(pid, 'msl', 'icbm')) Game.queue(pid, 'msl', 'icbm');
       if (pr.b.lab && S.diff === 'hard' && (side.nukes || 0) < 2 && side.m > 9000 && !Game.canQueue(pid, 'nuke', 'nuke')) Game.queue(pid, 'nuke', 'nuke');
@@ -112,8 +114,11 @@ const AI = {
       if (n) threatened.push({ pid, n });
     }
     threatened.sort((a, b) => b.n - a.n);
-    const O = A.off || (A.off = { ph: 'wait', t: Math.max(S.t + 60, D.grace) });
-    const used = new Set(O.ph === 'gather' ? O.ids : []);
+    let O = A.off;
+    // Plans from older versions (one big wave) are dropped; the AI plans anew.
+    if (!O || (O.ph !== 'wait' && !O.groups)) O = A.off = { ph: 'wait', t: Math.max(S.t + 60, D.grace) };
+    // Units of a running offensive belong to their battle group and are not pulled into home defense.
+    const used = new Set(O.ph === 'wait' ? [] : O.groups.flatMap((g) => g.ids.concat(g.sup, g.rec)));
     const free = land.filter((u) => !u.ord || u.ord.ai === 'wave-done');
     for (const th of threatened.slice(0, 4)) {
       const p = Geo.provinces[th.pid];
@@ -128,8 +133,10 @@ const AI = {
   },
 
   // Offensives follow a fixed rhythm so the player can learn them: every D.offEvery seconds the troops first gather
-  // at a staging province for D.gather seconds, then attack together. The main axis keeps its direction until its
-  // target falls (the next target is the one closest to it); a smaller secondary push hits a different target.
+  // at a staging province for D.gather seconds, then attack. The main axis keeps its direction until its target
+  // falls (the next target is the one closest to it); a secondary axis hits a different target.
+  // The force is split into battle groups of mixed roles instead of one swarm. Each group attacks in phases
+  // (reconnaissance → artillery preparation → assault → hold) and breaks off when it has lost too much.
   // Between offensives the AI only defends. A gathering that the player's side can see raises a warning.
   offensive(S, D, me, mine, enemy, land, heli, pool, O) {
     if (O.ph === 'wait') {
@@ -138,45 +145,129 @@ const AI = {
       const main = prev ?? this.pickTarget(S, mine, enemy, land, O.main != null ? Geo.provinces[O.main] : null);
       if (main === null) { O.t = S.t + 30; return; }
       const mp = Geo.provinces[main];
-      const sideT = pool.length >= 8 ? this.pickSideTarget(S, mine, enemy, main) : null;
-      // Keep a small garrison at home; a quarter of the force goes to the secondary axis.
+      // Keep a small garrison at home.
       const force = pool.sort((a, b) => U.dist2(a.x, a.y, mp.x, mp.y) - U.dist2(b.x, b.y, mp.x, mp.y)).slice(0, Math.max(3, Math.floor(pool.length * 0.8)));
-      const sideN = sideT === null ? 0 : Math.floor(force.length * 0.25);
-      const sideU = force.splice(force.length - sideN, sideN);
-      const st = this.stagingPoint(mine, mp, force), ss = sideT === null ? null : this.stagingPoint(mine, Geo.provinces[sideT], sideU);
+      const groups = this.formGroups(force);
+      const sideT = groups.length >= 2 ? this.pickSideTarget(S, mine, enemy, main) : null;
+      // One group (the last, usually the smallest) takes the secondary axis.
+      groups.forEach((g, i) => { g.axis = sideT !== null && i === groups.length - 1 ? 'side' : 'main'; });
+      const st = this.stagingPoint(mine, mp, force), ss = sideT === null ? null : this.stagingPoint(mine, Geo.provinces[sideT], force);
       Object.assign(O, { ph: 'gather', t: S.t + D.gather, next: S.t + D.offEvery, main, side: sideT, sx: st[0], sy: st[1],
-        ssx: ss && ss[0], ssy: ss && ss[1], ids: force.map((u) => u.id), sids: sideU.map((u) => u.id), warned: false });
-      Game.order(force, { k: 'amove', x: st[0], y: st[1], coh: 1 });
-      if (sideU.length) Game.order(sideU, { k: 'amove', x: ss[0], y: ss[1], coh: 1 });
+        ssx: ss && ss[0], ssy: ss && ss[1], groups, warned: false });
+      // Groups on the same axis assemble side by side, not on one spot.
+      const n = { main: 0, side: 0 };
+      for (const g of groups) {
+        const [bx, by] = g.axis === 'side' ? ss : st, tp = Geo.provinces[g.axis === 'side' ? sideT : main];
+        const a = Math.atan2(tp.y - by, tp.x - bx) + Math.PI / 2, off = (n[g.axis]++ - 0.5 * (groups.filter((x) => x.axis === g.axis).length - 1)) * 0.45;
+        g.x = bx + Math.cos(a) * off; g.y = by + Math.sin(a) * off;
+        Game.order(this.members(g), { k: 'amove', x: g.x, y: g.y, coh: 1 });
+      }
       return;
     }
-    const units = (ids) => ids.map((id) => Game.unit(id)).filter((u) => u && !u.inside);
     if (O.ph === 'gather') {
       // Warning when the player or an ally can see any of the gathering troops and the target is on their side.
       if (!O.warned && Game.hostile(me, S.player) && [O.main, O.side].some((p) => p != null && Game.allied(S.prov[p].o, S.player))
-        && units(O.ids.concat(O.sids)).some((u) => Sim.sees(S.player, u))) {
+        && O.groups.some((g) => this.members(g).some((u) => Sim.sees(S.player, u)))) {
         O.warned = true;
         Game.emit('aiGather', { k: me, x: O.sx, y: O.sy, pid: O.main });
       }
       if (S.t < O.t) return;
       // Attack: targets that fell in the meantime are replaced by the nearest hostile province.
       for (const key of ['main', 'side']) if (O[key] != null && !Game.hostile(me, S.prov[O[key]].o)) O[key] = this.nearestEnemy(enemy, Geo.provinces[O[key]]);
-      const go = (us, pid) => {
-        if (pid == null || !us.length) return;
-        const p = Geo.provinces[pid];
-        Game.order(us, { k: 'amove', x: p.x, y: p.y });
-        us.forEach((u) => { if (u.ord) u.ord.ai = 'wave'; });
-      };
-      go(units(O.ids), O.main);
-      go(units(O.sids), O.side ?? O.main);
+      for (const g of O.groups) this.groupPhase(S, me, g, 'recon', O);
       const h = heli.filter((u) => !u.ord);
       if (h.length && O.main != null) Game.order(h, { k: 'amove', x: Geo.provinces[O.main].x, y: Geo.provinces[O.main].y });
       O.ph = 'attack';
-      O.t = S.t + 180;
+      O.t = S.t + 300;
       return;
     }
-    // Attack phase: the arrow stays on the map until the push is over, then the AI waits for its next offensive.
-    if (S.t >= O.t || O.main == null || !Game.hostile(me, S.prov[O.main].o)) Object.assign(O, { ph: 'wait', t: Math.max(O.next, S.t + 30), ids: [], sids: [], warned: false });
+    // Attack: every group runs through its own phases; the offensive ends when all are done or time is up.
+    for (const g of O.groups) this.groupStep(S, me, g, O, enemy);
+    if (S.t >= O.t || O.groups.every((g) => g.ph === 'hold' || g.ph === 'retreat'))
+      Object.assign(O, { ph: 'wait', t: Math.max(O.next, S.t + 30), groups: [], warned: false });
+  },
+
+  // Battle groups of 4–8 units: front units (tanks, infantry, IFVs) spread evenly, plus support (artillery, air
+  // defense, medics, supply) and reconnaissance, so every group fights with combined arms.
+  formGroups(force) {
+    const role = (u) => { const T = UNIT_TYPES[u.t]; return u.t === 'recon' ? 'rec' : Game.isSupport(T) ? 'sup' : 'ids'; };
+    const by = { ids: [], sup: [], rec: [] };
+    // Sorting by type first makes the round-robin below mix the types across groups.
+    for (const u of force.slice().sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0))) by[role(u)].push(u.id);
+    const n = U.clamp(Math.round(by.ids.length / 6), 1, 4);
+    const groups = Array.from({ length: n }, () => ({ ids: [], sup: [], rec: [], ph: 'gather', t: 0, hp0: 0 }));
+    for (const r of ['ids', 'sup', 'rec']) by[r].forEach((id, i) => groups[i % n][r].push(id));
+    // Groups without front units would only be support: they join the first group.
+    for (const g of groups.slice(1)) if (!g.ids.length) { groups[0].sup.push(...g.sup); groups[0].rec.push(...g.rec); g.sup = []; g.rec = []; }
+    return groups.filter((g) => g.ids.length || g.sup.length || g.rec.length);
+  },
+
+  members(g, key) { return (key ? g[key] : g.ids.concat(g.sup, g.rec)).map((id) => Game.unit(id)).filter((u) => u && !u.inside); },
+  isArty(u) { return UNIT_TYPES[u.t].w.some((k) => W[k].indirect); },
+  frontHp(g) { return this.members(g, 'ids').concat(this.members(g, 'rec')).reduce((s, u) => s + u.hp, 0); },
+
+  groupTarget(O, g) { const pid = g.axis === 'side' && O.side != null ? O.side : O.main; return pid == null ? null : pid; },
+
+  // Enter a phase and give the orders that belong to it.
+  groupPhase(S, me, g, ph, O) {
+    g.ph = ph;
+    const pid = this.groupTarget(O, g);
+    if (pid == null) { g.ph = 'hold'; return; }
+    const p = Geo.provinces[pid], d = Math.max(0.01, U.dist(g.x, g.y, p.x, p.y)), dx = (p.x - g.x) / d, dy = (p.y - g.y) / d;
+    const arty = this.members(g, 'sup').filter((u) => this.isArty(u)), other = this.members(g, 'sup').filter((u) => !this.isArty(u));
+    if (ph === 'recon') {
+      g.hp0 = this.frontHp(g);
+      g.t = S.t + 25;
+      // Scouts probe ahead; artillery moves into range of the target (never past the staging point).
+      const scouts = this.members(g, 'rec');
+      if (scouts.length) Game.order(scouts, { k: 'amove', x: p.x - dx * Math.min(d, 1.0), y: p.y - dy * Math.min(d, 1.0) });
+      for (const u of arty) {
+        const r = Math.max(...UNIT_TYPES[u.t].w.filter((k) => W[k].indirect).map((k) => W[k].r)) * 0.8;
+        if (d > r) Game.order([u], { k: 'move', x: p.x - dx * r, y: p.y - dy * r });
+      }
+    } else if (ph === 'prep') {
+      g.t = S.t + 40;
+    } else if (ph === 'assault') {
+      g.t = S.t + 150;
+      const front = this.members(g, 'ids').concat(this.members(g, 'rec'));
+      Game.order(front, { k: 'amove', x: p.x, y: p.y, coh: 1 });
+      front.forEach((u) => { if (u.ord) u.ord.ai = 'wave'; });
+      // Air defense, medics and supply follow halfway; artillery keeps firing from its position.
+      if (other.length) Game.order(other, { k: 'move', x: g.x + (p.x - g.x) * 0.5, y: g.y + (p.y - g.y) * 0.5 });
+    } else if (ph === 'retreat') {
+      // Break off: back to the staging area to repair and refill, no fighting on the way.
+      Game.order(this.members(g), { k: 'move', x: g.x, y: g.y });
+    }
+  },
+
+  groupStep(S, me, g, O, enemy) {
+    if (g.ph === 'hold' || g.ph === 'retreat') return;
+    let pid = this.groupTarget(O, g);
+    // Target taken (by us or an ally): the assaulting group stays there and digs in; groups that have not
+    // attacked yet switch to the nearest hostile province.
+    if (pid == null || !Game.hostile(me, S.prov[pid].o)) {
+      const next = pid == null ? null : this.nearestEnemy(enemy, Geo.provinces[pid]);
+      if (g.ph === 'assault' || next == null) { g.ph = 'hold'; return; }
+      O[g.axis === 'side' && O.side != null ? 'side' : 'main'] = pid = next;
+    }
+    // Losses: a group that has lost more than 55 % of its front strength breaks off.
+    if (g.hp0 > 0 && this.frontHp(g) < g.hp0 * 0.45) {
+      this.groupPhase(S, me, g, 'retreat', O);
+      const p = Geo.provinces[pid];
+      if (Game.hostile(me, S.player) && Game.allied(S.prov[pid].o, S.player) && this.members(g).some((u) => Sim.sees(S.player, u)))
+        Game.emit('aiRetreat', { k: me, x: p.x, y: p.y, pid });
+      return;
+    }
+    const p = Geo.provinces[pid];
+    if (g.ph === 'recon') {
+      // Contact or time up: artillery prepares the attack (skipped without artillery).
+      const contact = Game.hash.query(p.x, p.y, 1.5, []).some((u) => Game.hostile(me, u.s) && Sim.sees(me, u));
+      if (contact || S.t >= g.t) this.groupPhase(S, me, g, this.members(g, 'sup').some((u) => this.isArty(u)) ? 'prep' : 'assault', O);
+    } else if (g.ph === 'prep') {
+      if (S.t >= g.t) this.groupPhase(S, me, g, 'assault', O);
+    } else if (g.ph === 'assault') {
+      if (S.t >= g.t) g.ph = 'hold';
+    }
   },
 
   // Own province closest to the target, a little towards it; without territory the troops' center.
