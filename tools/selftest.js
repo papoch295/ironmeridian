@@ -49,6 +49,11 @@ const finish = (code) => { try { proc.kill(); } catch (e) { /* ignore */ } setTi
       if (text.startsWith('[SelfTest]')) console.log(text.slice(11));
       else if (msg.params.type === 'error') console.log('  Konsole: ' + text.split('\n')[0]);
     }
+    // Over file:// the page itself only sees "Script error."; the debugger gets the real message and location.
+    if (msg.method === 'Runtime.exceptionThrown') {
+      const d = msg.params.exceptionDetails, ex = d.exception && d.exception.description;
+      console.log(`  Ausnahme: ${(ex || d.text).split('\n').slice(0, 3).join(' | ')} (${(d.url || '').split('/').pop()}:${d.lineNumber + 1})`);
+    }
   };
   const send = (method, params = {}) => new Promise((r) => { const n = ++id; pending.set(n, r); ws.send(JSON.stringify({ id: n, method, params })); });
   await send('Runtime.enable');

@@ -171,7 +171,8 @@ const TIME_SCALE = 0.7;
 const MOVE_SCALE = 0.75;
 const CAPTURE_TIME = (lvl) => 10 + 5 * lvl;
 // Upkeep per minute as a share of the unit's purchase price (money and oil). Large armies cost their economy.
-const UPKEEP = { m: 0.02, o: 0.05 };
+// Tuned so a starting army uses about half of the money and three quarters of the oil income (Germany: 255/480, 32/42).
+const UPKEEP = { m: 0.015, o: 0.03 };
 // Entrenchment: a land unit that stands still digs in over DIG.time seconds and then takes DIG.max less damage
 // (indirect fire ignores half of it, so artillery preparation pays off).
 const DIG = { time: 75, max: 0.4 };

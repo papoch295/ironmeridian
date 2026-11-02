@@ -257,6 +257,19 @@ const Geo = {
         this.provinces.push(p);
         c.provinces.push(p.id);
       });
+      // A country whose own border runs along the sea but whose sites all lie a bit inland (e.g. Germany: Hamburg)
+      // still needs a harbour: the province closest to that coastline gets a sea point. Types stay as generated.
+      if (!c.provinces.some((pid) => this.provinces[pid].seaPt)) {
+        let best = null, bd = 9; // at most 3 map units from the site
+        for (const r of c.hi) for (let i = 0; i < r.length; i += 2) {
+          let near = null, nd = bd;
+          for (const pid of c.provinces) { const q = this.provinces[pid], d = U.dist2(q.x, q.y, r[i], r[i + 1]); if (d < nd) { nd = d; near = pid; } }
+          if (near === null) continue;
+          const sp = this.nearestSea(r[i], r[i + 1], 0.2);
+          if (sp) { bd = nd; best = [near, sp]; }
+        }
+        if (best) { const q = this.provinces[best[0]]; q.seaPt = best[1]; q.coastal = true; }
+      }
       // Disambiguate generated names ("Ölfeld Nord", "Ölfeld Nord II").
       const seen = {};
       for (const pid of c.provinces) {

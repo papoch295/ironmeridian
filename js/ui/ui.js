@@ -391,7 +391,10 @@ const UI = {
       const inc = el.querySelector('.inc'), n = s.inc[k];
       inc.textContent = (n < 0 ? '−' : '+') + U.fmt(Math.abs(n)) + t('perMin');
       inc.classList.toggle('neg', n < 0);
+      // Phones hide the income line: the value itself turns red, and a tap shows the breakdown.
+      el.classList.toggle('neg', n < 0);
       el.title = s.gross ? t('incTip', U.fmt(s.gross[k]), U.fmt(s.upk[k] || 0)) : '';
+      if (!el.onclick) el.onclick = () => { const sd = Game.state && Game.state.side[Game.me()]; if (sd && sd.gross) this.toast(t('incTip', U.fmt(sd.gross[k]), U.fmt(sd.upk[k] || 0)) + ' → ' + (sd.inc[k] < 0 ? '−' : '+') + U.fmt(Math.abs(sd.inc[k])) + t('perMin')); };
     }
     this.renderTime();
   },
@@ -530,7 +533,12 @@ const UI = {
     Game.on('noPath', () => this.toast(t('evNoPath'), 'bad'));
     Game.on('crash', (u) => this.log(t('evCrash', unitName(u.t)), 'warn', u.x, u.y));
     Game.on('rout', (u) => { if (this.sel.has(u.id)) this.log(t('evRout', unitName(u.t)), 'warn', u.x, u.y); });
-    Game.on('over', (r) => { Sfx.play(r === 'win' ? 'victory' : 'defeat'); Saves.autosave(); setTimeout(() => Screens.endScreen(r), 600); });
+    Game.on('over', (r) => {
+      if (SelfTest.active) return;
+      const S = Game.state;
+      Sfx.play(r === 'win' ? 'victory' : 'defeat'); Saves.autosave();
+      setTimeout(() => { if (Game.state === S) Screens.endScreen(r); }, 600);
+    });
   },
 
   // ---------- Tutorial ----------

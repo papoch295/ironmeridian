@@ -245,7 +245,7 @@ const Panels = {
   unitHtml(u) {
     const T = UNIT_TYPES[u.t];
     let h = this.head(unitName(u.t), U.esc(modelName(u)), this.sideTag(u.s));
-    h += `<div class="p-body"><div class="unit-big"><img src="${UnitIcon.get(u.t, u.s)}" alt=""><p class="desc">${U.esc(L({ de: T.dd, en: T.ed }))}</p></div>`;
+    h += `<div class="p-body"><div class="unit-big"><img src="${UnitIcon.get(u.t, Game.look(u.s))}" alt=""><p class="desc">${U.esc(L({ de: T.dd, en: T.ed }))}</p></div>`;
     if (u.s === Game.me()) h += this.armyHtml([u]);
     const f = u.hp / T.hp;
     h += `<div class="kv"><span>${U.esc(T.men ? t('men') : t('hp'))}</span><div>${T.men ? Math.max(1, Math.ceil(f * T.men)) + ' / ' + T.men : Math.round(f * 100) + '%'}<div class="bar ${f < 0.35 ? 'bad' : f < 0.7 ? 'warn' : ''}"><i style="width:${f * 100}%"></i></div></div>`;

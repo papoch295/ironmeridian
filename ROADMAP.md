@@ -321,7 +321,7 @@ Sammeln an einer Grenzprovinz (2,5 / 2 / 1¼ Minuten), dann gemeinsamer Angriff;
 Ziels gleich bleibt, plus kleiner Nebenangriff; dazwischen nur Verteidigung. Sehen eigene oder verbündete Einheiten bzw.
 Radar das Sammeln, kommt die Meldung „Aufklärung: … sammelt Truppen“ und ein roter Pfeil Sammelort → Ziel.
 Schritt 4 erledigt: Tempo langsamer (Bewegung ×0,75, Eroberung 10 + 5 s je Stufe, Bauzeiten ×0,7), **Unterhalt**
-(2 % des Preises in Geld und 5 % des Öls pro Minute, Anzeige netto mit Aufschlüsselung im Tooltip; KI rekrutiert nur, was
+(1,5 % des Preises in Geld und 3 % des Öls pro Minute, Anzeige netto mit Aufschlüsselung im Tooltip; KI rekrutiert nur, was
 sie bezahlen kann), **Eingraben** (bis −40 % Schaden nach 75 s Stillstand, Artillerie ignoriert die Hälfte; Sandsack-Bogen
 unter der Einheit), **KI-Kampfgruppen** (1–4 gemischte Gruppen à 5–9 Einheiten statt einem Schwarm) mit Phasen
 Aufklärung → Artillerie-Vorbereitung → Sturm → Halten und **Rückzug** bei mehr als 55 % Verlusten (Meldung an den Spieler).

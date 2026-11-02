@@ -341,7 +341,10 @@ const Screens = {
   },
 
   endScreen(r) {
-    const S = Game.state, s = S.side[S.player];
+    // The game may have been left (main menu, next self-test run) before the delayed end screen appears.
+    const S = Game.state;
+    if (!S || !S.over) return;
+    const s = S.side[S.player];
     const days = Math.floor(S.t * 120 / 86400) + 1;
     this.modal(`<div class="end-title ${r === 'win' ? 'win' : 'lose'}">${U.esc(t(r === 'win' ? 'victory' : 'defeat'))}</div>
       <p style="text-align:center" class="muted">${U.esc(t(r === 'win' ? 'victoryText' : 'defeatText'))}</p>

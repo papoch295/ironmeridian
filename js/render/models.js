@@ -63,6 +63,8 @@ const Models = {
   // Public entry point: draw unit type t with look key `side` (see MODEL_COL, e.g. Game.look(u.s)) at (x, y),
   // size s px, heading hd.
   draw(ctx, t, side, x, y, s, hd, alpha = 1) {
+    // Unknown look keys (e.g. a country code passed by mistake) fall back to the neutral Western look.
+    if (!MODEL_COL[side]) side = 'NW';
     const T = UNIT_TYPES[t], face = Math.cos(hd || 0) < -0.15 ? -1 : 1;
     const dpr = (Render && Render.dpr) || 1;
     const air = T.dom === 'air', sea = T.dom === 'sea';
