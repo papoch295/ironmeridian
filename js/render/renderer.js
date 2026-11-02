@@ -245,6 +245,7 @@ const Render = {
     this.drawFallout(ctx, S);
     this.drawOrders(ctx, S);
     this.drawUnits(ctx, vb, S);
+    this.drawThreats(ctx, S);
     this.drawFx(ctx, S);
     this.drawMissiles(ctx, S);
     this.drawPings(ctx);
@@ -357,6 +358,44 @@ const Render = {
       ctx.beginPath(); ctx.ellipse(ex, ey, 6, 3.6, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.beginPath(); ctx.arc(ex, ey, 2, 0, Math.PI * 2); ctx.fillStyle = ctx.strokeStyle; ctx.fill();
       ctx.setLineDash([6, 5]);
+    }
+    ctx.restore();
+  },
+
+  // Enemy offensives that our reconnaissance spotted: red arrow from the staging area to the expected target.
+  drawThreats(ctx, S) {
+    const arrow = (x0, y0, pid, main) => {
+      const p = Geo.provinces[pid];
+      let [ax, ay] = this.toScreen(x0, y0);
+      const [bx, by] = this.toScreen(p.x, p.y);
+      const len = Math.hypot(bx - ax, by - ay);
+      if (len < 2) return;
+      const ang = Math.atan2(by - ay, bx - ax), w = main ? 5 : 3.5, hd = main ? 18 : 13;
+      // Short axes (neighbouring provinces) are stretched back so the arrow stays readable.
+      if (len < 80) { ax = bx - Math.cos(ang) * 80; ay = by - Math.sin(ang) * 80; }
+      const ex = bx - Math.cos(ang) * 8, ey = by - Math.sin(ang) * 8;
+      const col = main ? 'rgba(255,80,60,0.95)' : 'rgba(255,125,95,0.85)';
+      const shaft = () => { ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ex - Math.cos(ang) * hd * 0.6, ey - Math.sin(ang) * hd * 0.6); ctx.stroke(); };
+      const head = () => {
+        ctx.beginPath(); ctx.moveTo(ex, ey);
+        ctx.lineTo(ex - Math.cos(ang - 0.45) * hd, ey - Math.sin(ang - 0.45) * hd);
+        ctx.lineTo(ex - Math.cos(ang + 0.45) * hd, ey - Math.sin(ang + 0.45) * hd);
+        ctx.closePath();
+      };
+      ctx.lineCap = 'round';
+      // Dark outline first so the arrow stands out over red territory and unit models.
+      ctx.strokeStyle = 'rgba(10,6,6,0.7)'; ctx.lineWidth = w + 3; ctx.setLineDash([]); shaft(); head(); ctx.stroke();
+      ctx.strokeStyle = col; ctx.lineWidth = w;
+      ctx.setLineDash([12, 7]); ctx.lineDashOffset = -(performance.now() / 40) % 19; shaft();
+      ctx.setLineDash([]); ctx.fillStyle = col; head(); ctx.fill();
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ax, ay, w, 0, Math.PI * 2); ctx.stroke();
+    };
+    ctx.save();
+    for (const k in S.ai) {
+      const O = S.ai[k] && S.ai[k].off;
+      if (!O || !O.warned || (O.ph !== 'gather' && O.ph !== 'attack') || !Game.hostile(k, S.player)) continue;
+      if (O.main != null) arrow(O.sx, O.sy, O.main, true);
+      if (O.side != null && O.ssx != null) arrow(O.ssx, O.ssy, O.side, false);
     }
     ctx.restore();
   },

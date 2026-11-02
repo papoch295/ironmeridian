@@ -280,6 +280,10 @@ Hochformat-Leiste, automatischer Testlauf `node tools/selftest.js`.
 Schritt 2 erledigt: jedes Land eine eigene Fraktion (Wirtschaft, KI), Bündnisse als Teams, Spieler steuert nur sein
 Land, Verbündete per KI, freie Länderwahl (auch ohne Bündnis), Modi „Bündniskrieg“ und „Weltkrieg“, Kriegserklärung
 an neutrale Länder mit Mobilmachung und Reaktion der Nachbarn, alte Spielstände werden umgewandelt.
+Schritt 3 erledigt: feste Offensiven im Takt der Schwierigkeit (Leicht alle 8, Normal 6, Schwer 4 Spielminuten), erst
+Sammeln an einer Grenzprovinz (2,5 / 2 / 1¼ Minuten), dann gemeinsamer Angriff; eine Hauptachse, die bis zum Fall des
+Ziels gleich bleibt, plus kleiner Nebenangriff; dazwischen nur Verteidigung. Sehen eigene oder verbündete Einheiten bzw.
+Radar das Sammeln, kommt die Meldung „Aufklärung: … sammelt Truppen“ und ein roter Pfeil Sammelort → Ziel.
 
 | Schritt | Inhalt | Punkte |
 |---|---|---|

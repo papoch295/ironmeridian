@@ -461,7 +461,12 @@ const UI = {
       Sfx.at('bigboom', x, y, true);
       if (Render.selProv !== null) Panels.show();
     });
-    Game.on('unloaded', (u) => this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));
+    Game.on('aiGather', ({ k, x, y, pid }) => {
+      const msg = t('evGather', countryName(Geo.byKey[k]), pName(pid));
+      this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
+      Render.ping(x, y, 'attack');
+    });
+    Game.on('unloaded', (u) =>this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));
     Game.on('noPath', () => this.toast(t('evNoPath'), 'bad'));
     Game.on('crash', (u) => this.log(t('evCrash', unitName(u.t)), 'warn', u.x, u.y));
     Game.on('rout', (u) => { if (this.sel.has(u.id)) this.log(t('evRout', unitName(u.t)), 'warn', u.x, u.y); });

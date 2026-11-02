@@ -16,7 +16,7 @@ const AI = {
   // Per-faction state, created on first use (also for countries that join a war later).
   st(S, k) {
     const D = DIFFICULTY[S.diff];
-    return S.ai[k] || (S.ai[k] = { t: Math.random() * D.aiTick, target: null, waveT: D.grace, missileT: D.grace + 30 + Math.random() * 30, def: {} });
+    return S.ai[k] || (S.ai[k] = { t: Math.random() * D.aiTick, missileT: D.grace + 30 + Math.random() * 30, def: {} });
   },
 
   update(dt) {
@@ -34,7 +34,7 @@ const AI = {
       const mine = prov[k] || [], mu = units[k] || [];
       if (!mine.length && !mu.length) continue;
       const A = this.st(S, k);
-      A.t -= step; A.waveT -= step; A.missileT -= step;
+      A.t -= step; A.missileT -= step;
       if (A.t > 0) continue;
       const ally = Game.allied(k, S.player), Dk = ally ? DIFFICULTY.normal : D;
       A.t = Dk.aiTick;
@@ -112,8 +112,9 @@ const AI = {
       if (n) threatened.push({ pid, n });
     }
     threatened.sort((a, b) => b.n - a.n);
+    const O = A.off || (A.off = { ph: 'wait', t: Math.max(S.t + 60, D.grace) });
+    const used = new Set(O.ph === 'gather' ? O.ids : []);
     const free = land.filter((u) => !u.ord || u.ord.ai === 'wave-done');
-    const used = new Set();
     for (const th of threatened.slice(0, 4)) {
       const p = Geo.provinces[th.pid];
       const helpers = free.filter((u) => !used.has(u.id) && U.dist(u.x, u.y, p.x, p.y) < 6)
@@ -121,30 +122,95 @@ const AI = {
       helpers.forEach((u) => used.add(u.id));
       if (helpers.length) Game.order(helpers, { k: 'amove', x: p.x, y: p.y });
     }
-    // Offensive target: the hostile province closest to our territory.
-    if (A.target === null || !Game.hostile(me, S.prov[A.target].o) || (A.retarget || 0) < S.t) {
-      A.target = this.pickTarget(S, mine, enemy, land);
-      A.retarget = S.t + 120;
-    }
-    if (A.target === null) return;
-    const tp = Geo.provinces[A.target];
-    const pool = free.filter((u) => !used.has(u.id));
-    const waveSize = Math.max(4, Math.round(land.length * 0.35 / D.aggr));
-    if (pool.length >= waveSize || (A.waveT <= 0 && pool.length >= 3)) {
-      A.waveT = 70 * D.aggr;
-      // Keep a small garrison at home.
-      const sendN = Math.max(1, Math.floor(pool.length * 0.8));
-      const wave = pool.sort((a, b) => U.dist2(a.x, a.y, tp.x, tp.y) - U.dist2(b.x, b.y, tp.x, tp.y)).slice(0, sendN);
-      Game.order(wave, { k: 'amove', x: tp.x, y: tp.y });
-      wave.forEach((u) => { if (u.ord) u.ord.ai = 'wave'; });
-      const h = heli.filter((u) => !u.ord);
-      if (h.length) Game.order(h, { k: 'amove', x: tp.x, y: tp.y });
-    }
+    this.offensive(S, D, me, mine, enemy, land, heli, free.filter((u) => !used.has(u.id)), O);
     // Units that arrived but the province still stands: push into the city center.
     for (const u of land) if (u.ord && u.ord.ai === 'wave' && !u.path && !u.tgt) u.ord.ai = 'wave-done';
   },
 
-  pickTarget(S, mine, enemy, land) {
+  // Offensives follow a fixed rhythm so the player can learn them: every D.offEvery seconds the troops first gather
+  // at a staging province for D.gather seconds, then attack together. The main axis keeps its direction until its
+  // target falls (the next target is the one closest to it); a smaller secondary push hits a different target.
+  // Between offensives the AI only defends. A gathering that the player's side can see raises a warning.
+  offensive(S, D, me, mine, enemy, land, heli, pool, O) {
+    if (O.ph === 'wait') {
+      if (S.t < O.t || pool.length < 3) return;
+      const prev = O.main != null && Game.hostile(me, S.prov[O.main].o) ? O.main : null;
+      const main = prev ?? this.pickTarget(S, mine, enemy, land, O.main != null ? Geo.provinces[O.main] : null);
+      if (main === null) { O.t = S.t + 30; return; }
+      const mp = Geo.provinces[main];
+      const sideT = pool.length >= 8 ? this.pickSideTarget(S, mine, enemy, main) : null;
+      // Keep a small garrison at home; a quarter of the force goes to the secondary axis.
+      const force = pool.sort((a, b) => U.dist2(a.x, a.y, mp.x, mp.y) - U.dist2(b.x, b.y, mp.x, mp.y)).slice(0, Math.max(3, Math.floor(pool.length * 0.8)));
+      const sideN = sideT === null ? 0 : Math.floor(force.length * 0.25);
+      const sideU = force.splice(force.length - sideN, sideN);
+      const st = this.stagingPoint(mine, mp, force), ss = sideT === null ? null : this.stagingPoint(mine, Geo.provinces[sideT], sideU);
+      Object.assign(O, { ph: 'gather', t: S.t + D.gather, next: S.t + D.offEvery, main, side: sideT, sx: st[0], sy: st[1],
+        ssx: ss && ss[0], ssy: ss && ss[1], ids: force.map((u) => u.id), sids: sideU.map((u) => u.id), warned: false });
+      Game.order(force, { k: 'amove', x: st[0], y: st[1], coh: 1 });
+      if (sideU.length) Game.order(sideU, { k: 'amove', x: ss[0], y: ss[1], coh: 1 });
+      return;
+    }
+    const units = (ids) => ids.map((id) => Game.unit(id)).filter((u) => u && !u.inside);
+    if (O.ph === 'gather') {
+      // Warning when the player or an ally can see any of the gathering troops and the target is on their side.
+      if (!O.warned && Game.hostile(me, S.player) && [O.main, O.side].some((p) => p != null && Game.allied(S.prov[p].o, S.player))
+        && units(O.ids.concat(O.sids)).some((u) => Sim.sees(S.player, u))) {
+        O.warned = true;
+        Game.emit('aiGather', { k: me, x: O.sx, y: O.sy, pid: O.main });
+      }
+      if (S.t < O.t) return;
+      // Attack: targets that fell in the meantime are replaced by the nearest hostile province.
+      for (const key of ['main', 'side']) if (O[key] != null && !Game.hostile(me, S.prov[O[key]].o)) O[key] = this.nearestEnemy(enemy, Geo.provinces[O[key]]);
+      const go = (us, pid) => {
+        if (pid == null || !us.length) return;
+        const p = Geo.provinces[pid];
+        Game.order(us, { k: 'amove', x: p.x, y: p.y });
+        us.forEach((u) => { if (u.ord) u.ord.ai = 'wave'; });
+      };
+      go(units(O.ids), O.main);
+      go(units(O.sids), O.side ?? O.main);
+      const h = heli.filter((u) => !u.ord);
+      if (h.length && O.main != null) Game.order(h, { k: 'amove', x: Geo.provinces[O.main].x, y: Geo.provinces[O.main].y });
+      O.ph = 'attack';
+      O.t = S.t + 180;
+      return;
+    }
+    // Attack phase: the arrow stays on the map until the push is over, then the AI waits for its next offensive.
+    if (S.t >= O.t || O.main == null || !Game.hostile(me, S.prov[O.main].o)) Object.assign(O, { ph: 'wait', t: Math.max(O.next, S.t + 30), ids: [], sids: [], warned: false });
+  },
+
+  // Own province closest to the target, a little towards it; without territory the troops' center.
+  stagingPoint(mine, tp, us) {
+    let best = null, bd = 1e18;
+    for (const pid of mine) { const p = Geo.provinces[pid], d = U.dist2(p.x, p.y, tp.x, tp.y); if (d < bd) { bd = d; best = p; } }
+    if (!best) return us.length ? [us.reduce((s, u) => s + u.x, 0) / us.length, us.reduce((s, u) => s + u.y, 0) / us.length] : [tp.x, tp.y];
+    const d = Math.sqrt(bd), k = d > 1.5 ? 0.6 / d : 0;
+    return [best.x + (tp.x - best.x) * k, best.y + (tp.y - best.y) * k];
+  },
+
+  nearestEnemy(enemy, p) {
+    let best = null, bd = 1e18;
+    for (const pid of enemy) { const q = Geo.provinces[pid], d = U.dist2(q.x, q.y, p.x, p.y); if (d < bd) { bd = d; best = pid; } }
+    return best;
+  },
+
+  // Secondary axis: a different hostile province near our border, but clearly apart from the main target.
+  pickSideTarget(S, mine, enemy, main) {
+    const mp = Geo.provinces[main];
+    let best = null, bs = 1e18;
+    for (const pid of enemy) {
+      const p = Geo.provinces[pid], dm = U.dist(p.x, p.y, mp.x, mp.y);
+      if (dm < 4 || dm > 20) continue;
+      let d = 1e18;
+      for (const m of mine) d = Math.min(d, U.dist2(p.x, p.y, Geo.provinces[m].x, Geo.provinces[m].y));
+      if (d < bs) { bs = d; best = pid; }
+    }
+    return best;
+  },
+
+  // Main target: the hostile province closest to our territory. After a fallen target (axis) the next one is
+  // preferably taken near it, so an offensive keeps pushing along the same front section.
+  pickTarget(S, mine, enemy, land, axis) {
     if (!land.length) return null;
     const cx = land.reduce((s, u) => s + u.x, 0) / land.length, cy = land.reduce((s, u) => s + u.y, 0) / land.length;
     const scored = enemy.map((pid) => {
@@ -153,7 +219,7 @@ const AI = {
       for (const m of mine) dmin = Math.min(dmin, U.dist2(p.x, p.y, Geo.provinces[m].x, Geo.provinces[m].y));
       if (!mine.length) dmin = U.dist2(p.x, p.y, cx, cy);
       const val = p.type === 'capital' ? 0.7 : p.type === 'industry' || p.type === 'oil' ? 0.85 : 1;
-      return { pid, s: Math.sqrt(dmin) * val + U.dist(cx, cy, p.x, p.y) * 0.15 };
+      return { pid, s: Math.sqrt(dmin) * val + U.dist(cx, cy, p.x, p.y) * 0.15 + (axis ? U.dist(axis.x, axis.y, p.x, p.y) * 0.5 : 0) };
     }).sort((a, b) => a.s - b.s);
     for (const c of scored.slice(0, 4)) {
       const p = Geo.provinces[c.pid];

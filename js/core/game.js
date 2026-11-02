@@ -3,9 +3,10 @@
 
 const DIFFICULTY = {
   // pBonus: extra starting resources for the player. missiles/air: how eagerly the AI uses strategic weapons.
-  easy:   { inc: 0.45, forces: 0.55, aiTick: 5,   aggr: 2.4, build: 0.6,  cap: 50,  grace: 480, pBonus: 1.6, missiles: 0,   air: 0.25, eDmg: 0.6 },
-  normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 80,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75 },
-  hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 170, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1 },
+  // offEvery: seconds between two AI offensives; gather: how long the troops assemble before they attack.
+  easy:   { inc: 0.45, forces: 0.55, aiTick: 5,   aggr: 2.4, build: 0.6,  cap: 50,  grace: 480, pBonus: 1.6, missiles: 0,   air: 0.25, eDmg: 0.6, offEvery: 480, gather: 150 },
+  normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 80,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75, offEvery: 360, gather: 120 },
+  hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 170, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1, offEvery: 240, gather: 75 },
 };
 const START_DATE = Date.UTC(2026, 2, 1, 6, 0);
 const blocOf = (k) => BLOCS.find((b) => b.members.includes(k)) || null;

@@ -214,7 +214,8 @@ const Saves = {
     // References to old province ids are dropped; units and the AI pick new targets on their own.
     for (const u of S.units) { u.tgtP = null; if (u.air && u.air.base != null) u.air.base = null; }
     S.missiles = [];
-    if (S.ai) { S.ai.target = null; S.ai.def = {}; }
+    // AI plans point to province ids, so every faction plans anew.
+    if (S.ai) for (const k in S.ai) if (S.ai[k] && typeof S.ai[k] === 'object') { S.ai[k].off = null; S.ai[k].def = {}; }
     return prov;
   },
 };
