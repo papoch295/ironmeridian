@@ -130,6 +130,17 @@ const SelfTest = {
         Screens.enterHud();
         Game.state.paused = true; // the main loop must not step the game in parallel
         // Alliance wars also test a declaration of war on a neutral neighbour halfway through.
+        // The player's ground troops form army 1 and get an assault task on the nearest hostile province.
+        {
+          const S = Game.state, ids = S.units.filter((u) => u.s === country && UNIT_TYPES[u.t].dom === 'land' && !u.inside).slice(0, 10).map((u) => u.id);
+          const g = { ids, side: country, ret: Tactics.RETREAT }, us = Tactics.members(g), [cx, cy] = Tactics.center(us);
+          let best = null, bd = 1e9;
+          S.prov.forEach((pr, pid) => { const p = Geo.provinces[pid]; if (Game.hostile(country, pr.o) && U.dist(cx, cy, p.x, p.y) < bd) { bd = U.dist(cx, cy, p.x, p.y); best = pid; } });
+          if (us.length && best !== null) {
+            Tactics.task(g, 'attack', Geo.provinces[best].x, Geo.provinces[best].y, best);
+            UI.groups()['1'] = { ids, coh: true, task: g };
+          }
+        }
         await this.simulate(minutes * 30);
         if (mode === 'bloc') {
           const S = Game.state, nb = Geo.neighbors()[Geo.byKey[country].idx];

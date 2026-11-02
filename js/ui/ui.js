@@ -82,7 +82,7 @@ const UI = {
   setMode(m, data) {
     this.mode = m; this.modeData = data || null;
     const hint = $('#hint');
-    const txt = { move: t('hintMove'), fast: t('hintMove'), amove: t('hintAttack'), load: t('hintLoad'), unloadAt: t('hintUnloadAt'), drop: t('hintDrop'), strike: t('hintStrike'), slbm: t('hintMissile', 'SLBM'),
+    const txt = { move: t('hintMove'), fast: t('hintMove'), amove: t('hintAttack'), tAttack: t('hintTaskAttack'), tAdvance: t('hintTaskAdvance'), load: t('hintLoad'), unloadAt: t('hintUnloadAt'), drop: t('hintDrop'), strike: t('hintStrike'), slbm: t('hintMissile', 'SLBM'),
       missile: data && (data.nuke ? t('hintNuke') : t('hintMissile', L(MISSILES[data.key]))), nuke: t('hintNuke'), box: t('hintBox') }[m];
     if (txt) { hint.innerHTML = `<span>${U.esc(txt)}</span><button>${U.esc(t('close'))}</button>`; hint.hidden = false; hint.querySelector('button').onclick = () => this.setMode(null); }
     else hint.hidden = true;
@@ -99,6 +99,8 @@ const UI = {
       const p = Geo.provinceAt(ord.x, ord.y);
       if (p && Game.isFoe(Game.state.prov[p.id].o)) ord = { ...ord, k: 'amove' };
     }
+    // A direct order replaces the task of every army it touches: the player takes over.
+    this.clearTasks(units);
     // Armies set to "keep together" march at the pace of their slowest unit.
     const ak = this.selectedArmy();
     if (ak && this.groups()[ak].coh && ['move', 'fast', 'amove'].includes(ord.k)) ord = { ...ord, coh: 1 };
@@ -184,7 +186,8 @@ const UI = {
 
   applyMode(wx, wy, hit) {
     const m = this.mode, d = this.modeData;
-    if (m === 'move' || m === 'fast') this.issue({ k: m, x: wx, y: wy });
+    if (m === 'tAttack' || m === 'tAdvance') this.armyTask(m === 'tAttack' ? 'attack' : 'advance', wx, wy, hit);
+    else if (m === 'move' || m === 'fast') this.issue({ k: m, x: wx, y: wy });
     else if (m === 'amove') this.issue(hit && Game.isFoe(hit.s) ? { k: 'attack', id: hit.id } : { k: 'amove', x: wx, y: wy });
     else if (m === 'load') {
       // Any transport in the tapped stack (or a parked plane at the tapped airfield) takes the selected units.
@@ -218,6 +221,46 @@ const UI = {
       Panels.show();
     }
     this.setMode(null);
+  },
+
+  // ---------- Army tasks (shared battle-group tactics, see Tactics) ----------
+  // attack: reconnaissance → artillery → assault on the tapped province or point; advance: march there and fight
+  // on the way; hold: stop and dig in. Support units follow on their own; heavy losses trigger a retreat.
+  armyTask(kind, wx, wy, hit) {
+    const ak = this.selectedArmy();
+    if (!ak) return;
+    const a = this.groups()[ak];
+    let x = wx, y = wy, pid = null;
+    if (kind !== 'hold') {
+      const sx = Render.toScreen(wx, wy), site = Input.siteAt(sx[0], sx[1]);
+      const p = site !== null ? Geo.provinces[site] : Geo.provinceAt(wx, wy);
+      if (hit && Game.isFoe(hit.s)) { x = hit.x; y = hit.y; }
+      else if (p && Game.hostile(Game.me(), Game.state.prov[p.id].o)) { x = p.x; y = p.y; pid = p.id; }
+      else if (site !== null) { x = p.x; y = p.y; }
+    }
+    const g = { ids: a.ids.slice(), side: Game.me(), ret: a.ret === false ? 0 : Tactics.RETREAT };
+    Tactics.task(g, kind, x, y, pid);
+    a.task = g;
+    if (kind !== 'hold') Render.ping(x, y, kind === 'attack' ? 'attack' : 'move');
+    this.toast(t('task_' + kind, ak));
+    if (kind !== 'hold') this.tutDone('move');
+    Sfx.play('order');
+    this.groupSig = ''; this.renderGroups(); Panels.show();
+  },
+  clearTasks(units) {
+    const G = this.groups();
+    for (const k in G) if (G[k].task && units.some((u) => G[k].ids.includes(u.id))) { G[k].task = null; this.groupSig = ''; }
+  },
+  // Short status of an army for the army bar and the panel.
+  armyState(a, us) {
+    const S = Game.state, g = a.task;
+    if (g && g.ph !== 'done') return t('ph_' + (g.k === 'hold' && g.ph === 'hold' ? 'dig' : g.ph));
+    const fight = us.some((u) => S.t - u.lastHit < 3 || S.t - (u.lf || -99) < 3);
+    if (fight) return t('armyFight');
+    if (us.some((u) => u.path || (u.ord && u.ord.k !== 'rtb'))) return t('armyMoving');
+    const land = us.filter((u) => UNIT_TYPES[u.t].dom === 'land');
+    if (land.length && land.every((u) => (u.dig || 0) > 0.9)) return t('ph_dig');
+    return us.length ? t('armyIdle') : t('armyRecruiting');
   },
 
   // Selected cargo boards the given transports (distributed automatically).
@@ -268,7 +311,13 @@ const UI = {
     // Key hint in the corner shows the player's current binding for that command.
     const kh = (id) => { const k = Keys.of(id); return k ? `<span class="k">${U.esc(Keys.label(k))}</span>` : ''; };
     const btn = (id, icon, label, mode) => `<button class="cmd" data-c="${id}" ${mode ? `data-mode="${mode}"` : ''}>${KEY_GROUP[id] ? kh(id) : ''}${ICON[icon]}<span>${U.esc(label)}</span></button>`;
-    let h = btn('move', 'move', t('cmdMove'), 'move');
+    // A whole army gets tasks first: it then fights on its own (see Tactics).
+    let h = '';
+    if (this.selectedArmy() && anyLand) {
+      h += btn('tAttack', 'target', t('cmdTaskAttack'), 'tAttack') + btn('tAdvance', 'fast', t('cmdTaskAdvance'), 'tAdvance') + btn('tHold', 'shield', t('cmdTaskHold'));
+      h += '<div class="sep"></div>';
+    }
+    h += btn('move', 'move', t('cmdMove'), 'move');
     if (anyLand) h += btn('fast', 'fast', t('cmdFast'), 'fast');
     h += btn('amove', 'attack', t('cmdAttack'), 'amove');
     // Situational orders (loading, transport, strikes) come right after the main orders so they stay visible on phones.
@@ -300,7 +349,8 @@ const UI = {
     Sfx.play('click');
     const us = this.selUnits();
     switch (c) {
-      case 'move': case 'fast': case 'amove': case 'load': case 'unloadAt': case 'drop': case 'strike': case 'slbm': case 'nuke': case 'box': this.setMode(this.mode === c ? null : c); break;
+      case 'tHold': this.armyTask('hold'); break;
+      case 'tAttack': case 'tAdvance': case 'move': case 'fast': case 'amove': case 'load': case 'unloadAt': case 'drop': case 'strike': case 'slbm': case 'nuke': case 'box': this.setMode(this.mode === c ? null : c); break;
       case 'autoload': {
         const ls = this.loadSplit(us), n = Game.autoLoad(ls.cargo, ls.carriers);
         this.toast(n ? (n < ls.cargo.length ? t('loadPartial', n, ls.cargo.length) : t('loadOk', n)) : t('loadFull'), n ? '' : 'bad');
@@ -313,8 +363,8 @@ const UI = {
         this.toast(n ? t('loadOk', n) : t('loadNone'), n ? '' : 'bad');
         break;
       }
-      case 'stop': Game.order(us, { k: 'stop' }); break;
-      case 'retreat': Game.order(us, { k: 'retreat' }); break;
+      case 'stop': this.clearTasks(us); Game.order(us, { k: 'stop' }); break;
+      case 'retreat': this.clearTasks(us); Game.order(us, { k: 'retreat' }); break;
       case 'unload': {
         const ok = us.filter((u) => u.cargo.length).map((u) => Game.unload(u));
         if (!ok.some(Boolean)) this.toast(t('notOwned'), 'bad');
@@ -470,7 +520,12 @@ const UI = {
       this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
       Render.ping(x, y, 'attack');
     });
-    Game.on('aiRetreat', ({ k, x, y }) => this.log(t('evRetreat', countryName(Geo.byKey[k])), 'good', x, y));
+    Game.on('armyTask', ({ k, ev, g }) => {
+      if (ev === 'retreat') { this.log(t('evArmyRetreat', k), 'warn', g.x, g.y); Sfx.play('alert'); }
+      else if (ev === 'taken' && g.pid != null) this.log(t('evArmyTaken', k, pName(g.pid)), 'good', g.tx, g.ty);
+      this.groupSig = '';
+    });
+    Game.on('aiRetreat', ({ k, x, y }) =>this.log(t('evRetreat', countryName(Geo.byKey[k])), 'good', x, y));
     Game.on('unloaded', (u) => this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));
     Game.on('noPath', () => this.toast(t('evNoPath'), 'bad'));
     Game.on('crash', (u) => this.log(t('evCrash', unitName(u.t)), 'warn', u.x, u.y));
@@ -619,7 +674,7 @@ const UI = {
       // Icon of the strongest unit type shows what the army is made of.
       const main = us.slice().sort((a, b) => UNIT_TYPES[b.t].cost.m - UNIT_TYPES[a.t].cost.m)[0];
       const sel = us.length && us.every((u) => this.sel.has(u.id));
-      const st = fight ? t('armyFight') : moving ? t('armyMoving') : us.length ? t('armyIdle') : t('armyRecruiting');
+      const st = this.armyState(G[k], us);
       rows.push(`<button data-g="${k}" class="grp${sel ? ' on' : ''}${fight ? ' fight' : ''}${moving && !fight ? ' moving' : ''}" title="${U.esc(t('army') + ' ' + k + ' · ' + st)}"><b>${k}</b>${main ? `<img src="${UnitIcon.get(main.t)}" alt="">` : ''}<span>${U.esc(st)}</span><em>${us.length}${pending[k] ? `<small>+${pending[k]}</small>` : ''}</em><i style="width:${Math.round(hp * 100)}%"></i></button>`);
     }
     rows.push(`<button data-g="new" class="grp add" ${this.sel.size ? '' : 'disabled'} title="${U.esc(t('groupHint'))}">+ ${U.esc(t('army'))}</button>`);

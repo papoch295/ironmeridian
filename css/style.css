@@ -240,6 +240,7 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .ucard img { width: 100%; max-width: 98px; height: 52px; object-fit: contain; align-self: center; flex: none; background: radial-gradient(ellipse at center, rgba(111,179,234,.16), transparent 70%); border-radius: 3px; }
 .ucard .nm { font-size: 12px; line-height: 1.15; font-weight: 600; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
 .ucard .lock { font-size: 10px; color: var(--warn); line-height: 1.25; }
+.ucard .upk { font-size: 10px; color: var(--muted, #9aa7ae); line-height: 1.2; }
 .ucard .tm { position: absolute; right: 6px; top: 6px; font-size: 10px; color: var(--muted); background: rgba(5,10,14,.6); padding: 1px 5px; border-radius: 8px; }
 .qitem { display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 12px; background: rgba(5,10,14,.4); border: 1px solid var(--line); border-radius: var(--radius-s); margin-bottom: 4px; }
 .qitem .nm { flex: 2 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

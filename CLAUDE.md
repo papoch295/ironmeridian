@@ -27,7 +27,8 @@ Dieses Projekt ist ausschließlich das Spiel **IRON MERIDIAN – Globaler Konfli
 - `js/data/world.js` ist generiert (`node tools/build-world.js <50m.json> <110m.json>`, Quelle world-atlas@2.0.2) – nicht von Hand ändern.
 - Wichtige Stellen:
   - Balance/Schwierigkeit: `DIFFICULTY` in `js/core/game.js`; Einheiten, Waffen, Gebäude, `TIME_SCALE`, `RADAR_RANGE` in `js/data/units.js`.
-  - Simulation (Kampf, Sicht, Eroberung): `js/core/sim.js`; KI: `js/core/ai.js`.
+  - Simulation (Kampf, Sicht, Eroberung): `js/core/sim.js`; KI: `js/core/ai.js`; Kampfgruppen-Taktik für KI und
+    Spieler-Armeen (Phasen, Rückzug, Rollen): `js/core/tactics.js`.
   - Darstellung: `js/render/renderer.js`, NATO-Symbole `js/render/symbols.js`. Modelle: Kern, Helfer, Tarnung und Infanterie
     in `js/render/models.js`; Fahrzeuge in `models-land.js` (West) / `models-east-land.js` (Ost), `models-air.js`, `models-sea.js`.
     Jede Fraktion hat eigene Modelle (`Models.m` = West/P, `Models.mE` = Ost/E, Vorbilder `mw`/`me` in `units.js`).

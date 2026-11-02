@@ -74,6 +74,11 @@ const Panels = {
   teamName(tm) { const b = BLOCS.find((x) => x.id === tm); return b ? L(b) : Geo.byKey[tm] ? countryName(Geo.byKey[tm]) : tm; },
 
   mult(c, n) { return { m: (c.m || 0) * n, i: (c.i || 0) * n, o: (c.o || 0) * n }; },
+  // Running cost of what is being bought (see UPKEEP), shown on the recruitment cards.
+  upkHtml(c) {
+    const m = Math.round((c.m || 0) * UPKEEP.m), o = Math.round((c.o || 0) * UPKEEP.o);
+    return `<span class="upk" title="${U.esc(t('upkTip', m, o))}">${U.esc(t('upkShort', m))}</span>`;
+  },
   tabName(b) { return BUILDING_TABS[b] ? BUILDING_TABS[b][I18N.lang === 'en' ? 1 : 0] : L(BUILDINGS[b]); },
   reason(why, bld, tier) { return why === 'needBuilding' ? t('needBuilding', L(BUILDINGS[bld]), tier) : t(why); },
 
@@ -144,7 +149,7 @@ const Panels = {
         const off = lock || !Game.afford(Game.me(), Game.formationCost(F)) || pr.q.length + Object.keys(F.u).length > Game.QUEUE_MAX;
         h += `<button class="ucard fcard ${off ? 'off' : ''}" data-act="form" data-k="${F.id}"><span class="nm">${U.esc(L(F))}</span>
           <span class="fl">${Object.keys(F.u).map((k) => `<span title="${U.esc(unitName(k))}"><img src="${UnitIcon.get(k)}" alt="">${F.u[k]}</span>`).join('')}</span>
-          ${lock ? `<span class="lock">${U.esc(lock)}</span>` : costHtml(Game.formationCost(F), Game.me())}</button>`;
+          ${lock ? `<span class="lock">${U.esc(lock)}</span>` : costHtml(Game.formationCost(F), Game.me()) + this.upkHtml(Game.formationCost(F))}</button>`;
       }
     } else {
       for (const key in UNIT_TYPES) {
@@ -153,7 +158,7 @@ const Panels = {
         const why = Game.canQueue(pid, 'unit', key);
         h += `<button class="ucard ${why ? 'off' : ''}" data-act="unit" data-k="${key}" title="${U.esc(L({ de: T.dd, en: T.ed }))}">
           <span class="tm">${Math.round(T.time * TIME_SCALE)}s</span><span class="top"><img src="${UnitIcon.get(key)}" alt=""><span class="nm">${U.esc(L(T))}</span></span>
-          ${why === 'needBuilding' ? `<span class="lock">${U.esc(this.reason(why, T.bld, T.tier))}</span>` : costHtml(this.mult(T.cost, n), Game.me())}</button>`;
+          ${why === 'needBuilding' ? `<span class="lock">${U.esc(this.reason(why, T.bld, T.tier))}</span>` : costHtml(this.mult(T.cost, n), Game.me()) + this.upkHtml(this.mult(T.cost, n))}</button>`;
       }
     }
     h += '</div>';
@@ -201,8 +206,11 @@ const Panels = {
     const G = UI.groups(), ak = UI.selectedArmy(), ids = us.map((u) => u.id);
     if (ak) {
       const a = G[ak];
+      const ret = a.ret !== false, str = a.task && a.task.hp0 ? Math.round(Tactics.strength(a.task) * 100) : null;
       return `<div class="army-box"><div class="army-row"><b class="army-badge">${U.esc(ak)}</b><span class="nm">${U.esc(t('army'))} ${U.esc(ak)}</span><span class="muted small">${U.esc(t('armyKeys', ak, ak))}</span></div>
-        <div class="army-row"><button class="achip ${a.coh ? 'on' : ''}" data-act="coh">${a.coh ? '✓ ' : ''}${U.esc(t('keepTogether'))}</button>
+        <div class="army-row"><span class="muted small">${U.esc(t('task'))}:</span><b class="small">${U.esc(UI.armyState(a, us))}</b>${str !== null ? `<span class="muted small">· ${U.esc(t('strength'))} ${str} %</span>` : ''}</div>
+        <div class="army-row"><button class="achip ${ret ? 'on' : ''}" data-act="ret" title="${U.esc(t('autoRetreatTip'))}">${ret ? '✓ ' : ''}${U.esc(t('autoRetreat'))}</button>
+        <button class="achip ${a.coh ? 'on' : ''}" data-act="coh">${a.coh ? '✓ ' : ''}${U.esc(t('keepTogether'))}</button>
         ${us.length > 1 ? `<button class="achip" data-act="split">${U.esc(t('splitArmy'))}</button>` : ''}<button class="achip bad" data-act="disband">${U.esc(t('disband'))}</button></div></div>`;
     }
     const inArmy = ids.some((id) => UI.armyOf(id));
@@ -331,6 +339,11 @@ const Panels = {
         if (a === 'toArmy') { UI.addToGroup(k, [...UI.sel]); UI.toast(t('addedToArmy', k)); this.refresh(true); return; }
         if (a === 'unArmy') { UI.removeFromGroups([...UI.sel]); this.refresh(true); return; }
         if (a === 'coh') { const g = UI.groups()[UI.selectedArmy()]; if (g) g.coh = !g.coh; this.refresh(true); return; }
+        if (a === 'ret') {
+          const g = UI.groups()[UI.selectedArmy()];
+          if (g) { g.ret = g.ret === false; if (g.task) g.task.ret = g.ret ? Tactics.RETREAT : 0; }
+          this.refresh(true); return;
+        }
         if (a === 'split') { UI.splitArmy(); return; }
         if (a === 'disband') { const ak = UI.selectedArmy(); if (ak) { delete UI.groups()[ak]; UI.groupSig = ''; UI.renderGroups(); UI.toast(t('armyDisbanded', ak)); } this.refresh(true); return; }
         if (a === 'attackIt' && this.enemy) { UI.issue({ k: 'attack', id: this.enemy.id }); this.show(); }

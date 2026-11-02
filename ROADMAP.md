@@ -326,6 +326,13 @@ sie bezahlen kann), **Eingraben** (bis −40 % Schaden nach 75 s Stillstand, Art
 unter der Einheit), **KI-Kampfgruppen** (1–4 gemischte Gruppen à 5–9 Einheiten statt einem Schwarm) mit Phasen
 Aufklärung → Artillerie-Vorbereitung → Sturm → Halten und **Rückzug** bei mehr als 55 % Verlusten (Meldung an den Spieler).
 Werte zum Feintuning: `MOVE_SCALE`, `CAPTURE_TIME`, `UPKEEP`, `DIG` in `js/data/units.js`.
+Schritt 5 erledigt: gemeinsame Gruppen-Taktik für KI und Spieler (`js/core/tactics.js`). **Kampfgruppen-Vorlagen**
+(Infanterie-, Mech.- und Panzer-Kampfgruppe mit Aufklärer, Mörser/Flak/Versorgung; Artilleriebatterie, Luftlandezug) mit
+Unterhaltsanzeige auf jeder Rekrutierungskarte. Ist eine ganze Armee gewählt, stehen vorn in der Befehlsleiste
+**Großangriff** (Anmarsch → Aufklärung → Artillerie → Sturm → Halten), **Vorrücken** und **Halten**; Flak, Sanitäter und
+Versorgung folgen selbst, Artillerie bleibt in Reichweite; **Rückzug bei Verlusten** ist je Armee schaltbar. Die
+Armee-Leiste und das Armee-Panel zeigen Auftrag/Phase und Kampfkraft; Meldungen bei Rückzug und eingenommenem Ziel.
+Ein direkter Befehl hebt den Auftrag auf.
 Web: Das Spiel läuft unter **https://papoch295.github.io/ironmeridian/** (GitHub Pages, aktualisiert sich bei jedem Push).
 
 **Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
@@ -337,8 +344,8 @@ nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt n
 | 2. Mehr-Seiten-Kern | beliebig viele Fraktionen, **freie Länderwahl** (alle außer Zwergstaaten wie Vatikan), **Jeder gegen jeden** mit Bündnissen, neutrale Länder angreifbar und Nachbarn reagieren, KI je Fraktion | #1–#5, #21 | erledigt |
 | 3. KI-Angriffsmuster | **feste Angriffsmuster** (Achsen, Zeitpunkte), einfache Vorwarnung durch Aufklärung | #16, #17 | erledigt |
 | **4. Taktisches Gameplay (P0)** | **Unterhalt**, **langsameres Tempo**, **Eingraben**; KI mit **Kampfgruppen**, **Angriff in Phasen**, **Rückzug bei Verlusten** | #55–#60 | erledigt |
-| **5. Einfachere Führung (P0)** | **Kampfgruppen-Vorlagen** (eine Gruppe mit einem Tippen), **Gruppen-Haltungen** per Knopf, **automatische Rollen** in der Gruppe, **Armee-Übersicht** | #67–#70 | als Nächstes |
-| 6. Web live | ~~Veröffentlichung, Link für die Prüfer~~ (GitHub Pages läuft); fehlt noch: Service Worker für Offline und saubere Updates | 5.1, 7 | teilweise |
+| **5. Einfachere Führung (P0)** | **Kampfgruppen-Vorlagen** (eine Gruppe mit einem Tippen), **Gruppen-Haltungen** per Knopf, **automatische Rollen** in der Gruppe, **Armee-Übersicht** | #67–#70 | erledigt |
+| 6. Web live | ~~Veröffentlichung, Link für die Prüfer~~ (GitHub Pages läuft); fehlt noch: Service Worker für Offline und saubere Updates | 5.1, 7 | teilweise, als Nächstes |
 | 7. Tutorial | interaktives Tutorial in einfacher Fassung (Hervorhebungen, Schritt erst nach Aktion), erklärt Kampfgruppen und Haltungen | #28 | offen |
 | 8. Punktesieg | Partie endet mit Punktesieg statt Aufräumen bis zur letzten Einheit | #52 | offen |
 

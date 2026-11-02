@@ -14,6 +14,7 @@ const ICON = {
   move: svg('<path d="M5 12h12M13 7l5 5-5 5"/>'),
   fast: svg('<path d="M4 7l6 5-6 5M12 7l6 5-6 5"/>'),
   attack: svg('<path d="M14.5 4.5l5 5-9 9H5.5v-5z"/><path d="M4 20l3-3"/>'),
+  shield: svg('<path d="M12 3l7 3v5c0 5-3.2 8.4-7 10-3.8-1.6-7-5-7-10V6z"/>'),
   stop: svg('<rect x="6" y="6" width="12" height="12" rx="1"/>'),
   retreat: svg('<path d="M19 12H7M11 7l-5 5 5 5"/>'),
   fire: svg('<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.4 1.3-3.9 2.5-5 .3 1.7 1.1 2.6 2.1 3 .6-2.6.4-5.3.4-8z"/>'),

@@ -131,11 +131,12 @@ const AAD_LEVELS = [null, { r: 1.2, cd: 3.5, air: 38, heli: 34, ic: 0.25 }, { r:
 // or a strategic bomber can carry one. Higher lab levels build faster. Fallout blocks income and production.
 const NUKE = { cost: { m: 6000, i: 3000, o: 400 }, time: 120, r: 1.3, dmg: 1500, fallout: 150, falloutR: 1.0, de: 'Atomsprengkopf', en: 'Nuclear Warhead', mw: 'W80-4 / B61-12', me: 'RDS-Serie' };
 
-// Ready-made formations recruited as one order; the units form a new army.
+// Battle-group templates recruited as one order; the units form a new army with all roles a group needs
+// (front, reconnaissance, fire support, air defense / supply / medics – see Tactics.roles).
 const FORMATIONS = [
-  { id: 'infCoy', de: 'Infanteriekompanie', en: 'Infantry Company', u: { inf: 3, at: 1, medic: 1 } },
-  { id: 'mechCoy', de: 'Mech. Kompanie', en: 'Mechanized Company', u: { inf: 2, ifv: 2, at: 1 } },
-  { id: 'tankPlt', de: 'Panzerzug', en: 'Tank Platoon', u: { mbt: 3, ifv: 1, truck: 1 } },
+  { id: 'infBg', de: 'Infanterie-Kampfgruppe', en: 'Infantry Battle Group', u: { inf: 3, at: 1, recon: 1, mortar: 1, medic: 1 } },
+  { id: 'mechBg', de: 'Mech. Kampfgruppe', en: 'Mechanized Battle Group', u: { ifv: 2, inf: 2, at: 1, recon: 1, mortar: 1 } },
+  { id: 'tankBg', de: 'Panzer-Kampfgruppe', en: 'Armored Battle Group', u: { mbt: 3, ifv: 1, recon: 1, aa: 1, truck: 1 } },
   { id: 'artyBty', de: 'Artilleriebatterie', en: 'Artillery Battery', u: { spg: 2, aa: 1, truck: 1 } },
   { id: 'airMob', de: 'Luftlandezug', en: 'Air Assault Platoon', u: { inf: 2, thelo: 1, ahelo: 1 } },
 ];

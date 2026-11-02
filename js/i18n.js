@@ -68,17 +68,26 @@ const STR = {
     kFixedEsc: 'Esc: Abbrechen / Auswahl aufheben / Menü', kFixedArrows: 'Pfeiltasten: Karte verschieben (immer)', kFixedGroups: 'Strg + 1–9: Armee bilden · Umschalt + 1–9: zur Armee hinzufügen · 1–9: Armee wählen (doppelt: zentrieren)',
     kPanNote: 'Kamera-Tasten bewegen die Karte nur, wenn keine Einheit ausgewählt ist.',
     develop: 'Ausbau', aaRange: 'Flugabwehr', falloutHere: 'Radioaktiver Fallout: keine Einnahmen, keine Produktion.', cancel: 'Abbrechen (Kosten werden erstattet)',
-    formations: 'Verbände', amount: 'Anzahl', toArmy: 'Zu Armee', newShort: 'Neu', noInstitution: 'Hier steht noch keine Institution. Baue eine Kaserne, ein Rüstungswerk oder einen Flugplatz, um Einheiten zu rekrutieren.',
+    formations: 'Kampfgruppen', amount: 'Anzahl', toArmy: 'Zu Armee', newShort: 'Neu', noInstitution: 'Hier steht noch keine Institution. Baue eine Kaserne, ein Rüstungswerk oder einen Flugplatz, um Einheiten zu rekrutieren.',
     dUpgrade: 'Mehr Einnahmen und stärkere Garnison', d_barracks: 'Infanterie und Spezialkräfte', d_factory: 'Fahrzeuge, Panzer, Artillerie', d_airfield: 'Hubschrauber und Flugzeuge',
     d_shipyard: 'Kriegsschiffe und U-Boote', d_silo: 'Raketen lagern und starten', d_radar: 'Größere Sichtweite der Provinz',
     d_aad: 'Schießt feindliche Flugzeuge, Hubschrauber und Raketen ab', d_lab: 'Baut Atomsprengköpfe für Raketen und Bomber',
     nukeInfo: 'Ein Atomsprengkopf kann auf jede Rakete einer Raketenbasis oder in einen strategischen Bomber geladen werden. Zerstört alles in ca. {0} km Umkreis und hinterlässt Fallout.',
-    nukeStock: 'Atomsprengköpfe (landesweit)', formInfo: 'Ein Verband rekrutiert mehrere Einheiten auf einmal und bildet daraus automatisch eine neue Armee.', launchNuke: 'Mit Atomsprengkopf starten',
+    nukeStock: 'Atomsprengköpfe (landesweit)', formInfo: 'Eine Kampfgruppe rekrutiert Front, Aufklärung und Unterstützung auf einmal und bildet daraus eine neue Armee. Wähle die Armee aus und gib ihr „Großangriff“, „Vorrücken“ oder „Halten“ – den Rest erledigt sie selbst.', launchNuke: 'Mit Atomsprengkopf starten',
     armyKeys: 'Taste {0} wählt · Umschalt+{1} fügt hinzu', keepTogether: 'Formation halten', splitArmy: 'Aufteilen', disband: 'Auflösen', newArmy: 'Neue Armee', addToArmy: 'Zu Armee {0} hinzufügen',
     leaveArmy: 'Aus Armee entfernen', vehOk: 'auch Fahrzeuge', nukeAboard: 'Atombombe an Bord', armyFull: 'Alle 9 Armeen sind belegt',
     batchPartial: 'Nur {0} bezahlbar – so viele in Auftrag gegeben', recruitToArmy: 'Neue Einheiten bilden Armee {0}', formQueued: '{0} in Auftrag – wird Armee {1}', addedToArmy: 'Zu Armee {0} hinzugefügt',
     armyDisbanded: 'Armee {0} aufgelöst', armySplit: 'Armee {0} aufgeteilt – neue Armee {1}', armyPending: 'Armee {0} wird noch rekrutiert',
     armyFight: 'Im Gefecht', armyMoving: 'Marsch', armyIdle: 'Bereit', armyRecruiting: 'Rekrutierung',
+    cmdTaskAttack: 'Großangriff', cmdTaskAdvance: 'Vorrücken', cmdTaskHold: 'Halten',
+    hintTaskAttack: 'Ziel antippen: Die Armee greift in Phasen an – Aufklärung, Artillerie, Sturm',
+    hintTaskAdvance: 'Ziel antippen: Die Armee rückt vor und kämpft unterwegs, Unterstützung folgt',
+    task_attack: 'Armee {0}: Großangriff befohlen', task_advance: 'Armee {0}: Vorrücken befohlen', task_hold: 'Armee {0} hält und gräbt sich ein',
+    ph_approach: 'Anmarsch', ph_recon: 'Aufklärung', ph_prep: 'Artillerie', ph_assault: 'Sturm', ph_advance: 'Vormarsch', ph_hold: 'Hält Stellung', ph_dig: 'Verteidigt', ph_retreat: 'Rückzug',
+    task: 'Auftrag', strength: 'Kampfkraft', autoRetreat: 'Rückzug bei Verlusten',
+    autoRetreatTip: 'Bei einem Großangriff oder Vormarsch zieht sich die Armee zurück, wenn mehr als die Hälfte ihrer Kampfkraft verloren ist.',
+    evArmyRetreat: 'Armee {0} hat schwere Verluste und zieht sich zurück', evArmyTaken: 'Armee {0} hat {1} genommen und hält dort',
+    upkShort: 'Unterhalt {0}/min', upkTip: 'Laufende Kosten: {0} Geld und {1} Öl pro Minute',
     hintUnloadAt: 'Ziel antippen – dort wird ausgeladen', hintNuke: 'Ziel für den Atomschlag antippen', cmdAutoLoad: 'Verladen', cmdPickup: 'Aufnehmen', cmdUnloadAt: 'Transport nach', cmdNuke: 'Atomschlag',
     loadFull: 'Kein Platz in den Transportern', loadPartial: '{0} von {1} Einheiten steigen ein (kein Platz mehr)', loadOk: '{0} Einheiten steigen ein', loadNone: 'Keine passenden Einheiten in der Nähe',
     evNukeBomber: 'Bomber mit Atombombe gestartet', evNukeReady: 'Atomsprengkopf einsatzbereit', evLaunchNuke: 'FEINDLICHE ATOMRAKETE IM ANFLUG!', evLaunchOwnNuke: 'Atomrakete gestartet',
@@ -151,17 +160,26 @@ const STR = {
     kFixedEsc: 'Esc: cancel / deselect / menu', kFixedArrows: 'Arrow keys: pan the map (always)', kFixedGroups: 'Ctrl + 1–9: form army · Shift + 1–9: add to army · 1–9: select army (twice: center)',
     kPanNote: 'Camera keys only pan the map while no unit is selected.',
     develop: 'Develop', aaRange: 'Air defense', falloutHere: 'Radioactive fallout: no income, no production.', cancel: 'Cancel (costs refunded)',
-    formations: 'Formations', amount: 'Amount', toArmy: 'To army', newShort: 'New', noInstitution: 'No institution here yet. Build barracks, an arms factory or an airfield to recruit units.',
+    formations: 'Battle groups', amount: 'Amount', toArmy: 'To army', newShort: 'New', noInstitution: 'No institution here yet. Build barracks, an arms factory or an airfield to recruit units.',
     dUpgrade: 'More income and a stronger garrison', d_barracks: 'Infantry and special forces', d_factory: 'Vehicles, tanks, artillery', d_airfield: 'Helicopters and aircraft',
     d_shipyard: 'Warships and submarines', d_silo: 'Stores and launches missiles', d_radar: 'Wider province vision',
     d_aad: 'Shoots down enemy aircraft, helicopters and missiles', d_lab: 'Builds nuclear warheads for missiles and bombers',
     nukeInfo: 'A nuclear warhead fits any missile of a missile base or a strategic bomber. Destroys everything within about {0} km and leaves fallout.',
-    nukeStock: 'Nuclear warheads (nation-wide)', formInfo: 'A formation recruits several units at once and automatically forms a new army from them.', launchNuke: 'Launch with nuclear warhead',
+    nukeStock: 'Nuclear warheads (nation-wide)', formInfo: 'A battle group recruits front, reconnaissance and support at once and forms a new army from them. Select the army and give it "Assault", "Advance" or "Hold" – it handles the rest on its own.', launchNuke: 'Launch with nuclear warhead',
     armyKeys: 'Key {0} selects · Shift+{1} adds', keepTogether: 'Keep together', splitArmy: 'Split', disband: 'Disband', newArmy: 'New army', addToArmy: 'Add to army {0}',
     leaveArmy: 'Remove from army', vehOk: 'vehicles too', nukeAboard: 'Nuclear bomb on board', armyFull: 'All 9 armies are in use',
     batchPartial: 'Only {0} affordable – that many were ordered', recruitToArmy: 'New units will form army {0}', formQueued: '{0} ordered – will become army {1}', addedToArmy: 'Added to army {0}',
     armyDisbanded: 'Army {0} disbanded', armySplit: 'Army {0} split – new army {1}', armyPending: 'Army {0} is still being recruited',
     armyFight: 'In combat', armyMoving: 'Marching', armyIdle: 'Ready', armyRecruiting: 'Recruiting',
+    cmdTaskAttack: 'Assault', cmdTaskAdvance: 'Advance', cmdTaskHold: 'Hold',
+    hintTaskAttack: 'Tap a target: the army attacks in phases – reconnaissance, artillery, assault',
+    hintTaskAdvance: 'Tap a target: the army advances and fights on the way, support follows',
+    task_attack: 'Army {0}: assault ordered', task_advance: 'Army {0}: advance ordered', task_hold: 'Army {0} holds and digs in',
+    ph_approach: 'Approach', ph_recon: 'Recon', ph_prep: 'Artillery', ph_assault: 'Assault', ph_advance: 'Advancing', ph_hold: 'Holding', ph_dig: 'Defending', ph_retreat: 'Retreating',
+    task: 'Task', strength: 'Strength', autoRetreat: 'Retreat on losses',
+    autoRetreatTip: 'During an assault or advance the army falls back once it has lost more than half of its combat strength.',
+    evArmyRetreat: 'Army {0} has taken heavy losses and falls back', evArmyTaken: 'Army {0} has taken {1} and holds there',
+    upkShort: 'Upkeep {0}/min', upkTip: 'Running cost: {0} money and {1} oil per minute',
     hintUnloadAt: 'Tap the destination – cargo unloads there', hintNuke: 'Tap the nuclear strike target', cmdAutoLoad: 'Load up', cmdPickup: 'Pick up', cmdUnloadAt: 'Transport to', cmdNuke: 'Nuke',
     loadFull: 'No room in the transports', loadPartial: '{0} of {1} units board (no more room)', loadOk: '{0} units boarding', loadNone: 'No suitable units nearby',
     evNukeBomber: 'Bomber with nuclear bomb launched', evNukeReady: 'Nuclear warhead ready', evLaunchNuke: 'ENEMY NUCLEAR MISSILE INBOUND!', evLaunchOwnNuke: 'Nuclear missile launched',
@@ -192,7 +210,8 @@ const HELP = {
       <h3>Institutionen</h3><p>Einheiten werden in passenden Institutionen rekrutiert: <b>Kaserne</b> (Infanterie), <b>Rüstungswerk</b> (Fahrzeuge),
       <b>Flugplatz</b> (Luftwaffe), <b>Werft</b> (Marine, nur an der Küste) und <b>Raketenbasis</b> (Raketen). Höhere Stufen schalten stärkere Einheiten frei.</p>
       <p>Jede Provinz hat eine Warteschlange mit bis zu acht Aufträgen. Mit <b>Anzahl ×3 / ×5 / ×10</b> rekrutierst du mehrere Einheiten mit einem Klick,
-      unter <b>Verbände</b> ganze Kompanien. Mit <b>Zu Armee</b> stoßen neue Einheiten automatisch zu einer Armee. Abbrechen erstattet die Kosten.</p>
+      unter <b>Kampfgruppen</b> eine fertige Armee mit Front, Aufklärung und Unterstützung. Mit <b>Zu Armee</b> stoßen neue Einheiten automatisch zu einer Armee. Abbrechen erstattet die Kosten.</p>
+      <h3>Unterhalt</h3><p>Jede Einheit kostet laufend Geld und Öl. Oben siehst du dein Einkommen nach Abzug des Unterhalts; wird es rot, ist die Armee größer als deine Wirtschaft.</p>
       <h3>Flugabwehr & Forschung</h3><p>Die <b>Flugabwehrstellung</b> schützt eine Provinz vor Flugzeugen, Hubschraubern und Raketen.
       Im <b>Forschungszentrum</b> entstehen Atomsprengköpfe, die jede Rakete einer Raketenbasis oder ein strategischer Bomber tragen kann.</p>`,
     combat: `<h3>Echtzeit mit Pause</h3><p>Der Krieg läuft in Echtzeit. Pausiere jederzeit und gib in Ruhe Befehle – jede Einheit ist einzeln steuerbar.</p>
@@ -205,6 +224,10 @@ const HELP = {
       <h3>Transport</h3><p>Wähle Transporter und Truppen gemeinsam und tippe <b>Verladen</b> – alles wird automatisch verteilt, Hubschrauber fliegen den Truppen entgegen.
       Nur Transporter gewählt: <b>Aufnehmen</b> lädt Einheiten in der Nähe. <b>Transport nach</b> fährt bzw. fliegt zum Ziel und lädt dort aus.</p>
       <h3>Armeen</h3><p>Armeen 1–9 bündeln Einheiten. Mit <b>Formation halten</b> marschiert die Armee im Tempo der langsamsten Einheit; Kampfeinheiten gehen vorn, Unterstützung hinten.</p>
+      <h3>Aufträge für Armeen</h3><p>Ist eine ganze Armee gewählt, erscheinen unten <b>Großangriff</b>, <b>Vorrücken</b> und <b>Halten</b>. Beim Großangriff klären Aufklärer auf,
+      die Artillerie bereitet vor, dann stürmt die Front. Flugabwehr, Sanitäter und Versorgung folgen von selbst. Mit <b>Rückzug bei Verlusten</b> bricht die Armee ab,
+      bevor sie aufgerieben wird. Ein direkter Befehl hebt den Auftrag auf.</p>
+      <h3>Eingraben</h3><p>Einheiten, die stillstehen, graben sich ein (Sandsack-Bogen) und nehmen bis zu 40&nbsp;% weniger Schaden. Artillerie wirkt dagegen am besten.</p>
       <h3>Atomwaffen</h3><p>Ein Atomschlag zerstört alle feindlichen Einheiten im Umkreis, verwüstet Provinzen und hinterlässt Fallout, der Bodentruppen beider Seiten schadet.</p>`,
   },
   en: {
@@ -227,7 +250,8 @@ const HELP = {
       <h3>Institutions</h3><p>Units are recruited in matching institutions: <b>Barracks</b> (infantry), <b>Arms Factory</b> (vehicles),
       <b>Airfield</b> (air force), <b>Shipyard</b> (navy, coast only) and <b>Missile Base</b> (missiles). Higher levels unlock stronger units.</p>
       <p>Each province has a queue of up to eight orders. With <b>Amount ×3 / ×5 / ×10</b> one click recruits several units,
-      <b>Formations</b> recruit whole companies. With <b>To army</b> new units automatically join an army. Cancelling refunds the cost.</p>
+      <b>Battle groups</b> recruit a ready army with front, reconnaissance and support. With <b>To army</b> new units automatically join an army. Cancelling refunds the cost.</p>
+      <h3>Upkeep</h3><p>Every unit costs money and oil continuously. The top bar shows your income after upkeep; when it turns red, your army is larger than your economy.</p>
       <h3>Air defense & research</h3><p>An <b>Air Defense Site</b> protects a province against aircraft, helicopters and missiles.
       A <b>Research Facility</b> builds nuclear warheads that any missile of a missile base or a strategic bomber can carry.</p>`,
     combat: `<h3>Real time with pause</h3><p>The war runs in real time. Pause at any moment and issue orders calmly – every unit can be commanded individually.</p>
@@ -240,6 +264,10 @@ const HELP = {
       <h3>Transport</h3><p>Select transports and troops together and tap <b>Load up</b> – everyone is distributed automatically, helicopters fly to meet the troops.
       Transports only: <b>Pick up</b> loads nearby units. <b>Transport to</b> drives or flies to the destination and unloads there.</p>
       <h3>Armies</h3><p>Armies 1–9 bundle units. With <b>Keep together</b> an army marches at the pace of its slowest unit; combat units lead, support follows.</p>
+      <h3>Army tasks</h3><p>With a whole army selected, <b>Assault</b>, <b>Advance</b> and <b>Hold</b> appear at the bottom. In an assault, scouts probe ahead,
+      artillery prepares, then the front attacks. Air defense, medics and supply follow on their own. With <b>Retreat on losses</b> the army breaks off
+      before it is destroyed. A direct order cancels the task.</p>
+      <h3>Digging in</h3><p>Units that stand still dig in (sandbag arc) and take up to 40&nbsp;% less damage. Artillery works best against them.</p>
       <h3>Nuclear weapons</h3><p>A nuclear strike destroys every enemy unit in its radius, devastates provinces and leaves fallout that harms ground troops of both sides.</p>`,
   },
 };
