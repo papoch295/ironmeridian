@@ -1,7 +1,8 @@
 # Iron Meridian – Roadmap: von der Alpha zur Beta
 
 Stand: 2. November 2026 (Alpha 0.1). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
-Prioritäten: **P1** = nötig, um die Alpha zu verlassen · **P2** = macht das Spiel deutlich besser · **P3** = später.
+Prioritäten: **P0** = höchste Priorität, kommt vor allem anderen (taktisches Gameplay, siehe 2.9 und 2.10) ·
+**P1** = nötig, um die Alpha zu verlassen · **P2** = macht das Spiel deutlich besser · **P3** = später.
 Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
 
 ---
@@ -114,6 +115,41 @@ Bitte bestätigen oder ändern (Frage F1):
 |---|---|---|---|
 | 41 | Waffensounds je Typ, Funksprüche/Bestätigungen, Umgebungsgeräusche | P3 | M |
 | 42 | Musik (eigene oder lizenzfreie Stücke), getrennte Lautstärken | P3 | M |
+
+### 2.9 Taktisches Gameplay statt Masse (P0 – höchste Priorität)
+Feedback vom 2. Nov.: Die KI schwärmt mit einer ganzen Armee auf einen Punkt und spielt nicht taktisch; das Spiel soll
+**langsamer und taktischer** werden, **kein Spam**. Ursache im Code: Jede Offensive schickt 80 % aller freien
+Bodentruppen mit einem einzigen Angriffsbefehl auf ein Ziel, und die Wirtschaft rekrutiert ohne Pause bis zur Obergrenze.
+Gilt für KI **und** Spieler gleichermaßen.
+
+| # | Funktion | Prio | Aufwand |
+|---|---|---|---|
+| 55 | **Unterhalt:** jede Einheit kostet laufend Geld und Öl; große Armeen belasten die Wirtschaft, Spam lohnt sich nicht mehr | P0 | M |
+| 56 | **Langsameres Tempo:** Bewegung, Eroberung und Verteidigungsaufbau von Provinzen langsamer; Partien länger, jede Bewegung zählt | P0 | S–M |
+| 57 | **Eingraben:** stehende Einheiten bekommen mit der Zeit einen wachsenden Verteidigungsbonus; gehaltene Stellungen brauchen vorbereitete Angriffe | P0 | M |
+| 58 | **KI-Kampfgruppen statt Blob:** Gruppen aus 4–8 Einheiten mit Rollen (Aufklärer vorn, Panzer/Infanterie Mitte, Artillerie und Flak hinten), je Gruppe ein eigener Auftrag | P0 | L |
+| 59 | **Angriff in Phasen:** Aufklärung → Artillerie-Vorbereitung auf erkannte Ziele → Sturm → Stellung halten und eingraben | P0 | M |
+| 60 | **Rückzug und Schonung:** Gruppe bricht bei hohen Verlusten ab, zieht sich zurück, repariert/füllt auf und greift erneut an | P0 | M |
+| 61 | Kommandolimit: Einheitenzahl hängt an Hauptquartieren/Provinzstufe statt nur am Geld | P2 | M |
+| 62 | Längere Bauzeiten und höhere Preise für schwere Einheiten | P2 | S |
+| 63 | KI-Frontabschnitte: Gruppen halten eine Linie, Angriff nur mit örtlicher Übermacht | P2 | M |
+| 64 | Echte Umfassung: Nebenachse greift zeitgleich an einer anderen Seite an | P2 | M |
+| 65 | Flanken- und Rückenbonus im Kampf | P2 | S–M |
+| 66 | Städte als Verteidigungsbonus, stärkeres Niederhalten durch Artillerie | P2 | S |
+
+### 2.10 Einfachere Führung für den Spieler (P0 – gehört zu 2.9)
+Wenn das Spiel langsamer und taktischer wird, darf es nicht mehr Klickarbeit werden. Weniger, aber wertvollere Einheiten
+helfen schon; dazu soll der Spieler in **Kampfgruppen** denken statt in Einzeleinheiten.
+
+| # | Funktion | Prio | Aufwand |
+|---|---|---|---|
+| 67 | **Kampfgruppen-Vorlagen:** eine ganze Gruppe (z. B. „Mechanisierte Kampfgruppe“, „Panzerkampfgruppe“, „Artilleriebatterie“) mit einem Tippen rekrutieren; sie erscheint direkt als Armee | P0 | M |
+| 68 | **Gruppen-Haltungen per Knopf:** Halten/Eingraben, Vorrücken, Angreifen, Rückzug bei X % Verlusten – die Gruppe führt den Rest selbst aus | P0 | M |
+| 69 | **Automatische Rollen in der Gruppe:** Artillerie hält Abstand und feuert auf Sicht, Flak, Sanitäter und Versorgung folgen von selbst | P0 | M |
+| 70 | **Armee-Übersicht:** Liste aller Kampfgruppen mit Stärke, Zustand und Auftrag; Tippen springt hin | P0 | S–M |
+| 71 | Automatisches Auffrischen: Verluste werden aus der Heimat-Institution nachgebaut (abschaltbar) | P1 | M |
+| 72 | Daueraufträge in der Produktion und Unterhalt-Anzeige mit Warnung, wenn die Einnahmen nicht reichen | P1 | S |
+| 73 | Gebündelte Meldungen je Gruppe („Kampfgruppe 2 wird angegriffen“, „Ziel erreicht“, „zieht sich zurück“) | P1 | S |
 
 ---
 
@@ -243,8 +279,8 @@ Aufwand gesamt: M (erstes Mal), danach S pro Update.
 | **Netlify / Cloudflare Pages** | kostenlos | Eigene Domain leicht möglich, schnelle Auslieferung weltweit |
 
 Schritte (Beispiel GitHub Pages):
-1. Git-Repository anlegen (das Projekt ist **noch kein Git-Repository** – das sollte als Erstes passieren, auch als Backup).
-2. Auf GitHub hochladen, in den Einstellungen **Pages** aktivieren → Adresse `https://<name>.github.io/ironmeridian`.
+1. ~~Git-Repository anlegen~~ – erledigt (papoch295/ironmeridian, öffentlich).
+2. ~~Pages aktivieren~~ – erledigt: **https://papoch295.github.io/ironmeridian/**, Link steht oben in der README.
 3. Service Worker (5.1) ergänzen, damit Spieler nach Updates die neue Version bekommen (Versionsnummer im Cache-Namen).
 4. Optional eigene Domain, Versionsanzeige im Hauptmenü, Kanal für Feedback (Formular oder Discord).
 
@@ -274,7 +310,7 @@ Conflict of Nations** (moderne Weltkarte, Provinzen, Bündnisse, Forschung, Spio
 ### Beta 1 – Ziel: Ende November 2026 (Uni-Abgabe)
 Alles, was die Abgabe stabil, vorführbar und spürbar besser macht. Reihenfolge = Arbeitsreihenfolge.
 
-**Stand 2. Nov.:** Schritt 1 erledigt (Repository auf GitHub: papoch295/ironmeridian, privat): Spielstände (Namen,
+**Stand 2. Nov.:** Schritt 1 erledigt (Repository auf GitHub: papoch295/ironmeridian, öffentlich): Spielstände (Namen,
 Löschen, IndexedDB, Migration, 3 Autosaves, Speichern im Hintergrund), Fehlerfang mit Notfall-Spielstand,
 Hochformat-Leiste, automatischer Testlauf `node tools/selftest.js`.
 Schritt 2 erledigt: jedes Land eine eigene Fraktion (Wirtschaft, KI), Bündnisse als Teams, Spieler steuert nur sein
@@ -284,26 +320,37 @@ Schritt 3 erledigt: feste Offensiven im Takt der Schwierigkeit (Leicht alle 8, N
 Sammeln an einer Grenzprovinz (2,5 / 2 / 1¼ Minuten), dann gemeinsamer Angriff; eine Hauptachse, die bis zum Fall des
 Ziels gleich bleibt, plus kleiner Nebenangriff; dazwischen nur Verteidigung. Sehen eigene oder verbündete Einheiten bzw.
 Radar das Sammeln, kommt die Meldung „Aufklärung: … sammelt Truppen“ und ein roter Pfeil Sammelort → Ziel.
+Web: Das Spiel läuft unter **https://papoch295.github.io/ironmeridian/** (GitHub Pages, aktualisiert sich bei jedem Push).
 
-| Schritt | Inhalt | Punkte |
-|---|---|---|
-| 1. Fundament | GitHub-Konto (du) + Repository (ich), Spielstände mit Namen, **Löschen**, IndexedDB, Migration nach Updates, rotierende Autosaves, Fehlerfang, automatischer Testlauf, Hochformat-Fehler | #10–#13, #26, #37, #39 |
-| 2. Mehr-Seiten-Kern | beliebig viele Fraktionen, **freie Länderwahl** (alle außer Zwergstaaten wie Vatikan), **Jeder gegen jeden** mit Bündnissen, neutrale Länder angreifbar und Nachbarn reagieren, KI je Fraktion | #1–#5, #21 |
-| 3. KI | **feste Angriffsmuster** (Achsen, Zeitpunkte), einfache Vorwarnung durch Aufklärung | #16, #17 |
-| 4. Gegen die Langeweile (Auswahl) | **Eskalation:** weitere Länder treten gegen den Stärksten in den Krieg ein; **Punktesieg** statt Aufräumen bis zur letzten Einheit | #44, #52 |
-| 5. Tutorial | interaktives Tutorial in einfacher Fassung (Hervorhebungen, Schritt erst nach Aktion) | #28 |
-| 6. Web live | Service Worker, Veröffentlichung (GitHub Pages oder itch.io), Link für die Prüfer | 5.1, 7 |
+**Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
+nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt nur der Punktesieg.
 
-Puffer: Wenn die Zeit knapp wird, fällt zuerst Schritt 5 auf eine verbesserte Textfassung zurück, danach wird Schritt 4
-auf den Punktesieg reduziert. Schritte 1, 2 und 6 sind gesetzt.
+| Schritt | Inhalt | Punkte | Stand |
+|---|---|---|---|
+| 1. Fundament | GitHub-Konto (du) + Repository (ich), Spielstände mit Namen, **Löschen**, IndexedDB, Migration nach Updates, rotierende Autosaves, Fehlerfang, automatischer Testlauf, Hochformat-Fehler | #10–#13, #26, #37, #39 | erledigt |
+| 2. Mehr-Seiten-Kern | beliebig viele Fraktionen, **freie Länderwahl** (alle außer Zwergstaaten wie Vatikan), **Jeder gegen jeden** mit Bündnissen, neutrale Länder angreifbar und Nachbarn reagieren, KI je Fraktion | #1–#5, #21 | erledigt |
+| 3. KI-Angriffsmuster | **feste Angriffsmuster** (Achsen, Zeitpunkte), einfache Vorwarnung durch Aufklärung | #16, #17 | erledigt |
+| **4. Taktisches Gameplay (P0)** | **Unterhalt**, **langsameres Tempo**, **Eingraben**; KI mit **Kampfgruppen**, **Angriff in Phasen**, **Rückzug bei Verlusten** | #55–#60 | als Nächstes |
+| **5. Einfachere Führung (P0)** | **Kampfgruppen-Vorlagen** (eine Gruppe mit einem Tippen), **Gruppen-Haltungen** per Knopf, **automatische Rollen** in der Gruppe, **Armee-Übersicht** | #67–#70 | offen |
+| 6. Web live | ~~Veröffentlichung, Link für die Prüfer~~ (GitHub Pages läuft); fehlt noch: Service Worker für Offline und saubere Updates | 5.1, 7 | teilweise |
+| 7. Tutorial | interaktives Tutorial in einfacher Fassung (Hervorhebungen, Schritt erst nach Aktion), erklärt Kampfgruppen und Haltungen | #28 | offen |
+| 8. Punktesieg | Partie endet mit Punktesieg statt Aufräumen bis zur letzten Einheit | #52 | offen |
+
+Reihenfolge innerhalb von Schritt 4: erst Tempo, Unterhalt und Eingraben (Regeln, die für alle gelten), dann die
+KI-Kampfgruppen darauf abstimmen; Balance jeweils per Testskript KI gegen untätigen Spieler und KI gegen KI.
+Schritt 5 kann parallel zu den KI-Kampfgruppen entstehen, weil KI und Spieler dieselbe Gruppen-Logik nutzen sollen.
+
+Puffer: Wenn die Zeit knapp wird, fällt zuerst Schritt 8 weg, dann wird Schritt 7 auf eine verbesserte Textfassung
+reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2. Schritte 4 und 5 im Kern sowie 6 sind gesetzt.
 
 ### Beta 2 und folgende – Dezember 2026 bis Februar 2027
 | Block | Inhalt | Punkte |
 |---|---|---|
-| Spieltiefe | Technologiebaum, Besatzung und Widerstand, Nachschublinien, Kriegsmüdigkeit, Missionen, Ereignisse, Veteranen und Generäle, Automatisierung, Gegenoffensiven | #43, #45–#51, #53 |
+| Taktik ausbauen | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung; Auffrischen, Daueraufträge, gebündelte Meldungen | #61–#66, #71–#73 |
+| Spieltiefe | **Eskalation** (aus Beta 1 verschoben), Technologiebaum, Besatzung und Widerstand, Nachschublinien, Kriegsmüdigkeit, Missionen, Ereignisse, Veteranen und Generäle, Automatisierung, Gegenoffensiven | #43–#51, #53 |
 | Diplomatie & Spionage | Krieg/Frieden/Bündnis, Spionage deckt KI-Angriffsmuster auf, Geheimdienstzentrale | #54, #16, 3.2 |
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
-| Bedienung | strategische Übersicht, Ereignis-Meldungen, Armee-Befehle, ausführliches Tutorial | #22–#25, #29–#31 |
+| Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
 | Mobil | Handy-Tests auf deinem Android, Android Studio einrichten, APK über Capacitor | 5.2, 6 |
 | Später (laut deinen Antworten) | Szenarien mit Briefing, neue Einheiten/Gebäude, mehr Wirtschaft, Gelände und Wetter, Folgen von Atomwaffen, KI-Regeln auf Schwer, Play Store | #6, Abschnitt 3, F8, F14–F16 |
 
