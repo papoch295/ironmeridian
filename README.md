@@ -3,6 +3,12 @@
 Globales Echtzeit-Strategiespiel mit Pause für Einzelspieler gegen KI. Weltkarte mit allen Ländern, Provinzen mit Städten,
 Industriegebieten, Ölfeldern, Häfen und Luftwaffenbasen, moderne Einheiten (2000–2026) zu Land, Luft und See sowie Raketen.
 
+## ▶ Jetzt spielen (Handy & Browser)
+**https://papoch295.github.io/ironmeridian/**
+
+Einfach auf dem Handy öffnen, am besten im Querformat. Über „Zum Startbildschirm hinzufügen“ (Android: Chrome-Menü,
+iPhone: Safari → Teilen) lässt es sich wie eine App starten.
+
 ## Starten
 - **Desktop:** Verknüpfung „Iron Meridian“ auf dem Desktop (öffnet das Spiel als App-Fenster in Microsoft Edge).
 - **Entwicklung:** `node tools/serve.js 8765` und dann `http://127.0.0.1:8765` öffnen. `index.html` läuft auch direkt per Doppelklick.
