@@ -37,7 +37,7 @@ const SaveDB = {
 };
 
 const Saves = {
-  VERSION: 2,       // save format; older saves are migrated in migrate()
+  VERSION: 3,       // save format; older saves are migrated in migrate()
   AUTO_KEEP: 3,     // rotating autosaves
   index: [],        // [{ id, name, auto, when, country, eBloc, t, diff, prov }], newest first
   useDB: true,
@@ -112,7 +112,7 @@ const Saves = {
     if (!(await this.write(id, json))) return false;
     const old = this.get(id);
     this.index = this.index.filter((e) => e.id !== id);
-    this.index.push({ id, name: name || (old && old.name) || this.defaultName(S), auto, when: Date.now(), country: S.player, eBloc: S.eBloc, t: S.t, diff: S.diff, prov: Game.countProv('P') });
+    this.index.push({ id, name: name || (old && old.name) || this.defaultName(S), auto, when: Date.now(), country: S.player, eBloc: S.eBloc, mode: S.mode, t: S.t, diff: S.diff, prov: Game.countProv(S.player) });
     this.sort();
     if (auto) for (const e of this.index.filter((x) => x.auto).slice(this.AUTO_KEEP)) await this.remove(e.id);
     return this.saveIndex();
@@ -154,9 +154,10 @@ const Saves = {
       for (const b of ['radar', 'aad', 'lab']) pr.b[b] = pr.b[b] || 0;
       for (const q of pr.q) q.n = q.n || 1;
     }
-    for (const sd of ['P', 'E']) S.side[sd].nukes = S.side[sd].nukes || 0;
+    for (const sd in S.side) S.side[sd].nukes = S.side[sd].nukes || 0;
     S.fallout = S.fallout || [];
     for (const k in S.groups || {}) if (Array.isArray(S.groups[k])) S.groups[k] = { ids: S.groups[k], coh: true };
+    if (S.cside) this.toFactions(S, keys);
     S.v = this.VERSION;
     // Province layout changed since the save was made: map every current province onto the old one of the same
     // country closest to it. Without fingerprints (Alpha 0.1 saves) this is impossible.
@@ -169,13 +170,46 @@ const Saves = {
     return S;
   },
 
+  // Format 2 → 3: the two sides 'P' / 'E' become country factions. Provinces go back to their own country when it
+  // was part of that side, otherwise to the player / the strongest enemy country; units and stocks follow the same rule.
+  toFactions(S, keys) {
+    const pk = (pid) => (keys ? keys[pid][0] : Geo.countries[Geo.provinces[pid].country].k);
+    const eMembers = Object.keys(S.cside).filter((k) => S.cside[k] === 'E' && Geo.byKey[k]);
+    const eLeader = eMembers.sort((a, b) => Geo.byKey[b].power - Geo.byKey[a].power)[0] || S.player;
+    const map = (s) => (s === 'P' ? S.player : s === 'E' ? eLeader : s);
+    S.prov.forEach((pr, pid) => {
+      const k = pk(pid);
+      pr.o = pr.o === null ? k : S.cside[k] === pr.o ? k : map(pr.o);
+      if (pr.cap) pr.cap.s = map(pr.cap.s);
+    });
+    for (const u of S.units) u.s = map(u.s);
+    for (const m of S.missiles || []) m.side = map(m.side);
+    for (const s of S.shots || []) s.side = map(s.side);
+    for (const f of S.fallout || []) f.side = map(f.side);
+    const old = S.side;
+    S.team = {}; S.side = {}; S.war = {};
+    for (const c of Geo.countries) {
+      if (!c.provinces.length) continue;
+      const b = BLOCS.find((x) => x.members.includes(c.k));
+      S.team[c.k] = b ? b.id : c.k;
+      S.side[c.k] = Game.newSide();
+    }
+    for (const pr of S.prov) if (pr.o && !S.side[pr.o]) S.side[pr.o] = Game.newSide();
+    Object.assign(S.side[S.player], old.P);
+    Object.assign(S.side[eLeader], old.E);
+    S.war[Game.warKey(S.team[S.player], S.eBloc || S.team[eLeader])] = 1;
+    S.mode = 'bloc';
+    S.ai = {};
+    delete S.cside;
+  },
+
   remapProvinces(S, keys, cur) {
     const rnd = U.rng(S.seed || 1);
     const prov = cur.map(([k, x, y], pid) => {
       let best = -1, bd = 1e9;
       keys.forEach(([ok, ox, oy], i) => { if (ok === k) { const d = U.dist2(x, y, ox, oy); if (d < bd) { bd = d; best = i; } } });
       if (best >= 0) return JSON.parse(JSON.stringify(S.prov[best]));
-      return Game.newProv(Geo.provinces[pid], S.cside[k] || null, rnd);
+      return Game.newProv(Geo.provinces[pid], k, rnd);
     });
     // References to old province ids are dropped; units and the AI pick new targets on their own.
     for (const u of S.units) { u.tgtP = null; if (u.air && u.air.base != null) u.air.base = null; }

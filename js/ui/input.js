@@ -155,7 +155,7 @@ const Input = {
     if (x1 - x0 < 4 && y1 - y0 < 4) return;
     const ids = [];
     for (const u of Game.state.units) {
-      if (u.s !== 'P' || u.inside || (u.air && u.air.st === 'ground')) continue;
+      if (u.s !== Game.me() || u.inside || (u.air && u.air.st === 'ground')) continue;
       const [sx, sy] = Render.toScreen(u.x, u.y);
       if (sx >= x0 && sx <= x1 && sy >= y0 && sy <= y1) ids.push(u.id);
     }

@@ -77,15 +77,16 @@ const SelfTest = {
   // Values that must never become NaN/Infinity or point to nothing.
   check() {
     const S = Game.state, bad = [];
-    for (const sd of ['P', 'E']) for (const r of ['m', 'i', 'o']) if (!Number.isFinite(S.side[sd][r])) bad.push(`Ressource ${sd}.${r} = ${S.side[sd][r]}`);
+    for (const sd in S.side) for (const r of ['m', 'i', 'o']) if (!Number.isFinite(S.side[sd][r])) bad.push(`Ressource ${sd}.${r} = ${S.side[sd][r]}`);
     for (const u of S.units) {
       if (!UNIT_TYPES[u.t]) bad.push(`Einheit ${u.id}: unbekannter Typ ${u.t}`);
+      if (!S.side[u.s]) bad.push(`Einheit ${u.id}: unbekannte Fraktion ${u.s}`);
       if (!Number.isFinite(u.x) || !Number.isFinite(u.y)) bad.push(`Einheit ${u.id} (${u.t}): Position ${u.x},${u.y}`);
       if (!Number.isFinite(u.hp)) bad.push(`Einheit ${u.id} (${u.t}): hp ${u.hp}`);
       if (!Game.byId.has(u.id)) bad.push(`Einheit ${u.id}: fehlt im Index`);
     }
     S.prov.forEach((pr, pid) => {
-      if (pr.o !== null && pr.o !== 'P' && pr.o !== 'E') bad.push(`Provinz ${pid}: Besitzer ${pr.o}`);
+      if (!S.side[pr.o]) bad.push(`Provinz ${pid}: Besitzer ${pr.o}`);
       if (!Number.isFinite(pr.def)) bad.push(`Provinz ${pid}: Verteidigung ${pr.def}`);
     });
     return bad.slice(0, 10);
@@ -106,15 +107,18 @@ const SelfTest = {
   async run() {
     const q = new URLSearchParams(location.search);
     const runs = Math.max(1, parseInt(q.get('selftest'), 10) || 3), minutes = parseFloat(q.get('min')) || 20;
-    const countries = BLOCS.flatMap((b) => b.members).filter((k) => Geo.byKey[k]);
+    this.q = q;
+    // Any playable country; every third game is a world war, the others an alliance war against a random bloc.
+    const countries = Geo.countries.filter((c) => Geo.playable(c)).map((c) => c.k);
     const diffs = ['easy', 'normal', 'hard'];
     this.active = true;
     this.log(`Selbsttest: ${runs} Partien à ${minutes} Spielminuten`);
     let allOk = true;
     for (let i = 0; i < runs; i++) {
       this.errors = [];
-      const country = countries[Math.floor(Math.random() * countries.length)];
-      const own = BLOCS.find((b) => b.members.includes(country));
+      const country = q.get('country') || countries[Math.floor(Math.random() * countries.length)];
+      const own = Screens.ownTeam(country);
+      const mode = q.get('mode') || (i % 3 === 2 ? 'ffa' : 'bloc');
       const foes = BLOCS.filter((b) => b.id !== own.id && b.members.some((k) => Geo.byKey[k]));
       const near = foes.filter((b) => Screens.blocTouches(own, b));
       const enemy = (near.length ? near : foes)[Math.floor(Math.random() * (near.length || foes.length))];
@@ -122,23 +126,31 @@ const SelfTest = {
       const t0 = performance.now();
       let problems = [];
       try {
-        Game.newGame({ country, enemyBloc: enemy.id, difficulty: diff });
+        Game.newGame({ country, mode, enemyBloc: enemy.id, difficulty: diff });
         Screens.enterHud();
         Game.state.paused = true; // the main loop must not step the game in parallel
-        await this.simulate(minutes * 60);
+        // Alliance wars also test a declaration of war on a neutral neighbour halfway through.
+        await this.simulate(minutes * 30);
+        if (mode === 'bloc') {
+          const S = Game.state, nb = Geo.neighbors()[Geo.byKey[country].idx];
+          const neutral = [...nb].map((ci) => Geo.countries[ci].k).find((k) => Game.rk(k) === 'N');
+          if (neutral) { Game.declareWar(S.team[country], S.team[neutral]); this.log(`     Kriegserklärung an ${neutral}`); }
+        }
+        await this.simulate(minutes * 30);
         problems = this.check();
         const rt = await this.roundTrip();
         if (rt) problems.push('Speichern/Laden: ' + rt);
       } catch (e) { this.errors.push((e && e.stack) || String(e)); }
-      const S = Game.state;
+      const S = Game.state, me = S && S.player;
       problems = problems.concat(this.errors.map((m) => 'Fehler: ' + m.split('\n').slice(0, 2).join(' | ')));
       const ok = !problems.length;
       allOk = allOk && ok;
-      const res = { country, enemy: enemy.id, diff, ok, problems, t: S && Math.round(S.t), over: S && S.over,
-        units: S && { P: Game.countUnits('P'), E: Game.countUnits('E') }, prov: S && { P: Game.countProv('P'), E: Game.countProv('E') },
+      const foeU = S ? S.units.filter((u) => Game.hostile(u.s, me)).length : 0, foeP = S ? S.prov.filter((p) => Game.hostile(p.o, me)).length : 0;
+      const res = { country, mode, enemy: mode === 'ffa' ? 'alle' : enemy.id, diff, ok, problems, t: S && Math.round(S.t), over: S && S.over,
+        units: { own: S ? Game.countUnits(me) : 0, foe: foeU, all: S ? S.units.length : 0 }, prov: { own: S ? Game.countProv(me) : 0, foe: foeP },
         ms: Math.round(performance.now() - t0) };
       this.results.push(res);
-      this.log(`${ok ? 'OK  ' : 'FEHL'} #${i + 1} ${country} vs. ${enemy.id} (${diff}): t=${res.t}s, Einheiten ${res.units.P}/${res.units.E}, Provinzen ${res.prov.P}/${res.prov.E}${res.over ? ', Ende: ' + res.over : ''}, ${(res.ms / 1000).toFixed(1)} s`);
+      this.log(`${ok ? 'OK  ' : 'FEHL'} #${i + 1} ${country} vs. ${res.enemy} (${mode}, ${diff}): t=${res.t}s, Einheiten eigen ${res.units.own} / Feind ${res.units.foe} / gesamt ${res.units.all}, Provinzen ${res.prov.own}/${res.prov.foe}${res.over ? ', Ende: ' + res.over : ''}, ${(res.ms / 1000).toFixed(1)} s`);
       for (const p of problems) this.log('     ' + p);
     }
     this.active = false;

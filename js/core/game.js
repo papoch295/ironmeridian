@@ -7,8 +7,8 @@ const DIFFICULTY = {
   normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 80,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75 },
   hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 170, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1 },
 };
-const OTHER = { P: 'E', E: 'P' };
 const START_DATE = Date.UTC(2026, 2, 1, 6, 0);
+const blocOf = (k) => BLOCS.find((b) => b.members.includes(k)) || null;
 
 const Game = {
   state: null,
@@ -22,35 +22,44 @@ const Game = {
   unit(id) { return this.byId.get(id); },
   prov(pid) { return this.state.prov[pid]; },
 
-  newGame({ country, enemyBloc, difficulty, seed }) {
-    const pBloc = BLOCS.find((b) => b.members.includes(country));
-    const eBloc = BLOCS.find((b) => b.id === enemyBloc);
+  // Every country is its own faction (owner key = country code) with its own economy and AI. Alliances (blocs)
+  // form teams; wars are fought between teams. mode 'bloc': the player's bloc against one enemy bloc, everybody
+  // else neutral. mode 'ffa': all blocs at war with each other (countries outside a bloc stay neutral).
+  newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed }) {
+    const pBloc = blocOf(country);
     const S = {
-      v: 2 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
-      player: country, pBloc: pBloc.id, eBloc: eBloc.id, nid: 1,
-      side: { P: this.newSide(), E: this.newSide() },
-      cside: {}, prov: [], units: [], shots: [], missiles: [], fallout: [], ai: {}, over: null,
+      v: 3 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
+      mode, player: country, pBloc: pBloc ? pBloc.id : null, eBloc: mode === 'bloc' ? enemyBloc : null, nid: 1,
+      side: {}, team: {}, war: {}, prov: [], units: [], shots: [], missiles: [], fallout: [], ai: {}, over: null,
     };
-    for (const k of pBloc.members) if (Geo.byKey[k]) S.cside[k] = 'P';
-    for (const k of eBloc.members) if (Geo.byKey[k] && k !== country) S.cside[k] = 'E';
-    const rnd = U.rng(S.seed);
-    for (const p of Geo.provinces) {
-      const side = S.cside[Geo.countries[p.country].k] || null;
-      S.prov.push(this.newProv(p, side, rnd));
+    for (const c of Geo.countries) {
+      if (!c.provinces.length) continue;
+      const b = blocOf(c.k);
+      S.team[c.k] = b ? b.id : c.k;
+      S.side[c.k] = this.newSide();
     }
+    const pt = S.team[country];
+    if (mode === 'ffa') {
+      const teams = [...new Set(BLOCS.map((b) => b.id).filter((id) => Object.values(S.team).includes(id)).concat(pt))];
+      for (let i = 0; i < teams.length; i++) for (let j = i + 1; j < teams.length; j++) S.war[this.warKey(teams[i], teams[j])] = 1;
+    } else S.war[this.warKey(pt, enemyBloc)] = 1;
+    const rnd = U.rng(S.seed);
+    for (const p of Geo.provinces) S.prov.push(this.newProv(p, Geo.countries[p.country].k, rnd));
     this.state = S;
     this.rebuild();
     const D = DIFFICULTY[difficulty];
-    for (const sd of ['P', 'E']) {
-      const members = Object.keys(S.cside).filter((k) => S.cside[k] === sd);
-      const power = members.reduce((s, k) => s + Geo.byKey[k].power, 0);
-      const scale = Math.min(1, 34 / power) * (sd === 'E' ? D.forces : 1);
-      const k = sd === 'E' ? D.inc : D.pBonus;
-      S.side[sd].m = Math.round((2500 + 220 * power) * k);
-      S.side[sd].i = Math.round((1200 + 100 * power) * k);
-      S.side[sd].o = Math.round((600 + 60 * power) * k);
-      const enemyCenter = this.blocCenter(OTHER[sd]);
-      for (const k of members) this.spawnStartingForces(Geo.byKey[k], sd, scale, enemyCenter, rnd);
+    const teamPow = {};
+    for (const k in S.team) teamPow[S.team[k]] = (teamPow[S.team[k]] || 0) + Geo.byKey[k].power;
+    for (const k in S.side) {
+      const c = Geo.byKey[k], rel = this.rk(k), pw = c.power, s = S.side[k];
+      const mult = rel === 'P' ? D.pBonus : rel === 'E' ? D.inc : 1;
+      s.m = Math.round((1500 + 300 * pw) * mult);
+      s.i = Math.round((700 + 140 * pw) * mult);
+      s.o = Math.round((350 + 80 * pw) * mult);
+      // Only countries at war start with an army; neutral countries mobilise when war reaches them.
+      if (!this.bell[c.idx]) continue;
+      const scale = Math.min(1, 34 / teamPow[S.team[k]]) * (rel === 'E' ? D.forces : 1) * (mode === 'ffa' ? 0.5 : 1);
+      this.spawnStartingForces(c, k, scale, this.foeCenter(k), rnd);
     }
     this.economyTick(0);
     AI.init(S);
@@ -59,6 +68,81 @@ const Game = {
   },
 
   newSide() { return { m: 0, i: 0, o: 0, inc: { m: 0, i: 0, o: 0 }, kills: 0, losses: 0, built: 0, captured: 0, nukes: 0 }; },
+
+  // ---------- Factions, teams and wars ----------
+  me() { return this.state.player; },
+  team(k) { return this.state.team[k] || k; },
+  warKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; },
+  atWar(ta, tb) { return ta !== tb && !!this.state.war[this.warKey(ta, tb)]; },
+  // Hot path (targeting, damage): team index lookup into a precomputed hostility matrix.
+  hostile(a, b) {
+    if (!a || !b || a === b) return false;
+    const i = this.ti[a], j = this.ti[b];
+    return i !== undefined && j !== undefined && this.H[i * this.nt + j] === 1;
+  },
+  allied(a, b) { return !!a && !!b && (a === b || this.team(a) === this.team(b)); },
+  // Relation of a faction to the player: P = player, A = ally, E = enemy, N = neutral (used for colours and UI).
+  rk(s) {
+    if (!s) return 'N';
+    let r = this.rkCache[s];
+    if (!r) {
+      const me = this.state.player;
+      r = this.rkCache[s] = s === me ? 'P' : this.allied(s, me) ? 'A' : this.hostile(s, me) ? 'E' : 'N';
+    }
+    return r;
+  },
+  // Model palette key: relation colour + equipment doctrine (West / East).
+  look(s) { return this.rk(s) + (EAST_DOCTRINE.has(s) ? 'E' : 'W'); },
+  isFoe(s) { return this.rk(s) === 'E'; },
+  // Damage / production / income factor of AI factions hostile to the player (difficulty).
+  eK(s, key = 'eDmg') { return s && this.hostile(s, this.state.player) ? DIFFICULTY[this.state.diff][key] : 1; },
+  vbit(s) { const i = this.ti[s]; return i === undefined ? 0 : this.tbits[i]; },
+
+  // Average position of everything hostile to faction k (where its army should face).
+  foeCenter(k) {
+    let x = 0, y = 0, n = 0;
+    this.state.prov.forEach((pr, i) => { if (this.hostile(pr.o, k)) { x += Geo.provinces[i].x; y += Geo.provinces[i].y; n++; } });
+    return n ? [x / n, y / n] : [Geo.provinces[Geo.byKey[k].provinces[0]].x, Geo.provinces[Geo.byKey[k].provinces[0]].y];
+  },
+
+  // Declare war between two teams. The defending side mobilises; neighbours of the defender may join it.
+  declareWar(ta, tb, neighbours = true) {
+    const S = this.state;
+    if (ta === tb || this.atWar(ta, tb)) return false;
+    S.war[this.warKey(ta, tb)] = 1;
+    const joined = [];
+    if (neighbours) {
+      // Only land neighbours near the defender's capital react (no overseas territories, no micro-states).
+      const nb = Geo.neighbors(), def = Object.keys(S.team).filter((k) => S.team[k] === tb);
+      const capOf = (k) => Geo.provinces[Geo.byKey[k].provinces.find((pid) => Geo.provinces[pid].type === 'capital') ?? Geo.byKey[k].provinces[0]];
+      const cand = new Set();
+      for (const k of def) {
+        const ck = capOf(k);
+        for (const ci of nb[Geo.byKey[k].idx]) {
+          const oc = Geo.countries[ci], o = oc.k;
+          if (!S.team[o] || S.team[o] === ta || S.team[o] === tb || !Geo.playable(oc)) continue;
+          const co = capOf(o);
+          if (U.dist(ck.x, ck.y, co.x, co.y) < 22) cand.add(S.team[o]);
+        }
+      }
+      const rnd = U.rng((S.seed ^ Math.floor(S.t * 10)) >>> 0);
+      for (const tc of cand) if (!this.atWar(tc, ta) && rnd() < 0.35) { S.war[this.warKey(tc, ta)] = 1; joined.push(tc); }
+    }
+    this.rebuild(true);
+    for (const tm of [ta, tb, ...joined]) this.mobilize(tm);
+    Render.dirty = true; Render.dirtyMini = true;
+    this.emit('war', { a: ta, b: tb, joined });
+    return true;
+  },
+
+  // Countries of a team that have no army yet raise one (smaller than a prepared starting force).
+  mobilize(tm) {
+    const S = this.state, rnd = U.rng((S.seed + S.nid) >>> 0);
+    for (const k in S.team) {
+      if (S.team[k] !== tm || k === S.player || !this.countProv(k) || S.units.some((u) => u.s === k)) continue;
+      this.spawnStartingForces(Geo.byKey[k], k, 0.6, this.foeCenter(k), rnd);
+    }
+  },
 
   newProv(p, side, rnd) {
     const c = Geo.countries[p.country];
@@ -83,20 +167,32 @@ const Game = {
 
   maxDef(pid, pr) { return Math.round(PROVINCE_TYPES[Geo.provinces[pid].type].def * (0.6 + 0.2 * (pr || this.state.prov[pid]).lvl)); },
 
-  // Derived lookups that are not saved.
-  rebuild() {
+  // Derived lookups that are not saved: unit index, team indices, hostility matrix, vision bits, passable countries.
+  rebuild(keepFx) {
     const S = this.state;
     this.byId = new Map(S.units.map((u) => [u.id, u]));
+    const teams = [...new Set(Object.values(S.team))];
+    const pt = S.team[S.player];
+    const involved = (tm) => tm === pt || teams.some((o) => this.atWar(tm, o));
+    // Teams that fight (and the player's) come first: they get their own vision bit (30 available).
+    teams.sort((a, b) => (involved(b) ? 1 : 0) - (involved(a) ? 1 : 0));
+    const tix = new Map(teams.map((tm, i) => [tm, i]));
+    this.nt = teams.length;
+    this.ti = {};
+    for (const k in S.team) this.ti[k] = tix.get(S.team[k]);
+    this.H = new Uint8Array(this.nt * this.nt);
+    for (const key in S.war) {
+      const [a, b] = key.split('|'), i = tix.get(a), j = tix.get(b);
+      if (i !== undefined && j !== undefined) { this.H[i * this.nt + j] = 1; this.H[j * this.nt + i] = 1; }
+    }
+    this.tbits = new Int32Array(this.nt).map((_, i) => 1 << Math.min(i, 30));
+    // Ground units may only enter countries that take part in a war (or the player's own team).
     this.bell = new Uint8Array(Geo.countries.length);
-    for (const k in S.cside) this.bell[Geo.byKey[k].idx] = 1;
-    this.fx = [];
+    this.act = {};
+    for (const k in S.team) if (involved(S.team[k])) { this.bell[Geo.byKey[k].idx] = 1; this.act[k] = 1; }
+    this.rkCache = {};
+    if (!keepFx) this.fx = [];
     Sim.provIndex = null;
-  },
-
-  blocCenter(side) {
-    let x = 0, y = 0, n = 0;
-    this.state.prov.forEach((p, i) => { if (p.o === side) { x += Geo.provinces[i].x; y += Geo.provinces[i].y; n++; } });
-    return n ? [x / n, y / n] : [0, 0];
   },
 
   spawnStartingForces(c, side, scale, [ex, ey], rnd) {
@@ -128,7 +224,7 @@ const Game = {
     const u = {
       id: S.nid++, t, s: side, x, y, hp: T.hp, sup: 0, ammo: T.w.map((w) => W[w].ammo || 0), cd: T.w.map(() => Math.random() * 2),
       ord: null, path: null, pi: 0, stance: 'free', tgt: null, tgtP: null, rt: Math.random(), inside: null, cargo: [], emb: false,
-      lastHit: -99, rev: 0, vm: side === 'P' ? 1 : 2, kills: 0, rout: 0, hd: 0, mv: false,
+      lastHit: -99, rev: 0, vm: this.vbit(side), kills: 0, rout: 0, hd: 0, mv: false,
     };
     if (T.plane) u.air = { base: null, fuel: T.fuel || 400, st: 'fly' };
     if (T.slbm) u.slbm = T.slbm;
@@ -158,20 +254,24 @@ const Game = {
   },
 
   // ---------- Economy ----------
-  income(side) {
-    const S = this.state, inc = { m: 0, i: 0, o: 0 };
+  // Income per minute of every faction in one pass over the provinces (contested provinces yield half).
+  incomeAll() {
+    const S = this.state, all = {};
     S.prov.forEach((pr, pid) => {
-      if (pr.o !== side || Sim.inFallout(Geo.provinces[pid])) return;
-      const T = PROVINCE_TYPES[Geo.provinces[pid].type], k = pr.lvl * (pr.cap && pr.cap.s !== side ? 0.5 : 1);
+      if (!pr.o || Sim.inFallout(Geo.provinces[pid])) return;
+      const inc = all[pr.o] || (all[pr.o] = { m: 0, i: 0, o: 0 });
+      const T = PROVINCE_TYPES[Geo.provinces[pid].type], k = pr.lvl * (pr.cap && pr.cap.s !== pr.o ? 0.5 : 1);
       inc.m += T.m * k; inc.i += T.i * k; inc.o += T.o * k;
     });
-    if (side === 'E') { const d = DIFFICULTY[S.diff].inc; inc.m *= d; inc.i *= d; inc.o *= d; }
-    return inc;
+    for (const sd in all) { const d = this.eK(sd, 'inc'); if (d !== 1) for (const r in all[sd]) all[sd][r] *= d; }
+    return all;
   },
+  income(side) { return this.incomeAll()[side] || { m: 0, i: 0, o: 0 }; },
 
   economyTick(dtMin) {
-    for (const sd of ['P', 'E']) {
-      const s = this.state.side[sd], inc = this.income(sd);
+    const all = this.incomeAll();
+    for (const sd in this.state.side) {
+      const s = this.state.side[sd], inc = all[sd] || { m: 0, i: 0, o: 0 };
       s.inc = inc;
       s.m += inc.m * dtMin; s.i += inc.i * dtMin; s.o += inc.o * dtMin;
     }
@@ -271,7 +371,7 @@ const Game = {
     S.prov.forEach((pr, pid) => {
       if (!pr.o || !pr.q.length || Sim.inFallout(Geo.provinces[pid])) return;
       const it = pr.q[0];
-      const k = pr.o === 'E' ? DIFFICULTY[S.diff].build : 1;
+      const k = this.eK(pr.o, 'build');
       it.t += dt * k * (pr.cap ? 0.3 : 1);
       if (it.t < it.total) return;
       // A batch produces one item after the other.
@@ -283,7 +383,7 @@ const Game = {
       else if (it.kind === 'nuke') S.side[side].nukes = (S.side[side].nukes || 0) + 1;
       else if (it.kind === 'bld') pr.b[it.key]++;
       else if (it.kind === 'upg') { pr.lvl++; pr.def = this.maxDef(pid); }
-      if (side === 'P') this.emit('produced', { pid, it, u });
+      if (side === S.player) this.emit('produced', { pid, it, u });
     });
   },
 
@@ -343,7 +443,7 @@ const Game = {
       }
     }
     const p = Path.find(u.x, u.y, tx, ty, mode, this.bell);
-    if (!p) { u.path = null; u.ord = null; if (u.s === 'P') this.emit('noPath', u); return shared; }
+    if (!p) { u.path = null; u.ord = null; if (u.s === this.state.player) this.emit('noPath', u); return shared; }
     u.path = p; u.pi = 0;
     return shared || { mode, sx: u.x, sy: u.y, path: p };
   },

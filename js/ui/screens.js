@@ -2,7 +2,7 @@
 'use strict';
 
 const Screens = {
-  setup: { country: 'DE', enemy: 'EU', diff: 'normal' },
+  setup: { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'normal' },
   attract: true,
 
   show(id) {
@@ -28,19 +28,7 @@ const Screens = {
   },
 
   // ---------- Scenario setup ----------
-  neighbors() {
-    if (this._nb) return this._nb;
-    const nb = Geo.countries.map(() => new Set()), gw = Geo.gw;
-    for (let i = 0; i < Geo.gc.length; i++) {
-      const a = Geo.gc[i];
-      if (a < 0) continue;
-      for (const j of [i + 1, i + gw, i + gw + 1, i + gw - 1]) {
-        const b = Geo.gc[j];
-        if (b >= 0 && b !== a && j < Geo.gc.length) { nb[a].add(b); nb[b].add(a); }
-      }
-    }
-    return (this._nb = nb);
-  },
+  neighbors() { return Geo.neighbors(); },
 
   blocTouches(a, b) {
     const nb = this.neighbors();
@@ -48,63 +36,79 @@ const Screens = {
     return a.members.some((k) => Geo.byKey[k] && [...nb[Geo.byKey[k].idx]].some((i) => B.has(i)));
   },
 
+  // The player's team: their bloc, or the country alone when it belongs to no bloc.
+  ownTeam(k) { return BLOCS.find((b) => b.members.includes(k)) || { id: k, de: countryName(Geo.byKey[k]), en: countryName(Geo.byKey[k]), members: [k], solo: true }; },
+
   setupScreen(tutorial) {
     this.tutorial = tutorial;
     this.attract = false;
-    if (tutorial) Object.assign(this.setup, { country: 'DE', enemy: 'EU', diff: 'easy' });
+    if (tutorial) Object.assign(this.setup, { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'easy' });
     this.show('#setup');
     $('#setupSearch').value = '';
     $('#setupSearch').oninput = () => this.renderNations();
     $('#setupBack').onclick = () => this.menu();
     $('#setupStart').onclick = () => this.startGame();
     $$('#diffSeg button').forEach((b) => (b.onclick = () => { this.setup.diff = b.dataset.diff; this.renderSetup(); }));
+    $$('#modeSeg button').forEach((b) => (b.onclick = () => { this.setup.mode = b.dataset.mode; Sfx.play('click'); this.renderSetup(); }));
     this.renderNations();
     this.renderSetup();
   },
 
+  // Every playable country, grouped by alliance; countries outside the blocs are listed last.
   renderNations() {
     const q = $('#setupSearch').value.trim().toLowerCase();
+    const match = (k) => Geo.byKey[k] && Geo.playable(Geo.byKey[k]) && (!q || countryName(Geo.byKey[k]).toLowerCase().includes(q));
+    const btn = (k) => `<button class="nation ${k === this.setup.country ? 'on' : ''}" data-k="${k}">${U.esc(countryName(Geo.byKey[k]))}<small>${'▮'.repeat(Math.min(10, Geo.byKey[k].power))}</small></button>`;
     let h = '';
     for (const b of BLOCS) {
-      const ms = b.members.filter((k) => Geo.byKey[k] && (!q || countryName(Geo.byKey[k]).toLowerCase().includes(q)));
-      if (!ms.length) continue;
-      h += `<div class="bloc"><div class="bloc-name">${U.esc(L(b))}</div><div class="nation-grid">` +
-        ms.map((k) => `<button class="nation ${k === this.setup.country ? 'on' : ''}" data-k="${k}">${U.esc(countryName(Geo.byKey[k]))}<small>${'▮'.repeat(Math.min(10, Geo.byKey[k].power))}</small></button>`).join('') + '</div></div>';
+      const ms = b.members.filter(match);
+      if (ms.length) h += `<div class="bloc"><div class="bloc-name">${U.esc(L(b))}</div><div class="nation-grid">${ms.map(btn).join('')}</div></div>`;
     }
+    const inBloc = new Set(BLOCS.flatMap((b) => b.members));
+    const free = Geo.countries.filter((c) => !inBloc.has(c.k) && match(c.k)).sort((a, b) => countryName(a).localeCompare(countryName(b))).map((c) => c.k);
+    if (free.length) h += `<div class="bloc"><div class="bloc-name">${U.esc(t('noAlliance'))}</div><div class="nation-grid">${free.map(btn).join('')}</div></div>`;
     $('#blocList').innerHTML = h;
     $$('#blocList .nation').forEach((b) => (b.onclick = () => {
       this.setup.country = b.dataset.k;
-      const own = BLOCS.find((x) => x.members.includes(b.dataset.k));
-      if (own.id === this.setup.enemy) this.setup.enemy = BLOCS.find((x) => x.id !== own.id && this.blocTouches(own, x))?.id || BLOCS.find((x) => x.id !== own.id).id;
+      const own = this.ownTeam(b.dataset.k);
+      if (own.id === this.setup.enemy || !BLOCS.some((x) => x.id === this.setup.enemy)) this.setup.enemy = BLOCS.find((x) => x.id !== own.id && this.blocTouches(own, x))?.id || BLOCS.find((x) => x.id !== own.id).id;
       Sfx.unlock(); Sfx.play('click');
       this.renderNations(); this.renderSetup();
     }));
   },
 
   renderSetup() {
-    const S = this.setup, own = BLOCS.find((b) => b.members.includes(S.country)), en = BLOCS.find((b) => b.id === S.enemy);
+    const S = this.setup, own = this.ownTeam(S.country), en = BLOCS.find((b) => b.id === S.enemy), ffa = S.mode === 'ffa';
     const c = Geo.byKey[S.country];
     const members = (b) => b.members.filter((k) => Geo.byKey[k]);
     const provCount = (b) => members(b).reduce((s, k) => s + Geo.byKey[k].provinces.length, 0);
     const pow = (b) => members(b).reduce((s, k) => s + Geo.byKey[k].power, 0);
+    const allies = members(own).filter((k) => k !== S.country);
     $('#setupInfo').innerHTML = `<h2>${U.esc(countryName(c))}</h2>
-      <div class="stat-line"><span>${U.esc(t('yourBloc'))}</span><b>${U.esc(L(own))}</b></div>
-      <div class="chips">${members(own).map((k) => `<span class="chip">${U.esc(countryName(Geo.byKey[k]))}</span>`).join('')}</div>
-      <div class="stat-line" style="margin-top:8px"><span>${U.esc(t('provinces'))}</span><b>${provCount(own)}</b></div>
-      <div class="stat-line"><span>${U.esc(t('power'))}</span><b>${pow(own)}</b></div>`;
-    $('#enemyList').innerHTML = BLOCS.filter((b) => b.id !== own.id).map((b) => {
-      const touch = this.blocTouches(own, b);
-      return `<button class="enemy-opt ${b.id === S.enemy ? 'on' : ''}" data-b="${b.id}"><b>${U.esc(L(b))}</b>
-        <span>${members(b).map((k) => U.esc(countryName(Geo.byKey[k]))).join(', ')}</span><br>
-        <span>${provCount(b)} ${U.esc(t('provinces'))} · ${U.esc(t('power'))} ${pow(b)} · ${touch ? '⬌ ' + U.esc(t('adjacent')) : '⚓ ' + U.esc(t('notAdjacent'))}</span></button>`;
-    }).join('');
-    $$('#enemyList .enemy-opt').forEach((b) => (b.onclick = () => { S.enemy = b.dataset.b; Sfx.play('click'); this.renderSetup(); }));
+      <div class="stat-line"><span>${U.esc(t('yourBloc'))}</span><b>${U.esc(own.solo ? t('noAlliance') : L(own))}</b></div>
+      ${allies.length ? `<div class="chips"><span class="chip own">${U.esc(countryName(c))}</span>${allies.map((k) => `<span class="chip ally">${U.esc(countryName(Geo.byKey[k]))}</span>`).join('')}</div>
+      <p class="muted small">${U.esc(t('alliesAi'))}</p>` : ''}
+      <div class="stat-line" style="margin-top:8px"><span>${U.esc(t('yourProvinces'))}</span><b>${c.provinces.length}</b></div>
+      <div class="stat-line"><span>${U.esc(t('power'))}</span><b>${c.power}${allies.length ? ` <span class="muted small">(${U.esc(t('bloc'))} ${pow(own)})</span>` : ''}</b></div>`;
+    $$('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === S.mode));
+    $('#modeDesc').textContent = t(ffa ? 'modeFfaD' : 'modeBlocD');
+    $('#enemyHead').hidden = ffa; $('#enemyList').hidden = ffa;
+    if (!ffa) {
+      $('#enemyList').innerHTML = BLOCS.filter((b) => b.id !== own.id).map((b) => {
+        const touch = this.blocTouches(own, b);
+        return `<button class="enemy-opt ${b.id === S.enemy ? 'on' : ''}" data-b="${b.id}"><b>${U.esc(L(b))}</b>
+          <span>${members(b).map((k) => U.esc(countryName(Geo.byKey[k]))).join(', ')}</span><br>
+          <span>${provCount(b)} ${U.esc(t('provinces'))} · ${U.esc(t('power'))} ${pow(b)} · ${touch ? '⬌ ' + U.esc(t('adjacent')) : '⚓ ' + U.esc(t('notAdjacent'))}</span></button>`;
+      }).join('');
+      $$('#enemyList .enemy-opt').forEach((b) => (b.onclick = () => { S.enemy = b.dataset.b; Sfx.play('click'); this.renderSetup(); }));
+    }
     $$('#diffSeg button').forEach((b) => b.classList.toggle('on', b.dataset.diff === S.diff));
     $('#diffDesc').textContent = t(S.diff + 'D');
-    // Preview on the map and frame both blocs.
-    Render.preview = { P: new Set(members(own)), E: new Set(members(en)) };
+    // Preview on the map: own country, allies, enemies (world war: every other bloc).
+    const foes = ffa ? BLOCS.filter((b) => b.id !== own.id).flatMap(members) : members(en);
+    Render.preview = { P: new Set([S.country]), A: new Set(allies), E: new Set(foes) };
     Render.dirty = true; Render.dirtyMini = true;
-    const all = members(own).concat(members(en)).map((k) => Geo.byKey[k]);
+    const all = (ffa ? members(own) : members(own).concat(members(en))).map((k) => Geo.byKey[k]);
     const bx0 = Math.min(...all.map((x) => x.bbox[0])), by0 = Math.min(...all.map((x) => x.bbox[1])), bx1 = Math.max(...all.map((x) => x.bbox[2])), by1 = Math.max(...all.map((x) => x.bbox[3]));
     const z = Math.min(Render.w * 0.45 / Math.max(5, bx1 - bx0), Render.h * 0.8 / Math.max(5, by1 - by0));
     Render.flyTo((bx0 + bx1) / 2, (by0 + by1) / 2, z);
@@ -113,7 +117,7 @@ const Screens = {
   startGame() {
     Sfx.unlock();
     Render.preview = null;
-    const S = Game.newGame({ country: this.setup.country, enemyBloc: this.setup.enemy, difficulty: this.setup.diff });
+    const S = Game.newGame({ country: this.setup.country, mode: this.setup.mode, enemyBloc: this.setup.enemy, difficulty: this.setup.diff });
     this.enterHud();
     S.paused = true;
     UI.renderTime();
@@ -143,7 +147,7 @@ const Screens = {
     if (r !== true) { this.modal(`<h2>${U.esc(t('load'))}</h2><p>${U.esc(t(r))}</p><div class="row end"><button class="btn primary" data-a="ok">${U.esc(t('ok'))}</button></div>`); this.bindModal({ ok: () => this.slots('load') }); return; }
     this.enterHud();
     const S = Game.state;
-    const any = S.units.find((u) => u.s === 'P') || Geo.provinces[S.prov.findIndex((p) => p.o === 'P')];
+    const any = S.units.find((u) => u.s === S.player) || Geo.provinces[S.prov.findIndex((p) => p.o === S.player)];
     if (any) Render.flyTo(any.x, any.y, 14);
     UI.log(t('evLoaded'), 'info');
     UI.renderTime();
@@ -188,13 +192,22 @@ const Screens = {
     this.bindModal({ no: () => this.pauseMenu(), yes: () => { this.resumeOnClose = false; yes(); } });
   },
 
+  // In-game yes/no question that pauses the game while it is open and resumes afterwards.
+  ask(title, text, yes) {
+    const S = Game.state;
+    this.resumeOnClose = S && !S.paused;
+    if (S) { S.paused = true; UI.renderTime(); }
+    this.modal(`<h2>${U.esc(title)}</h2><p>${U.esc(text)}</p><div class="row end"><button class="btn" data-a="no">${U.esc(t('no'))}</button><button class="btn danger" data-a="yes">${U.esc(t('yes'))}</button></div>`);
+    this.bindModal({ no: () => this.closeModal(), yes: () => { this.closeModal(); yes(); } });
+  },
+
   // Save / load dialog: any number of named saves (newest first) plus the rotating autosaves.
   // kind = 'save' | 'load'; askDel = id of a save whose deletion waits for confirmation.
   slots(kind, askDel = null) {
     const back = () => (Game.state ? this.pauseMenu() : this.closeModal());
     const fmt = (m) => {
       const bloc = BLOCS.find((b) => b.id === m.eBloc), d = new Date(m.when);
-      return `${U.esc(bloc ? 'vs. ' + L(bloc) : '')}<br>${d.toLocaleString(I18N.lang === 'de' ? 'de-DE' : 'en-GB')} · ${U.esc(t('days', Math.floor(m.t * 120 / 86400) + 1))} · ${U.esc(t(m.diff))} · ${m.prov} ${U.esc(t('provinces'))}`;
+      return `${U.esc(bloc ? 'vs. ' + L(bloc) : m.mode === 'ffa' ? t('modeFfa') : '')}<br>${d.toLocaleString(I18N.lang === 'de' ? 'de-DE' : 'en-GB')} · ${U.esc(t('days', Math.floor(m.t * 120 / 86400) + 1))} · ${U.esc(t(m.diff))} · ${m.prov} ${U.esc(t('provinces'))}`;
     };
     let h = `<h2>${U.esc(t(kind))}</h2>`;
     if (kind === 'save') {
@@ -328,14 +341,14 @@ const Screens = {
   },
 
   endScreen(r) {
-    const S = Game.state, s = S.side.P;
+    const S = Game.state, s = S.side[S.player];
     const days = Math.floor(S.t * 120 / 86400) + 1;
     this.modal(`<div class="end-title ${r === 'win' ? 'win' : 'lose'}">${U.esc(t(r === 'win' ? 'victory' : 'defeat'))}</div>
       <p style="text-align:center" class="muted">${U.esc(t(r === 'win' ? 'victoryText' : 'defeatText'))}</p>
       <div class="end-stats">
         <div class="stat-line"><span>${U.esc(t('statTime'))}</span><b>${U.esc(t('days', days))}</b></div>
         <div class="stat-line"><span>${U.esc(t('statCaptured'))}</span><b>${s.captured}</b></div>
-        <div class="stat-line"><span>${U.esc(t('statKills'))}</span><b>${S.side.E.losses}</b></div>
+        <div class="stat-line"><span>${U.esc(t('statKills'))}</span><b>${s.kills}</b></div>
         <div class="stat-line"><span>${U.esc(t('statLosses'))}</span><b>${s.losses}</b></div>
         <div class="stat-line"><span>${U.esc(t('statBuilt'))}</span><b>${s.built}</b></div>
       </div>

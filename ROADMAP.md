@@ -274,9 +274,12 @@ Conflict of Nations** (moderne Weltkarte, Provinzen, Bündnisse, Forschung, Spio
 ### Beta 1 – Ziel: Ende November 2026 (Uni-Abgabe)
 Alles, was die Abgabe stabil, vorführbar und spürbar besser macht. Reihenfolge = Arbeitsreihenfolge.
 
-**Stand 2. Nov.:** Schritt 1 erledigt bis auf GitHub (Konto fehlt): lokales Git-Repository, Spielstände (Namen, Löschen,
-IndexedDB, Migration, 3 Autosaves, Speichern im Hintergrund), Fehlerfang mit Notfall-Spielstand, Hochformat-Leiste,
-automatischer Testlauf `node tools/selftest.js`.
+**Stand 2. Nov.:** Schritt 1 erledigt (Repository auf GitHub: papoch295/ironmeridian, privat): Spielstände (Namen,
+Löschen, IndexedDB, Migration, 3 Autosaves, Speichern im Hintergrund), Fehlerfang mit Notfall-Spielstand,
+Hochformat-Leiste, automatischer Testlauf `node tools/selftest.js`.
+Schritt 2 erledigt: jedes Land eine eigene Fraktion (Wirtschaft, KI), Bündnisse als Teams, Spieler steuert nur sein
+Land, Verbündete per KI, freie Länderwahl (auch ohne Bündnis), Modi „Bündniskrieg“ und „Weltkrieg“, Kriegserklärung
+an neutrale Länder mit Mobilmachung und Reaktion der Nachbarn, alte Spielstände werden umgewandelt.
 
 | Schritt | Inhalt | Punkte |
 |---|---|---|

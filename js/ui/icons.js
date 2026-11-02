@@ -37,8 +37,9 @@ const ICON = {
 
 const UnitIcon = {
   cache: {},
-  get(t, side = 'P') {
-    const key = t + side + (Render.models ? 'm' : 'n');
+  // side = model look key (Game.look); defaults to the player's own look. Symbols only need its relation letter.
+  get(t, side = Game.state ? Game.look(Game.state.player) : 'P') {
+    const key = t + side + (Render.models ? 'm' : 'n'), rk = side[0];
     if (this.cache[key]) return this.cache[key];
     const T = UNIT_TYPES[t];
     // Rendered at twice the display size so icons stay crisp on high-DPI screens.
@@ -49,8 +50,8 @@ const UnitIcon = {
       const inf = T.cls === 'soft' && t !== 'recon';
       const sz = T.dom === 'land' ? (inf ? 56 : 64) : T.dom === 'sea' ? 80 : 76;
       Models.draw(ctx, t, side, 84, T.dom === 'land' ? (inf ? 74 : 70) : T.dom === 'sea' ? 68 : 58, sz, 0, 1);
-    } else if (T.dom === 'land') Sym.counter(ctx, T.sym, side, 84, 60, 80, 1);
-    else Sym.craft(ctx, T.sym, side, 84, 60, T.dom === 'sea' ? 104 : 92, -Math.PI / 2 + (T.dom === 'sea' ? Math.PI / 2 : 0), 1);
+    } else if (T.dom === 'land') Sym.counter(ctx, T.sym, rk, 84, 60, 80, 1);
+    else Sym.craft(ctx, T.sym, rk, 84, 60, T.dom === 'sea' ? 104 : 92, -Math.PI / 2 + (T.dom === 'sea' ? Math.PI / 2 : 0), 1);
     return (this.cache[key] = c.toDataURL());
   },
   missile() {

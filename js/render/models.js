@@ -34,17 +34,24 @@ const Col = {
   },
 };
 
-// Faction palettes: vehicles wear one factory colour each, bright accents (plinth, pennants) for readability.
-// West (P): CARC desert tan. East (E): Russian protective green. camo: uniform / helmet patterns (see
-// Models.camoPaint, used for figures only); jet/ship/sub are the air and naval greys.
-const MODEL_COL = {
-  P: { body: '#b39b74', light: '#cdb892', dark: '#5f5240', cloth: '#7a7556', gear: '#4f5038', flag: '#3d8bff', accent: '#3d8bff', accentD: '#1d4fa8',
-       camo: ['#3c4630', '#5e4c34', '#1f211b'], skin2: '#b5a57c',
-       baseA: '#3a7ce6', baseB: '#173a80', rim: '#9fcaff', outline: '#0a121c', plate: '#0d1b2b', ship: '#8a959c', sub: '#2f3438', jet: '#7f878d' },
-  E: { body: '#55633b', light: '#7a8656', dark: '#2a301c', cloth: '#5f6646', gear: '#3e4330', flag: '#e8423a', accent: '#e8423a', accentD: '#9a1f1a',
-       camo: ['#9a8b5c', '#2a2c20', '#3f4a2a'], skin2: '#8d8f68',
-       baseA: '#d8473e', baseB: '#7a1914', rim: '#ffab9c', outline: '#1c0b08', plate: '#2a0f0b', ship: '#7f8c92', sub: '#2a2e31', jet: '#8fa3b2' },
+// Model palettes = equipment doctrine (paint, uniforms, models) + relation to the player (plinth, pennants, bands).
+// Doctrine W: CARC desert tan, Western equipment. Doctrine E: Russian protective green, Eastern equipment (Models.mE).
+// camo: uniform / helmet patterns (see Models.camoPaint, used for figures only); jet/ship/sub are air and naval greys.
+const DOC_COL = {
+  W: { east: false, body: '#b39b74', light: '#cdb892', dark: '#5f5240', cloth: '#7a7556', gear: '#4f5038', camo: ['#3c4630', '#5e4c34', '#1f211b'], skin2: '#b5a57c', ship: '#8a959c', sub: '#2f3438', jet: '#7f878d' },
+  E: { east: true, body: '#55633b', light: '#7a8656', dark: '#2a301c', cloth: '#5f6646', gear: '#3e4330', camo: ['#9a8b5c', '#2a2c20', '#3f4a2a'], skin2: '#8d8f68', ship: '#7f8c92', sub: '#2a2e31', jet: '#8fa3b2' },
 };
+const REL_COL = {
+  P: { flag: '#3d8bff', accent: '#3d8bff', accentD: '#1d4fa8', baseA: '#3a7ce6', baseB: '#173a80', rim: '#9fcaff', outline: '#0a121c', plate: '#0d1b2b' },
+  A: { flag: '#3fd1bc', accent: '#3fd1bc', accentD: '#167a6c', baseA: '#2fae9c', baseB: '#0f5148', rim: '#a6f2e6', outline: '#071a17', plate: '#0a221f' },
+  E: { flag: '#e8423a', accent: '#e8423a', accentD: '#9a1f1a', baseA: '#d8473e', baseB: '#7a1914', rim: '#ffab9c', outline: '#1c0b08', plate: '#2a0f0b' },
+  N: { flag: '#cfc58a', accent: '#cfc58a', accentD: '#7d7548', baseA: '#a59d68', baseB: '#4f4a30', rim: '#efe9c4', outline: '#15140e', plate: '#24221a' },
+};
+// Look keys: relation + doctrine ('PW', 'EE', 'AW', 'NE', ...); 'P' and 'E' remain as shorthands for the galleries.
+const MODEL_COL = {};
+for (const r in REL_COL) for (const d in DOC_COL) MODEL_COL[r + d] = { ...DOC_COL[d], ...REL_COL[r] };
+MODEL_COL.P = MODEL_COL.PW;
+MODEL_COL.E = MODEL_COL.EE;
 const TRACK = '#2a2d29', WHEEL = '#4a4f48', METAL = '#c9d0d4', GUN = '#2c302c', GLASS = '#13232f', SKIN = '#d9b08a', HULL_GREY = '#7d8a93', DECK = '#59636b';
 
 const Models = {
@@ -53,7 +60,8 @@ const Models = {
   pass: 'fill',    // 'out' draws the silhouette outline, 'fill' the shaded model
   cache: new Map(),
 
-  // Public entry point (same signature as before): draw unit type t of side at (x, y), size s px, heading hd.
+  // Public entry point: draw unit type t with look key `side` (see MODEL_COL, e.g. Game.look(u.s)) at (x, y),
+  // size s px, heading hd.
   draw(ctx, t, side, x, y, s, hd, alpha = 1) {
     const T = UNIT_TYPES[t], face = Math.cos(hd || 0) < -0.15 ? -1 : 1;
     const dpr = (Render && Render.dpr) || 1;
@@ -68,7 +76,7 @@ const Models = {
     ctx.globalAlpha *= alpha;
     ctx.drawImage(spr.cv, x - spr.ox * k, y + bob - spr.oy * k, spr.cv.width * k, spr.cv.height * k);
     // Animated parts (rotors, radar) are drawn live on top of the cached body. Eastern models bring their own.
-    const fn = side === 'E' && this.mE[t] ? this.animE[t] : this.anim[t];
+    const fn = MODEL_COL[side].east && this.mE[t] ? this.animE[t] : this.anim[t];
     if (fn) {
       ctx.translate(x, y + bob); ctx.scale(s * face, s);
       if (air) ctx.translate(0, -0.25);
@@ -105,7 +113,7 @@ const Models = {
   },
 
   render(ctx, t, side, face, s) {
-    const T = UNIT_TYPES[t], C = MODEL_COL[side], fn = (side === 'E' && this.mE[t]) || this.m[t];
+    const T = UNIT_TYPES[t], C = MODEL_COL[side], fn = (C.east && this.mE[t]) || this.m[t];
     const air = T.dom === 'air', sea = T.dom === 'sea';
     if (!sea && !air) this.base(ctx, C, s);
     if (sea) this.water(ctx, s, t);
@@ -123,7 +131,7 @@ const Models = {
     const o = s < 30 ? 1.4 : s < 60 ? 1.6 : 1.8;
     this.out = o / s; this.lw = (s < 30 ? 0.6 : 0.8) / s; this.small = s < 26;
     this.outCol = C.outline;
-    this.camoBase = C.body; this.camoCols = C.camo; this.camoSide = side;
+    this.camoBase = C.body; this.camoCols = C.camo; this.camoSide = C.east ? 'E' : 'P';
     this.pass = 'out'; fn.call(this, ctx, C);
     this.pass = 'fill'; fn.call(this, ctx, C);
     if (sea) {
@@ -453,7 +461,7 @@ const Models = {
   topFace(ctx, C, x0, x1, y, d = 0.026, col) { this.P(ctx, [[x0, y], [x0 + d, y - d], [x1 - d, y - d], [x1, y]], col || Col.adj(C.body, 9)); },
   // Crew member standing in an open hatch at (x, y = hatch rim): shoulders, head with helmet / headset, hatch ring.
   crew(ctx, C, x, y, k = 1) {
-    const east = C === MODEL_COL.E, helm = east ? '#3b3e30' : C.skin2;
+    const east = C.east, helm = east ? '#3b3e30' : C.skin2;
     ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
     this.R(ctx, -0.05, -0.07, 0.1, 0.08, C.cloth, null, 0.025, { camo: false });
     this.O(ctx, 0.005, -0.1, 0.034, SKIN, null, { noLine: true });
@@ -588,7 +596,7 @@ const Models = {
   // east (override the side, normally taken from the palette).
   soldier(ctx, C, x, k = 1, opt = {}) {
     ctx.save(); ctx.translate(x, 0.3); ctx.scale(k, k);
-    const east = opt.east ?? C === MODEL_COL.E, dark = !!opt.dark, fill = this.pass === 'fill', wpn = opt.weapon || 'rifle';
+    const east = opt.east ?? C.east, dark = !!opt.dark, fill = this.pass === 'fill', wpn = opt.weapon || 'rifle';
     const cloth = dark ? (east ? '#363b33' : '#3c4239') : C.cloth, clothD = Col.adj(cloth, -13);
     const gear = dark ? '#202427' : C.gear, gearD = Col.adj(gear, -9);
     const helm = dark ? '#272b2d' : east ? C.cloth : C.skin2;
@@ -856,7 +864,7 @@ const Models = {
     // Sniper team: West M110 SASS (suppressed, 10x scope, bipod), shooter in a boonie hat, spotter with binoculars.
     // East SV-98 team (bolt action, long suppressor), shooter in a Kikimora-type ghillie hood.
     sniper(ctx, C) {
-      const east = C === MODEL_COL.E;
+      const east = C.east;
       this.soldier(ctx, C, -0.44, 0.82, { pose: 'kneel', weapon: 'bino' });
       this.soldier(ctx, C, 0.08, 0.95, { pose: 'prone', weapon: 'long', hat: east ? 'ghillie' : 'boonie', pack: false });
       this.pennant(ctx, C, -0.7, 0.3, 0.6);

@@ -62,9 +62,10 @@ const Render = {
   viewBox() { const [x0, y0] = this.toWorld(0, 0), [x1, y1] = this.toWorld(this.w, this.h); return [x0, y0, x1, y1]; },
   visible(b, vb) { return !(b[2] < vb[0] || b[0] > vb[2] || b[3] < vb[1] || b[1] > vb[3]); },
 
+  // Relation key (P / A / E / N) of a country's own faction, or of the setup preview; null = plain map.
   sideOfCountry(c) {
-    if (Game.state) return Game.state.cside[c.k] || null;
-    if (this.preview) return this.preview.P.has(c.k) ? 'P' : this.preview.E.has(c.k) ? 'E' : null;
+    if (Game.state) return Game.state.team[c.k] ? Game.rk(c.k) : null;
+    if (this.preview) return this.preview.P.has(c.k) ? 'P' : this.preview.A && this.preview.A.has(c.k) ? 'A' : this.preview.E.has(c.k) ? 'E' : null;
     return null;
   },
 
@@ -111,11 +112,12 @@ const Render = {
     for (const co of Geo.countries) {
       if (!this.visible(co.bbox, vb)) continue;
       const side = this.sideOfCountry(co);
-      if (!side) { ctx.fillStyle = this.neutralCol[co.idx]; ctx.fill(hi ? co.path : co.pathLo); continue; }
+      // Provinces are coloured by their current owner's relation to the player; untouched neutral land stays plain.
+      if (!side || (S && side === 'N' && co.provinces.every((pid) => Game.rk(S.prov[pid].o) === 'N'))) { ctx.fillStyle = this.neutralCol[co.idx]; ctx.fill(hi ? co.path : co.pathLo); continue; }
       if (!S) { ctx.fillStyle = this.provColor(side, 0); ctx.fill(co.path); continue; }
       for (const pid of co.provinces) {
-        const p = Geo.provinces[pid], pr = S.prov[pid];
-        ctx.fillStyle = pr.o ? this.provColor(pr.o, p.shade, pr.cap && pr.cap.p > 0.05) : this.neutralCol[co.idx];
+        const p = Geo.provinces[pid], pr = S.prov[pid], rk = Game.rk(pr.o);
+        ctx.fillStyle = rk !== 'N' ? this.provColor(rk, p.shade, pr.cap && pr.cap.p > 0.05) : this.neutralCol[co.idx];
         ctx.fill(p.path);
       }
       // Province borders, clipped to the country so Voronoi seams over water are hidden.
@@ -130,12 +132,13 @@ const Render = {
     ctx.strokeStyle = 'rgba(8,12,14,0.85)'; ctx.lineWidth = 1.1 * px;
     for (const co of Geo.countries) if (this.visible(co.bbox, vb)) ctx.stroke(hi ? co.path : co.pathLo);
     // Highlight belligerent outlines: soft wide glow under a crisp line.
+    const edge = { P: 'rgba(165,212,255,0.7)', A: 'rgba(160,240,226,0.7)', E: 'rgba(255,165,150,0.7)' };
     for (const co of vis) {
       const side = this.sideOfCountry(co);
-      if (!side) continue;
-      ctx.strokeStyle = side === 'P' ? 'rgba(111,179,234,0.16)' : 'rgba(238,107,93,0.16)'; ctx.lineWidth = 5 * px;
+      if (!side || side === 'N') continue;
+      ctx.strokeStyle = COL[side].glow + '0.16)'; ctx.lineWidth = 5 * px;
       ctx.stroke(co.path);
-      ctx.strokeStyle = side === 'P' ? 'rgba(165,212,255,0.7)' : 'rgba(255,165,150,0.7)'; ctx.lineWidth = 1.3 * px;
+      ctx.strokeStyle = edge[side]; ctx.lineWidth = 1.3 * px;
       ctx.stroke(co.path);
     }
     if (this.selProv !== null && S) {
@@ -213,7 +216,8 @@ const Render = {
       if (!this.visible(co.bbox, vb)) continue;
       const wpx = (co.bbox[2] - co.bbox[0]) * c.z;
       if (wpx < 46) continue;
-      const side = this.sideOfCountry(co);
+      let side = this.sideOfCountry(co);
+      if (side === 'N') side = null;
       const size = U.clamp(Math.sqrt(co.area) * c.z * 0.09, 9, 26);
       if (c.z > 40 && !side) continue;
       const [sx, sy] = this.toScreen(co.label[0], co.label[1]);
@@ -221,7 +225,7 @@ const Render = {
       ctx.letterSpacing = (size * 0.12).toFixed(1) + 'px';
       const name = countryName(co).toUpperCase();
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(5,9,12,0.55)'; ctx.strokeText(name, sx, sy - (side && c.z > 10 ? size : 0));
-      ctx.fillStyle = side === 'P' ? 'rgba(205,230,255,0.85)' : side === 'E' ? 'rgba(255,215,210,0.85)' : 'rgba(225,228,215,0.5)';
+      ctx.fillStyle = side === 'P' ? 'rgba(205,230,255,0.85)' : side === 'A' ? 'rgba(205,245,238,0.85)' : side === 'E' ? 'rgba(255,215,210,0.85)' : 'rgba(225,228,215,0.5)';
       ctx.fillText(name, sx, sy - (side && c.z > 10 ? size : 0));
     }
     ctx.letterSpacing = '0px';
@@ -257,17 +261,17 @@ const Render = {
 
   drawSites(ctx, vb, S) {
     const z = this.cam.z, s = this.siteSize();
-    const parked = {};
-    for (const u of S.units) if (u.air && u.air.st === 'ground' && u.s === 'P') parked[u.air.base] = (parked[u.air.base] || 0) + 1;
+    const parked = {}, me = S.player;
+    for (const u of S.units) if (u.air && u.air.st === 'ground' && u.s === me) parked[u.air.base] = (parked[u.air.base] || 0) + 1;
     for (const p of Geo.provinces) {
       if (p.x < vb[0] - 1 || p.x > vb[2] + 1 || p.y < vb[1] - 1 || p.y > vb[3] + 1) continue;
-      const pr = S.prov[p.id];
-      if (!pr.o && (z < 9 || p.type !== 'capital')) continue;
+      const pr = S.prov[p.id], rk = Game.rk(pr.o);
+      if (rk === 'N' && (z < 9 || p.type !== 'capital')) continue;
       if (z < 3.2 && p.type !== 'capital') continue;
       const [sx, sy] = this.toScreen(p.x, p.y);
-      Sym.site(ctx, p.type, pr.o, sx, sy, s);
-      if (!pr.o) continue;
-      if (pr.o === 'P' && pr.b.radar) {
+      Sym.site(ctx, p.type, rk, sx, sy, s);
+      if (rk === 'N') continue;
+      if (pr.o === me && pr.b.radar) {
         // Radar: rotating sweep on the icon, full coverage ring when the province is selected.
         const a = performance.now() / 600;
         ctx.strokeStyle = 'rgba(140,230,190,0.85)'; ctx.lineWidth = 1.5;
@@ -277,9 +281,9 @@ const Render = {
           ctx.beginPath(); ctx.arc(sx, sy, RADAR_RANGE[pr.b.radar] * z, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
         }
       }
-      if (pr.b.aad && (pr.o === 'P' || this.selProv === p.id)) {
+      if (pr.b.aad && (pr.o === me || this.selProv === p.id)) {
         // Air defense site: small chevrons on the icon, engagement ring when the province is selected.
-        ctx.strokeStyle = pr.o === 'P' ? 'rgba(255,190,120,0.9)' : 'rgba(255,140,120,0.9)'; ctx.lineWidth = 1.4;
+        ctx.strokeStyle = pr.o === me ? 'rgba(255,190,120,0.9)' : 'rgba(255,140,120,0.9)'; ctx.lineWidth = 1.4;
         for (let i = 0; i < pr.b.aad; i++) { const yy = sy - s * 0.95 - i * 3.5; ctx.beginPath(); ctx.moveTo(sx - 4, yy + 2.5); ctx.lineTo(sx, yy); ctx.lineTo(sx + 4, yy + 2.5); ctx.stroke(); }
         if (this.selProv === p.id) {
           ctx.setLineDash([3, 6]); ctx.strokeStyle = 'rgba(255,170,110,0.55)';
@@ -293,7 +297,7 @@ const Render = {
       }
       if (pr.cap && pr.cap.p > 0) {
         ctx.beginPath(); ctx.arc(sx, sy, s * 0.85, -Math.PI / 2, -Math.PI / 2 + pr.cap.p * Math.PI * 2);
-        ctx.strokeStyle = COL[pr.cap.s].fill; ctx.lineWidth = 3; ctx.stroke();
+        ctx.strokeStyle = COL[Game.rk(pr.cap.s)].fill; ctx.lineWidth = 3; ctx.stroke();
       }
       if (parked[p.id] && z > 4) {
         ctx.fillStyle = COL.P.fill; ctx.font = '700 10px Bahnschrift, "Segoe UI", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
@@ -324,8 +328,10 @@ const Render = {
       g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
       f.fillStyle = g; f.beginPath(); f.arc(cx, cy, R, 0, Math.PI * 2); f.fill();
     };
-    for (const u of S.units) if (u.s === 'P' && !u.inside && !(u.air && u.air.st === 'ground')) hole(u.x, u.y, UNIT_TYPES[u.t].vis);
-    S.prov.forEach((pr, pid) => { if (pr.o === 'P') hole(Geo.provinces[pid].x, Geo.provinces[pid].y, RADAR_RANGE[pr.b.radar || 0]); });
+    // Vision is shared with allies.
+    const me = S.player;
+    for (const u of S.units) if (Game.allied(u.s, me) && !u.inside && !(u.air && u.air.st === 'ground')) hole(u.x, u.y, UNIT_TYPES[u.t].vis);
+    S.prov.forEach((pr, pid) => { if (Game.allied(pr.o, me)) hole(Geo.provinces[pid].x, Geo.provinces[pid].y, RADAR_RANGE[pr.b.radar || 0]); });
     ctx.drawImage(this.fogCv, 0, 0, this.w, this.h);
   },
 
@@ -362,7 +368,7 @@ const Render = {
     const s = this.unitSize(), cell = s * 1.5, map = new Map(), out = [];
     for (const u of S.units) {
       if (u.inside || (u.air && u.air.st === 'ground')) continue;
-      if (u.s === 'E' && !(u.vm & 1)) continue;
+      if (!Sim.sees(S.player, u)) continue;
       if (u.x < vb[0] - 0.5 || u.x > vb[2] + 0.5 || u.y < vb[1] - 0.5 || u.y > vb[3] + 0.5) continue;
       const [sx, sy] = this.toScreen(u.x, u.y);
       const dom = UNIT_TYPES[u.t].dom;
@@ -393,7 +399,8 @@ const Render = {
       const sx = c.sx, sy = c.sy;
       const sel = c.units.some((x) => this.selection.has(x.id));
       const allSel = sel && c.units.every((x) => this.selection.has(x.id));
-      const alpha = T.st > 0.6 && u.s === 'P' && n === 1 ? 0.8 : 1;
+      const alpha = T.st > 0.6 && u.s === S.player && n === 1 ? 0.8 : 1;
+      const rk = Game.rk(u.s), look = Game.look(u.s);
       // Combat feedback: red pulse when hit, hover ring under the cursor.
       const hit = c.units.some((x) => S.t - x.lastHit < 1.5);
       if (hit) {
@@ -422,16 +429,16 @@ const Render = {
       const big = T.dom === 'sea' ? s * (u.t === 'cv' ? 1.45 : 1.4) : T.dom === 'air' ? s * (T.plane ? 1.25 : 1.15) : s;
       if (this.models) {
         // Unit models: stacks show a second plate behind the representative.
-        if (n > 1 && !u.emb) { const u2 = c.units.find((x) => x !== u) || u; Models.draw(ctx, u2.t, u.s, sx + s * 0.28, sy - s * 0.22, s * 0.85, u.hd, 0.55); }
-        if (u.emb) { Models.draw(ctx, 'corv', u.s, sx, sy, s * 1.2, u.hd, 0.9); Models.draw(ctx, u.t, u.s, sx, sy - s * 0.55, s * 0.7, u.hd, alpha); }
-        else Models.draw(ctx, u.t, u.s, sx, sy, big, u.hd, T.cls === 'sub' ? 0.8 : alpha);
+        if (n > 1 && !u.emb) { const u2 = c.units.find((x) => x !== u) || u; Models.draw(ctx, u2.t, look, sx + s * 0.28, sy - s * 0.22, s * 0.85, u.hd, 0.55); }
+        if (u.emb) { Models.draw(ctx, 'corv', look, sx, sy, s * 1.2, u.hd, 0.9); Models.draw(ctx, u.t, look, sx, sy - s * 0.55, s * 0.7, u.hd, alpha); }
+        else Models.draw(ctx, u.t, look, sx, sy, big, u.hd, T.cls === 'sub' ? 0.8 : alpha);
       } else {
-        if (n > 1 && T.dom === 'land' && !u.emb) Sym.counter(ctx, T.sym, u.s, sx + 3, sy - 3, s, 0.55);
+        if (n > 1 && T.dom === 'land' && !u.emb) Sym.counter(ctx, T.sym, rk, sx + 3, sy - 3, s, 0.55);
         if (u.emb) {
-          Sym.craft(ctx, 'corv', u.s, sx, sy, s * 0.9, u.hd, 0.85);
-          Sym.counter(ctx, T.sym, u.s, sx, sy - s * 0.5, s * 0.6, alpha);
-        } else if (T.dom === 'land') Sym.counter(ctx, T.sym, u.s, sx, sy, s, alpha);
-        else Sym.craft(ctx, T.sym, u.s, sx, sy, T.dom === 'sea' ? s * (u.t === 'cv' ? 1.8 : 1.4) : s * (T.plane ? 1.15 : 1.05), u.hd, T.cls === 'sub' ? 0.75 : alpha);
+          Sym.craft(ctx, 'corv', rk, sx, sy, s * 0.9, u.hd, 0.85);
+          Sym.counter(ctx, T.sym, rk, sx, sy - s * 0.5, s * 0.6, alpha);
+        } else if (T.dom === 'land') Sym.counter(ctx, T.sym, rk, sx, sy, s, alpha);
+        else Sym.craft(ctx, T.sym, rk, sx, sy, T.dom === 'sea' ? s * (u.t === 'cv' ? 1.8 : 1.4) : s * (T.plane ? 1.15 : 1.05), u.hd, T.cls === 'sub' ? 0.75 : alpha);
       }
       // Health (average over the stack), suppression, cargo, stack size.
       const bw = s * 1.3, by = sy + s * 0.62;
@@ -447,8 +454,8 @@ const Render = {
         ctx.font = '700 11px Bahnschrift, "Segoe UI", sans-serif';
         const w = Math.max(17, ctx.measureText(txt).width + 9);
         rr(tx - w / 2, ty - 8.5, w, 17, 8.5);
-        ctx.fillStyle = u.s === 'P' ? '#10283c' : '#3a110d'; ctx.fill();
-        ctx.strokeStyle = COL[u.s].fill; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = COL[rk].dark; ctx.fill();
+        ctx.strokeStyle = COL[rk].fill; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, tx, ty + 0.5);
       } else {
         if (u.cargo.length) { ctx.fillStyle = '#fff'; ctx.font = '700 9px Bahnschrift, "Segoe UI", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('+' + u.cargo.length, sx + s * 0.8, sy - s * 0.45); }
@@ -458,7 +465,7 @@ const Render = {
         }
       }
       // Army number badge.
-      const g = this.groupOf && c.side === 'P' ? this.groupOf.get(c.units.find((x) => this.groupOf.has(x.id))?.id) : null;
+      const g = this.groupOf && c.side === S.player ? this.groupOf.get(c.units.find((x) => this.groupOf.has(x.id))?.id) : null;
       if (g) {
         const gx = sx - s * 0.88, gy = sy - s * 0.62;
         rr(gx - 7.5, gy - 7.5, 15, 15, 3); ctx.fillStyle = '#e8b54a'; ctx.fill();
@@ -526,7 +533,7 @@ const Render = {
       }
       if (age > f.dur) continue;
       const [bx, by] = this.toScreen(f.x1, f.y1);
-      if (f.k === 'jet') { Sym.craft(ctx, 'jet', f.side, U.lerp(ax, bx, k), U.lerp(ay, by, k), 14, Math.atan2(by - ay, bx - ax), 1); continue; }
+      if (f.k === 'jet') { Sym.craft(ctx, 'jet', Game.rk(f.side), U.lerp(ax, bx, k), U.lerp(ay, by, k), 14, Math.atan2(by - ay, bx - ax), 1); continue; }
       if (f.k === 'mg' || f.k === 'cannon' || f.k === 'shot') {
         ctx.strokeStyle = f.k === 'cannon' ? `rgba(255,230,160,${1 - k})` : `rgba(255,214,120,${0.8 * (1 - k)})`;
         ctx.lineWidth = f.k === 'cannon' ? 1.6 : 0.8;
@@ -554,7 +561,8 @@ const Render = {
       const k = U.clamp((S.t - m.t0) / m.dur, 0, 1);
       const [ax, ay] = this.toScreen(m.sx, m.sy), [bx, by] = this.toScreen(m.tx, m.ty);
       const h = Math.min(260, Math.hypot(bx - ax, by - ay) * 0.35);
-      ctx.strokeStyle = m.side === 'P' ? 'rgba(150,205,255,0.35)' : 'rgba(255,140,120,0.45)'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+      const mrk = Game.rk(m.side);
+      ctx.strokeStyle = mrk === 'E' ? 'rgba(255,140,120,0.45)' : mrk === 'N' ? 'rgba(230,225,190,0.35)' : 'rgba(150,205,255,0.35)'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
       ctx.beginPath();
       for (let i = 0; i <= 24; i++) { const q = i / 24 * k; const qx = U.lerp(ax, bx, q), qy = U.lerp(ay, by, q) - Math.sin(q * Math.PI) * h; i ? ctx.lineTo(qx, qy) : ctx.moveTo(qx, qy); }
       ctx.stroke(); ctx.setLineDash([]);
@@ -566,7 +574,7 @@ const Render = {
         ctx.strokeStyle = `rgba(255,216,74,${0.45 + 0.45 * pulse})`; ctx.lineWidth = 2; ctx.setLineDash([8, 5]);
         ctx.beginPath(); ctx.arc(bx, by, Math.max(10, R), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
         ctx.fillStyle = '#ffd84a'; ctx.font = '14px "Segoe UI Symbol", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('☢', px, py - 10);
-      } else if (m.side === 'E') {
+      } else if (mrk === 'E') {
         const R = MISSILES[m.key].aoe * this.cam.z, pulse = 0.5 + 0.5 * Math.sin(performance.now() / 120);
         ctx.strokeStyle = `rgba(255,80,60,${0.4 + 0.4 * pulse})`; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(bx, by, Math.max(8, R), 0, Math.PI * 2); ctx.stroke();
@@ -592,11 +600,12 @@ const Render = {
       for (const co of Geo.countries) {
         let side = this.sideOfCountry(co);
         if (S && side) {
-          let p = 0, e = 0;
-          for (const pid of co.provinces) S.prov[pid].o === 'P' ? p++ : S.prov[pid].o === 'E' ? e++ : 0;
-          side = p >= e ? 'P' : 'E';
+          // Colour by the relation that holds most of the country's provinces.
+          const n = { P: 0, A: 0, E: 0, N: 0 };
+          for (const pid of co.provinces) n[Game.rk(S.prov[pid].o)]++;
+          side = Object.keys(n).reduce((a, b) => (n[b] > n[a] ? b : a));
         }
-        bx.fillStyle = side ? this.provColor(side, 0.12) : '#3b4038';
+        bx.fillStyle = side && side !== 'N' ? this.provColor(side, 0.12) : '#3b4038';
         bx.fill(co.pathLo);
       }
       bx.strokeStyle = 'rgba(5,9,12,0.6)'; bx.lineWidth = 0.6 / sc;
@@ -606,12 +615,13 @@ const Render = {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(this.miniBase, 0, 0);
     if (S) for (const u of S.units) {
-      if (u.inside || (u.s === 'E' && !(u.vm & 1))) continue;
-      ctx.fillStyle = u.s === 'P' ? '#bfe2ff' : '#ff9a8a';
+      if (u.inside || !Sim.sees(S.player, u)) continue;
+      const urk = Game.rk(u.s);
+      ctx.fillStyle = urk === 'P' ? '#bfe2ff' : urk === 'A' ? '#a8f0e4' : urk === 'E' ? '#ff9a8a' : '#e6e0b8';
       ctx.fillRect(ox + (u.x - Geo.x0) * sc - 1.2, oy + (u.y - Geo.y0) * sc - 1.2, 2.6, 2.6);
     }
     // Combat pings: own units under fire.
-    if (S) { ctx.strokeStyle = 'rgba(255,90,70,0.9)'; ctx.lineWidth = 2; for (const u of S.units) if (u.s === 'P' && S.t - u.lastHit < 3 && !u.inside) { ctx.beginPath(); ctx.arc(ox + (u.x - Geo.x0) * sc, oy + (u.y - Geo.y0) * sc, 6 + (performance.now() / 60) % 8, 0, Math.PI * 2); ctx.stroke(); } }
+    if (S) { ctx.strokeStyle = 'rgba(255,90,70,0.9)'; ctx.lineWidth = 2; for (const u of S.units) if (u.s === S.player && S.t - u.lastHit < 3 && !u.inside) { ctx.beginPath(); ctx.arc(ox + (u.x - Geo.x0) * sc, oy + (u.y - Geo.y0) * sc, 6 + (performance.now() / 60) % 8, 0, Math.PI * 2); ctx.stroke(); } }
     const vb = this.viewBox();
     const rx = ox + (vb[0] - Geo.x0) * sc, ry = oy + (vb[1] - Geo.y0) * sc, rw = (vb[2] - vb[0]) * sc, rh = (vb[3] - vb[1]) * sc;
     ctx.fillStyle = 'rgba(255,224,138,0.08)'; ctx.fillRect(rx, ry, rw, rh);

@@ -1,15 +1,17 @@
 // Tactical symbology: NATO-style counters for ground units, silhouettes for aircraft and ships, map site icons.
 'use strict';
 
+// Colours by relation to the player (Game.rk): P = own country, A = ally, E = enemy, N = neutral.
 const COL = {
   P: { fill: '#6fb3ea', dark: '#0b1d2c', line: '#cfe8ff', prov: [46, 95, 143], glow: 'rgba(111,179,234,' },
+  A: { fill: '#5fd0bf', dark: '#08241f', line: '#cff7f0', prov: [34, 116, 106], glow: 'rgba(95,208,191,' },
   E: { fill: '#ee6b5d', dark: '#2a0c0a', line: '#ffd6d0', prov: [143, 52, 52], glow: 'rgba(238,107,93,' },
-  N: { fill: '#9aa196', dark: '#1a1d19', line: '#d8dcd2' },
+  N: { fill: '#c9c48f', dark: '#22211a', line: '#f0ecd0', prov: [110, 106, 76], glow: 'rgba(201,196,143,' },
   gold: '#e8b54a', ink: '#0b141b',
 };
 
 const Sym = {
-  // Ground unit counter (friendly: rectangle, hostile: diamond) with its branch glyph.
+  // Ground unit counter (friendly/allied: rectangle, hostile: diamond, neutral: square) with its branch glyph.
   counter(ctx, sym, side, x, y, s, alpha) {
     const c = COL[side], hw = s * 0.75, hh = s * 0.5;
     ctx.save();
@@ -17,13 +19,14 @@ const Sym = {
     ctx.globalAlpha = alpha ?? 1;
     ctx.beginPath();
     if (side === 'E') { const d = s * 0.66; ctx.moveTo(0, -d); ctx.lineTo(d, 0); ctx.lineTo(0, d); ctx.lineTo(-d, 0); ctx.closePath(); }
+    else if (side === 'N') ctx.rect(-hh * 1.1, -hh * 1.1, hh * 2.2, hh * 2.2);
     else ctx.rect(-hw, -hh, hw * 2, hh * 2);
     ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = s * 0.35; ctx.shadowOffsetY = s * 0.08;
     ctx.fillStyle = c.fill; ctx.fill();
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
     ctx.lineWidth = Math.max(1, s * 0.09); ctx.strokeStyle = c.dark; ctx.stroke();
     // Glyph area: shrink a little inside the diamond.
-    const gw = side === 'E' ? hw * 0.62 : hw * 0.92, gh = side === 'E' ? hh * 0.62 : hh * 0.92;
+    const gw = side === 'E' ? hw * 0.62 : side === 'N' ? hh * 0.95 : hw * 0.92, gh = side === 'E' ? hh * 0.62 : hh * 0.92;
     ctx.strokeStyle = c.dark; ctx.fillStyle = c.dark; ctx.lineWidth = Math.max(1, s * 0.08); ctx.lineCap = 'round';
     this.glyph(ctx, sym, gw, gh, s);
     ctx.restore();
@@ -94,8 +97,9 @@ const Sym = {
     }
   },
 
-  // Map site icon (city, factory, oil, port, airbase, capital) on an owner-colored disc.
-  site(ctx, type, owner, x, y, s) {
+  // Map site icon (city, factory, oil, port, airbase, capital) on an owner-colored disc (owner = relation key).
+  site(ctx, type, rel, x, y, s) {
+    const owner = rel && rel !== 'N' ? rel : null;
     const c = owner ? COL[owner] : COL.N;
     ctx.save();
     ctx.translate(x, y);

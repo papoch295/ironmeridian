@@ -58,7 +58,7 @@ const UI = {
     Render.selection.clear();
     Render.selProv = pid; Render.dirty = true;
     this.setMode(null);
-    if (Game.state.prov[pid].o === 'P') this.tutDone('province');
+    if (Game.state.prov[pid].o === Game.me()) this.tutDone('province');
     Sfx.play('click');
     Panels.show();
     this.renderCmdbar();
@@ -97,7 +97,7 @@ const UI = {
     // Smart order: a plain move into enemy territory becomes an attack-move.
     if (ord.k === 'move') {
       const p = Geo.provinceAt(ord.x, ord.y);
-      if (p && Game.state.prov[p.id].o === 'E') ord = { ...ord, k: 'amove' };
+      if (p && Game.isFoe(Game.state.prov[p.id].o)) ord = { ...ord, k: 'amove' };
     }
     // Armies set to "keep together" march at the pace of their slowest unit.
     const ak = this.selectedArmy();
@@ -117,7 +117,7 @@ const UI = {
     const stack = Input.clusterAt(sx, sy), hit = stack ? stack.rep : null;
     if (this.mode && this.mode !== 'box') { this.applyMode(wx, wy, hit); return; }
     // Own stack: select the whole stack (double click: every unit of that type on screen).
-    if (stack && stack.side === 'P') {
+    if (stack && stack.side === Game.me()) {
       const ids = stack.units.map((u) => u.id);
       // Clicking the same stack again narrows the selection: whole stack -> same type -> single unit.
       if (!opts.dbl && !opts.shift && ids.length > 1 && [...this.sel].every((id) => ids.includes(id)) && this.sel.size) {
@@ -129,24 +129,24 @@ const UI = {
       }
       if (opts.dbl) {
         const vb = Render.viewBox();
-        this.select(Game.state.units.filter((u) => u.s === 'P' && u.t === hit.t && !u.inside && !(u.air && u.air.st === 'ground') && u.x > vb[0] && u.x < vb[2] && u.y > vb[1] && u.y < vb[3]).map((u) => u.id), opts.shift);
+        this.select(Game.state.units.filter((u) => u.s === Game.me() && u.t === hit.t && !u.inside && !(u.air && u.air.st === 'ground') && u.x > vb[0] && u.x < vb[2] && u.y > vb[1] && u.y < vb[3]).map((u) => u.id), opts.shift);
       } else if (opts.shift && ids.every((id) => this.sel.has(id))) { ids.forEach((id) => this.sel.delete(id)); Panels.show(); this.renderCmdbar(); }
       else this.select(ids, opts.shift);
       return;
     }
     // With units selected every click on the map is an order (WC4 style: select, then tap the target).
     if (this.sel.size) {
-      if (hit && hit.s === 'E') { this.issue({ k: 'attack', id: this.nearestOf(stack.units, wx, wy).id }); return; }
+      if (hit && Game.isFoe(hit.s)) { this.issue({ k: 'attack', id: this.nearestOf(stack.units, wx, wy).id }); return; }
       const site = Input.siteAt(sx, sy);
       const p = site !== null ? Geo.provinces[site] : null;
       this.issue({ k: 'move', x: p ? p.x : wx, y: p ? p.y : wy });
       return;
     }
-    if (hit && hit.s === 'E') { this.showEnemy(hit); return; }
+    if (hit && hit.s !== Game.me()) { this.showEnemy(hit); return; }
     const site = Input.siteAt(sx, sy);
     if (site !== null) { this.selectProvince(site); return; }
     const p = Geo.provinceAt(wx, wy);
-    if (p && Game.bell[p.country]) { this.selectProvince(p.id); return; }
+    if (p) { this.selectProvince(p.id); return; }
     this.deselect();
   },
 
@@ -157,7 +157,7 @@ const UI = {
     const vb = Render.viewBox();
     const inView = (u) => u.x > vb[0] && u.x < vb[2] && u.y > vb[1] && u.y < vb[3];
     const ids = Game.state.units.filter((u) => {
-      if (u.s !== 'P' || u.inside || (u.air && u.air.st === 'ground')) return false;
+      if (u.s !== Game.me() || u.inside || (u.air && u.air.st === 'ground')) return false;
       const T = UNIT_TYPES[u.t];
       if (kind === 'idle') return !u.ord && !u.path && T.w.length > 0;
       return T.dom === kind && inView(u) && (kind !== 'land' || T.w.length > 0);
@@ -176,8 +176,8 @@ const UI = {
     if (!this.sel.size) return;
     const [wx, wy] = Render.toWorld(sx, sy);
     const stack = Input.clusterAt(sx, sy), hit = stack ? stack.rep : null;
-    if (hit && hit.s === 'E') { this.issue({ k: 'attack', id: this.nearestOf(stack.units, wx, wy).id }); return; }
-    const trs = stack && stack.side === 'P' ? stack.units.filter((u) => UNIT_TYPES[u.t].cap && !this.sel.has(u.id)) : [];
+    if (hit && Game.isFoe(hit.s)) { this.issue({ k: 'attack', id: this.nearestOf(stack.units, wx, wy).id }); return; }
+    const trs = stack && stack.side === Game.me() ? stack.units.filter((u) => UNIT_TYPES[u.t].cap && !this.sel.has(u.id)) : [];
     if (trs.length && this.loadInto(trs)) return;
     this.issue({ k: Input.keys.has('a') ? 'amove' : 'move', x: wx, y: wy });
   },
@@ -185,14 +185,14 @@ const UI = {
   applyMode(wx, wy, hit) {
     const m = this.mode, d = this.modeData;
     if (m === 'move' || m === 'fast') this.issue({ k: m, x: wx, y: wy });
-    else if (m === 'amove') this.issue(hit && hit.s === 'E' ? { k: 'attack', id: hit.id } : { k: 'amove', x: wx, y: wy });
+    else if (m === 'amove') this.issue(hit && Game.isFoe(hit.s) ? { k: 'attack', id: hit.id } : { k: 'amove', x: wx, y: wy });
     else if (m === 'load') {
       // Any transport in the tapped stack (or a parked plane at the tapped airfield) takes the selected units.
       const stack = Input.clusterAt(...Render.toScreen(wx, wy));
-      let trs = stack && stack.side === 'P' ? stack.units.filter((u) => UNIT_TYPES[u.t].cap && !this.sel.has(u.id)) : [];
+      let trs = stack && stack.side === Game.me() ? stack.units.filter((u) => UNIT_TYPES[u.t].cap && !this.sel.has(u.id)) : [];
       if (!trs.length) {
         const site = Input.siteAt(...Render.toScreen(wx, wy));
-        if (site !== null) trs = Game.state.units.filter((u) => u.s === 'P' && u.air && u.air.base === site && u.air.st === 'ground' && UNIT_TYPES[u.t].cap);
+        if (site !== null) trs = Game.state.units.filter((u) => u.s === Game.me() && u.air && u.air.base === site && u.air.st === 'ground' && UNIT_TYPES[u.t].cap);
       }
       if (!trs.length || !this.loadInto(trs)) { this.toast(t('hintLoad'), 'bad'); return; }
     } else if (m === 'unloadAt') {
@@ -210,10 +210,10 @@ const UI = {
       for (const u of this.selUnits().filter((u) => UNIT_TYPES[u.t].strike)) { const r = Game.carrierStrike(u, wx, wy); if (r) this.toast(t(r), 'bad'); else Sfx.play('order'); }
     } else if (m === 'slbm') {
       const u = this.selUnits().find((u) => u.slbm > 0);
-      if (u) { const r = Game.launchMissile('P', 'slbm', u.x, u.y, wx, wy, { uid: u.id }); if (r) { this.toast(t(r), 'bad'); return; } }
+      if (u) { const r = Game.launchMissile(Game.me(), 'slbm', u.x, u.y, wx, wy, { uid: u.id }); if (r) { this.toast(t(r), 'bad'); return; } }
     } else if (m === 'missile') {
       const p = Geo.provinces[d.pid];
-      const r = Game.launchMissile('P', d.key, p.x, p.y, wx, wy, { pid: d.pid }, d.nuke);
+      const r = Game.launchMissile(Game.me(), d.key, p.x, p.y, wx, wy, { pid: d.pid }, d.nuke);
       if (r) { this.toast(t(r), 'bad'); return; }
       Panels.show();
     }
@@ -282,7 +282,7 @@ const UI = {
     if (anyPlane) c += btn('rtb', 'rtb', t('cmdRtb'));
     if (us.some((u) => UNIT_TYPES[u.t].strike)) c += btn('strike', 'strike', t('cmdStrike'), 'strike');
     if (us.some((u) => u.slbm > 0)) c += btn('slbm', 'missile', t('cmdSlbm'), 'slbm');
-    if (us.some((u) => UNIT_TYPES[u.t].w.includes('bombs') && (u.nuke || Game.state.side.P.nukes > 0))) c += `<button class="cmd nuke" data-c="nuke" data-mode="nuke"><b class="nuke-ico">☢</b><span>${U.esc(t('cmdNuke'))}</span></button>`;
+    if (us.some((u) => UNIT_TYPES[u.t].w.includes('bombs') && (u.nuke || Game.state.side[Game.me()].nukes > 0))) c += `<button class="cmd nuke" data-c="nuke" data-mode="nuke"><b class="nuke-ico">☢</b><span>${U.esc(t('cmdNuke'))}</span></button>`;
     if (c) h += '<div class="sep"></div>' + c + '<div class="sep"></div>';
     h += btn('stop', 'stop', t('cmdStop'));
     if (anyLand) h += btn('retreat', 'retreat', t('cmdRetreat'));
@@ -333,7 +333,7 @@ const UI = {
   renderTop() {
     const S = Game.state;
     if (!S) return;
-    const s = S.side.P;
+    const s = S.side[S.player];
     for (const [id, k] of [['#resM', 'm'], ['#resI', 'i'], ['#resO', 'o']]) {
       const el = $(id);
       el.querySelector('.v').textContent = U.fmt(s[k]);
@@ -360,14 +360,18 @@ const UI = {
     const box = $('#objBox');
     if (box.hidden || !Game.state) return;
     const S = Game.state;
-    const eTotal = S.prov.filter((p, i) => S.cside[Geo.countries[Geo.provinces[i].country].k] === 'E').length;
-    const ep = Game.countProv('E'), eu = Game.countUnits('E');
+    const me = S.player;
+    // Enemy provinces: everything held by factions at war with the player, measured against what they started with.
+    const eTotal = S.prov.filter((p, i) => Game.hostile(Geo.countries[Geo.provinces[i].country].k, me) || Game.hostile(p.o, me)).length;
+    const ep = S.prov.filter((p) => Game.hostile(p.o, me)).length, eu = S.units.filter((u) => Game.hostile(u.s, me)).length;
+    const allies = Object.keys(S.team).filter((k) => k !== me && Game.allied(k, me) && Game.countProv(k)).length;
     box.innerHTML = `<h2>${U.esc(t('objectives'))}</h2><p class="desc">${U.esc(t('objWin', eTotal))}</p>
       <div class="stat-line"><span>${U.esc(t('objProv'))}</span><b>${ep} / ${eTotal}</b></div>
       <div class="meter"><i style="width:${(1 - ep / Math.max(1, eTotal)) * 100}%"></i></div>
       <div class="stat-line"><span>${U.esc(t('objUnits'))}</span><b>${eu}</b></div>
-      <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv('P')}</b></div>
-      <div class="stat-line"><span>${U.esc(t('objYourUnits'))}</span><b>${Game.countUnits('P')}</b></div>`;
+      <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv(me)}</b></div>
+      <div class="stat-line"><span>${U.esc(t('objYourUnits'))}</span><b>${Game.countUnits(me)}</b></div>
+      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>`;
   },
 
   // ---------- Log & toasts ----------
@@ -396,12 +400,25 @@ const UI = {
   // ---------- Game events -> feedback ----------
   wireGameEvents() {
     const pName = (pid) => provName(Geo.provinces[pid]);
-    Game.on('captured', ({ pid, side }) => {
+    // With many factions only events that concern the player's country or its allies are reported.
+    const me = () => Game.state.player;
+    const ours = (x, y) => { const p = Geo.provinceAt(x, y); return p && Game.allied(Game.state.prov[p.id].o, me()); };
+    Game.on('captured', ({ pid, side, prev }) => {
       Render.dirty = true; Render.dirtyMini = true;
       const p = Geo.provinces[pid];
-      if (side === 'P') { this.log(t('evCaptured', pName(pid)), 'good', p.x, p.y); Sfx.play('capture'); }
-      else { this.log(t('evLost', pName(pid)), 'bad', p.x, p.y); Sfx.play('lost'); this.toast(t('evLost', pName(pid)), 'bad'); }
+      if (side === me()) { this.log(t('evCaptured', pName(pid)), 'good', p.x, p.y); Sfx.play('capture'); }
+      else if (prev === me()) { this.log(t('evLost', pName(pid)), 'bad', p.x, p.y); Sfx.play('lost'); this.toast(t('evLost', pName(pid)), 'bad'); }
+      else if (Game.allied(prev, me())) this.log(t('evAllyLost', pName(pid)), 'warn', p.x, p.y);
+      else if (Game.allied(side, me())) this.log(t('evAllyCaptured', pName(pid)), 'info', p.x, p.y);
       if (Render.selProv === pid) Panels.show();
+    });
+    Game.on('war', ({ a, b, joined }) => {
+      Render.dirty = true; Render.dirtyMini = true;
+      this.toast(t('evWar', Panels.teamName(a), Panels.teamName(b)), 'warn');
+      this.log(t('evWar', Panels.teamName(a), Panels.teamName(b)), 'warn');
+      for (const tm of joined) this.log(t('evJoinWar', Panels.teamName(tm)), 'bad');
+      Sfx.play('alert');
+      if (Render.selProv !== null) Panels.show();
     });
     Game.on('produced', ({ pid, it, u }) => {
       const p = Geo.provinces[pid];
@@ -423,22 +440,24 @@ const UI = {
     Game.on('shot', ({ w, x, y }) => Sfx.at(w.fx, x, y));
     Game.on('impact', (s) => Sfx.at('boom', s.x, s.y));
     Game.on('launch', (m) => {
-      const msg = m.side === 'E' ? t(m.nuke ? 'evLaunchNuke' : 'evLaunch') : t(m.nuke ? 'evLaunchOwnNuke' : 'evLaunchOwn');
-      if (m.side === 'E') { this.toast(msg, 'bad'); this.log(msg, 'bad', m.tx, m.ty); Sfx.play('alert'); }
-      else this.log(msg, m.nuke ? 'warn' : 'info', m.tx, m.ty);
+      const own = m.side === me(), incoming = !Game.allied(m.side, me()) && ours(m.tx, m.ty);
+      if (own) this.log(t(m.nuke ? 'evLaunchOwnNuke' : 'evLaunchOwn'), m.nuke ? 'warn' : 'info', m.tx, m.ty);
+      else if (incoming) { const msg = t(m.nuke ? 'evLaunchNuke' : 'evLaunch'); this.toast(msg, 'bad'); this.log(msg, 'bad', m.tx, m.ty); Sfx.play('alert'); }
       Sfx.at('missile', m.x, m.y, true);
     });
-    Game.on('intercepted', (m) => this.log(t(m.nuke ? 'evInterceptNuke' : 'evIntercept'), m.side === 'E' ? 'good' : 'warn', m.tx, m.ty));
+    Game.on('intercepted', (m) => {
+      if (m.side === me() || ours(m.tx, m.ty)) this.log(t(m.nuke ? 'evInterceptNuke' : 'evIntercept'), m.side === me() ? 'warn' : 'good', m.tx, m.ty);
+    });
     Game.on('missileHit', (m) => {
       const p = Geo.provinceAt(m.tx, m.ty);
-      this.log(t('evMissileHit', p ? provName(p) : '—'), m.side === 'E' ? 'bad' : 'good', m.tx, m.ty);
+      if (m.side === me() || ours(m.tx, m.ty)) this.log(t('evMissileHit', p ? provName(p) : '—'), m.side === me() ? 'good' : 'bad', m.tx, m.ty);
       Sfx.at('bigboom', m.tx, m.ty, true);
       Render.dirty = true;
     });
     Game.on('nuke', ({ side, x, y }) => {
       const p = Geo.provinceAt(x, y), nm = p ? provName(p) : '—';
-      this.log(t('evNuke', nm), side === 'P' ? 'good' : 'bad', x, y);
-      if (side === 'E') this.toast(t('evNuke', nm), 'bad');
+      this.log(t('evNuke', nm), Game.allied(side, me()) ? 'good' : 'bad', x, y);
+      if (!Game.allied(side, me())) this.toast(t('evNuke', nm), 'bad');
       Sfx.at('bigboom', x, y, true);
       if (Render.selProv !== null) Panels.show();
     });
@@ -494,7 +513,7 @@ const UI = {
   },
   armyIds(k) { const a = this.groups()[k]; return a ? a.ids.filter((id) => Game.unit(id)) : []; },
   armyOf(id) { const G = this.groups(); for (const k in G) if (G[k].ids.includes(id)) return k; return null; },
-  pendingArmy(k) { return Game.state.prov.some((pr) => pr.o === 'P' && pr.q.some((q) => q.g === k)); },
+  pendingArmy(k) { return Game.state.prov.some((pr) => pr.o === Game.me() && pr.q.some((q) => q.g === k)); },
   freeArmyKey() {
     const G = this.groups();
     for (let i = 1; i <= 9; i++) { const k = String(i); if (!G[k] || (!this.armyIds(k).length && !this.pendingArmy(k) && !G[k].res)) return k; }
@@ -576,7 +595,7 @@ const UI = {
     const rows = [];
     Render.groupOf = new Map();
     const pending = {};
-    for (const pr of S.prov) if (pr.o === 'P') for (const q of pr.q) if (q.g) pending[q.g] = (pending[q.g] || 0) + (q.n || 1);
+    for (const pr of S.prov) if (pr.o === Game.me()) for (const q of pr.q) if (q.g) pending[q.g] = (pending[q.g] || 0) + (q.n || 1);
     for (const k of Object.keys(G).sort()) {
       G[k].ids = G[k].ids.filter((id) => Game.unit(id));
       if (G[k].res && G[k].res < S.t && !pending[k]) delete G[k].res;

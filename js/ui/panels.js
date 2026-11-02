@@ -26,19 +26,19 @@ const Panels = {
     let sig, render;
     if (this.enemy) {
       const u = Game.unit(this.enemy.id);
-      if (!u || !(u.vm & 1)) { this.close(); return; }
+      if (!u || !Sim.sees(S.player, u)) { this.close(); return; }
       sig = 'e' + u.id + Math.round(u.hp);
       render = () => this.enemyHtml(u);
     } else if (UI.sel.size) {
       const us = UI.selUnits();
       sig = 'u' + us.map((u) => u.id + ':' + Math.round(u.hp) + ':' + u.ammo.join(',') + ':' + u.cargo.length + u.stance + Math.round(u.sup / 10) + (u.nuke ? 'N' : '') + (u.air ? u.air.st + Math.round(u.air.fuel / 5) : '')).join('|') +
-        JSON.stringify(UI.groups()) + S.side.P.nukes;
+        JSON.stringify(UI.groups()) + Game.state.side[Game.me()].nukes;
       render = () => this.unitsHtml(us);
     } else if (Render.selProv !== null) {
       const pid = Render.selProv, pr = S.prov[pid];
       sig = 'p' + pid + pr.o + pr.lvl + JSON.stringify(pr.b) + pr.q.map((q) => q.key + 'x' + (q.n || 1)).join() + JSON.stringify(pr.msl) + this.tab + this.view + this.batch + this.army + Math.round(pr.def) + (pr.cap ? Math.round(pr.cap.p * 20) : '') +
-        ['m', 'i', 'o'].map((k) => Math.floor(S.side.P[k] / 50)).join() + S.side.P.nukes + Object.keys(UI.groups()).join() + Sim.inFallout(Geo.provinces[pid]) +
-        S.units.filter((u) => u.air && u.air.base === pid && u.air.st === 'ground' && u.s === 'P').length;
+        ['m', 'i', 'o'].map((k) => Math.floor(Game.state.side[Game.me()][k] / 50)).join() + Game.state.side[Game.me()].nukes + Object.keys(UI.groups()).join() + Sim.inFallout(Geo.provinces[pid]) +
+        S.units.filter((u) => u.air && u.air.base === pid && u.air.st === 'ground' && u.s === Game.me()).length;
       render = () => this.provHtml(pid);
     } else { this.close(); return; }
     // Progress bars update in place every tick.
@@ -65,7 +65,13 @@ const Panels = {
     return `<div class="p-head"><div class="ttl"><h2>${U.esc(title)}</h2><div class="sub">${sub}</div></div>${tag || ''}<button class="ibtn x" data-act="close">${ICON.close}</button></div>`;
   },
 
-  sideTag(o) { return `<span class="side-tag ${o || 'N'}">${U.esc(o === 'P' ? t('player') : o === 'E' ? t('enemy') : t('neutral'))}</span>`; },
+  // Owner tag: relation colour plus the owning country (o = faction key).
+  sideTag(o) {
+    const rk = Game.rk(o), c = o && Geo.byKey[o];
+    const rel = rk === 'P' ? t('player') : rk === 'A' ? t('ally') : rk === 'E' ? t('enemy') : t('neutral');
+    return `<span class="side-tag ${rk}" title="${U.esc(c ? countryName(c) : '')}">${U.esc(rel)}</span>`;
+  },
+  teamName(tm) { const b = BLOCS.find((x) => x.id === tm); return b ? L(b) : Geo.byKey[tm] ? countryName(Geo.byKey[tm]) : tm; },
 
   mult(c, n) { return { m: (c.m || 0) * n, i: (c.i || 0) * n, o: (c.o || 0) * n }; },
   tabName(b) { return BUILDING_TABS[b] ? BUILDING_TABS[b][I18N.lang === 'en' ? 1 : 0] : L(BUILDINGS[b]); },
@@ -85,9 +91,17 @@ const Panels = {
       ${pr.o ? `<span>${U.esc(t('radarRange'))}</span><b>${Math.round(RADAR_RANGE[pr.b.radar || 0] * 111)} km${pr.b.radar ? ` <span class="muted small">(${U.esc(t('lvl', pr.b.radar))})</span>` : ''}</b>` : ''}
       ${A ? `<span>${U.esc(t('aaRange'))}</span><b>${Math.round(A.r * 111)} km <span class="muted small">(${U.esc(t('lvl', pr.b.aad))})</span></b>` : ''}</div>`;
     if (fallout) h += `<p class="small warn-line">☢ ${U.esc(t('falloutHere'))}</p>`;
-    if (pr.cap && pr.cap.p > 0) h += `<p class="small" style="color:${pr.cap.s === 'P' ? 'var(--blue)' : 'var(--red)'}">${U.esc(t('capturing', Math.round(pr.cap.p * 100)))}</p>`;
-    if (pr.o !== 'P') {
-      if (pr.o === 'E') h += `<h3>${U.esc(t('buildings'))}</h3>` + Object.keys(BUILDINGS).filter((b) => pr.b[b]).map((b) => `<div class="bld"><span class="nm">${U.esc(L(BUILDINGS[b]))}</span><span class="lv">${U.esc(t('lvl', pr.b[b]))}</span></div>`).join('');
+    if (pr.cap && pr.cap.p > 0) h += `<p class="small" style="color:${COL[Game.rk(pr.cap.s)].fill}">${U.esc(t('capturing', Math.round(pr.cap.p * 100)))}</p>`;
+    if (pr.o !== S.player) {
+      const rk = Game.rk(pr.o);
+      if (pr.o && pr.o !== c.k) h += `<p class="small muted">${U.esc(t('heldBy', countryName(Geo.byKey[pr.o])))}</p>`;
+      if (rk !== 'N') h += `<h3>${U.esc(t('buildings'))}</h3>` + Object.keys(BUILDINGS).filter((b) => pr.b[b]).map((b) => `<div class="bld"><span class="nm">${U.esc(L(BUILDINGS[b]))}</span><span class="lv">${U.esc(t('lvl', pr.b[b]))}</span></div>`).join('');
+      if (rk === 'N' && pr.o) {
+        // Neutral country: the player may declare war on its whole alliance; neighbours may join the defender.
+        const tm = S.team[pr.o];
+        h += `<h3>${U.esc(t('diplomacy'))}</h3><p class="small muted">${U.esc(t('neutralInfo', this.teamName(tm)))}</p>
+          <button class="btn danger" data-act="war" style="width:100%">${U.esc(t('declareWar'))}</button>`;
+      }
       return h + '</div>';
     }
     const tabs = Object.keys(BUILDINGS).filter((b) => pr.b[b] > 0 && !BUILDINGS[b].noRecruit);
@@ -116,21 +130,21 @@ const Panels = {
         const M = MISSILES[key], why = Game.canQueue(pid, 'msl', key);
         h += `<button class="ucard ${why ? 'off' : ''}" data-act="msl" data-k="${key}" title="${U.esc(why ? this.reason(why, 'silo', M.tier) : '')}">
           <span class="tm">${Math.round(M.time * TIME_SCALE)}s</span><span class="top"><img src="${UnitIcon.missile()}" alt=""><span class="nm">${U.esc(L(M))}</span></span>
-          ${why === 'needBuilding' ? `<span class="lock">${U.esc(this.reason(why, 'silo', M.tier))}</span>` : costHtml(this.mult(M.cost, n), 'P')}</button>`;
+          ${why === 'needBuilding' ? `<span class="lock">${U.esc(this.reason(why, 'silo', M.tier))}</span>` : costHtml(this.mult(M.cost, n), Game.me())}</button>`;
       }
     } else if (this.tab === 'lab') {
       const why = Game.canQueue(pid, 'nuke', 'nuke'), c = Game.itemCost(pid, 'nuke', 'nuke');
       h += `<button class="ucard nukecard ${why ? 'off' : ''}" data-act="nuke" data-k="nuke" title="${U.esc(why ? t(why) : '')}">
-        <span class="tm">${Math.round(c.t)}s</span><span class="top"><span class="nuke-ico">☢</span><span class="nm">${U.esc(L(NUKE))}</span></span>${costHtml(this.mult(NUKE.cost, n), 'P')}</button>`;
-      h += `</div><p class="small muted">${U.esc(t('nukeInfo', Math.round(NUKE.r * 111)))}</p><div class="stat-line"><span>${U.esc(t('nukeStock'))}</span><b>☢ ${S.side.P.nukes || 0}</b></div><div>`;
+        <span class="tm">${Math.round(c.t)}s</span><span class="top"><span class="nuke-ico">☢</span><span class="nm">${U.esc(L(NUKE))}</span></span>${costHtml(this.mult(NUKE.cost, n), Game.me())}</button>`;
+      h += `</div><p class="small muted">${U.esc(t('nukeInfo', Math.round(NUKE.r * 111)))}</p><div class="stat-line"><span>${U.esc(t('nukeStock'))}</span><b>☢ ${Game.state.side[Game.me()].nukes || 0}</b></div><div>`;
     } else if (this.tab === 'form') {
       for (const F of FORMATIONS) {
         let lock = null;
         for (const k in F.u) { const T = UNIT_TYPES[k]; if ((pr.b[T.bld] || 0) < T.tier) { lock = this.reason('needBuilding', T.bld, T.tier); break; } }
-        const off = lock || !Game.afford('P', Game.formationCost(F)) || pr.q.length + Object.keys(F.u).length > Game.QUEUE_MAX;
+        const off = lock || !Game.afford(Game.me(), Game.formationCost(F)) || pr.q.length + Object.keys(F.u).length > Game.QUEUE_MAX;
         h += `<button class="ucard fcard ${off ? 'off' : ''}" data-act="form" data-k="${F.id}"><span class="nm">${U.esc(L(F))}</span>
           <span class="fl">${Object.keys(F.u).map((k) => `<span title="${U.esc(unitName(k))}"><img src="${UnitIcon.get(k)}" alt="">${F.u[k]}</span>`).join('')}</span>
-          ${lock ? `<span class="lock">${U.esc(lock)}</span>` : costHtml(Game.formationCost(F), 'P')}</button>`;
+          ${lock ? `<span class="lock">${U.esc(lock)}</span>` : costHtml(Game.formationCost(F), Game.me())}</button>`;
       }
     } else {
       for (const key in UNIT_TYPES) {
@@ -139,19 +153,19 @@ const Panels = {
         const why = Game.canQueue(pid, 'unit', key);
         h += `<button class="ucard ${why ? 'off' : ''}" data-act="unit" data-k="${key}" title="${U.esc(L({ de: T.dd, en: T.ed }))}">
           <span class="tm">${Math.round(T.time * TIME_SCALE)}s</span><span class="top"><img src="${UnitIcon.get(key)}" alt=""><span class="nm">${U.esc(L(T))}</span></span>
-          ${why === 'needBuilding' ? `<span class="lock">${U.esc(this.reason(why, T.bld, T.tier))}</span>` : costHtml(this.mult(T.cost, n), 'P')}</button>`;
+          ${why === 'needBuilding' ? `<span class="lock">${U.esc(this.reason(why, T.bld, T.tier))}</span>` : costHtml(this.mult(T.cost, n), Game.me())}</button>`;
       }
     }
     h += '</div>';
     if (this.tab === 'form') h += `<p class="small muted">${U.esc(t('formInfo'))}</p>`;
     // Missile inventory: conventional or nuclear launch.
-    const inv = Object.keys(pr.msl).filter((k) => pr.msl[k] > 0), nukes = S.side.P.nukes || 0;
+    const inv = Object.keys(pr.msl).filter((k) => pr.msl[k] > 0), nukes = Game.state.side[Game.me()].nukes || 0;
     if (inv.length) {
       h += `<h3>${U.esc(t('missiles'))}</h3><div class="mini-list">` + inv.map((k) => `<div class="row"><span>${U.esc(L(MISSILES[k]))} × ${pr.msl[k]} <span class="muted small">(${MISSILES[k].r * 111 | 0} km)</span></span>
         <span class="row"><button class="btn sm primary" data-act="launch" data-k="${k}">${U.esc(t('launch'))}</button>${nukes ? `<button class="btn sm nuke" data-act="launchN" data-k="${k}" title="${U.esc(t('launchNuke'))}">☢</button>` : ''}</span></div>`).join('') + '</div>';
     }
     // Aircraft parked here.
-    const parked = S.units.filter((u) => u.air && u.air.base === pid && u.air.st === 'ground' && u.s === 'P');
+    const parked = S.units.filter((u) => u.air && u.air.base === pid && u.air.st === 'ground' && u.s === Game.me());
     if (parked.length) {
       h += `<h3>${U.esc(t('aircraftHere'))}</h3><div class="groups">` + parked.map((u) => `<button class="gchip" data-act="selu" data-id="${u.id}"><img src="${UnitIcon.get(u.t)}" alt=""><span>${U.esc(unitName(u.t))}${u.cargo.length ? ' +' + u.cargo.length : ''}${u.nuke ? ' ☢' : ''}</span></button>`).join('') + '</div>';
     }
@@ -170,14 +184,14 @@ const Panels = {
     const pr = Game.state.prov[pid], p = Geo.provinces[pid];
     let h = none ? `<p class="small muted">${U.esc(t('noInstitution'))}</p>` : '';
     const upCost = Game.itemCost(pid, 'upg'), upWhy = Game.canQueue(pid, 'upg');
-    h += `<h3>${U.esc(t('develop'))}</h3><div class="bld"><span class="nm">${U.esc(t('upgradeProv'))}<small>${U.esc(t('dUpgrade'))}</small></span>${upWhy === 'maxLevel' ? `<span class="muted small">${U.esc(t('maxLevel'))}</span>` : `${costHtml(upCost, 'P')}<button class="btn sm" data-act="upg" ${upWhy ? 'disabled' : ''}>${U.esc(t('upgrade'))}</button>`}</div>`;
+    h += `<h3>${U.esc(t('develop'))}</h3><div class="bld"><span class="nm">${U.esc(t('upgradeProv'))}<small>${U.esc(t('dUpgrade'))}</small></span>${upWhy === 'maxLevel' ? `<span class="muted small">${U.esc(t('maxLevel'))}</span>` : `${costHtml(upCost, Game.me())}<button class="btn sm" data-act="upg" ${upWhy ? 'disabled' : ''}>${U.esc(t('upgrade'))}</button>`}</div>`;
     h += `<h3>${U.esc(t('buildings'))}</h3>`;
     for (const b in BUILDINGS) {
       const B = BUILDINGS[b];
       if (B.coastal && !p.seaPt) continue;
       const why = Game.canQueue(pid, 'bld', b), cost = Game.itemCost(pid, 'bld', b);
       h += `<div class="bld"><span class="nm">${U.esc(L(B))}<small>${U.esc(t('d_' + b))}</small></span><span class="lv">${pr.b[b] ? U.esc(t('lvl', pr.b[b])) : '—'}</span>
-        ${why === 'maxLevel' ? '' : `${costHtml(cost, 'P')}<button class="btn sm" data-act="bld" data-k="${b}" ${why ? 'disabled' : ''}>${U.esc(pr.b[b] ? t('upgrade') : t('build'))}</button>`}</div>`;
+        ${why === 'maxLevel' ? '' : `${costHtml(cost, Game.me())}<button class="btn sm" data-act="bld" data-k="${b}" ${why ? 'disabled' : ''}>${U.esc(pr.b[b] ? t('upgrade') : t('build'))}</button>`}</div>`;
     }
     return h;
   },
@@ -224,7 +238,7 @@ const Panels = {
     const T = UNIT_TYPES[u.t];
     let h = this.head(unitName(u.t), U.esc(modelName(u)), this.sideTag(u.s));
     h += `<div class="p-body"><div class="unit-big"><img src="${UnitIcon.get(u.t, u.s)}" alt=""><p class="desc">${U.esc(L({ de: T.dd, en: T.ed }))}</p></div>`;
-    if (u.s === 'P') h += this.armyHtml([u]);
+    if (u.s === Game.me()) h += this.armyHtml([u]);
     const f = u.hp / T.hp;
     h += `<div class="kv"><span>${U.esc(T.men ? t('men') : t('hp'))}</span><div>${T.men ? Math.max(1, Math.ceil(f * T.men)) + ' / ' + T.men : Math.round(f * 100) + '%'}<div class="bar ${f < 0.35 ? 'bad' : f < 0.7 ? 'warn' : ''}"><i style="width:${f * 100}%"></i></div></div>`;
     if (T.cls === 'soft') h += `<span>${U.esc(t('sup'))}</span><div><div class="bar warn"><i style="width:${u.sup}%"></i></div></div>`;
@@ -249,8 +263,8 @@ const Panels = {
 
   enemyHtml(u) {
     const T = UNIT_TYPES[u.t], f = u.hp / T.hp;
-    return this.head(unitName(u.t), U.esc(modelName(u)), this.sideTag('E')) +
-      `<div class="p-body"><div class="unit-big"><img src="${UnitIcon.get(u.t, 'E')}" alt=""><p class="desc">${U.esc(L({ de: T.dd, en: T.ed }))}</p></div>
+    return this.head(unitName(u.t), U.esc(modelName(u)), this.sideTag(u.s)) +
+      `<div class="p-body"><div class="unit-big"><img src="${UnitIcon.get(u.t, Game.look(u.s))}" alt=""><p class="desc">${U.esc(L({ de: T.dd, en: T.ed }))}</p></div>
       <div class="kv"><span>${U.esc(t('hp'))}</span><div><div class="bar ${f < 0.35 ? 'bad' : f < 0.7 ? 'warn' : ''}"><i style="width:${f * 100}%"></i></div></div></div>
       <button class="btn sm" data-act="attackIt" ${UI.sel.size ? '' : 'disabled'}>${U.esc(t('cmdAttack'))}</button></div>`;
   },
@@ -274,6 +288,14 @@ const Panels = {
         if (a === 'view') { this.view = k; this.refresh(true); return; }
         if (a === 'batch') { this.batch = +k; this.refresh(true); return; }
         if (a === 'army') { this.army = k || null; this.refresh(true); return; }
+        if (a === 'war') {
+          const S = Game.state, tm = S.team[S.prov[pid].o];
+          Screens.ask(t('declareWar'), t('confirmWar', this.teamName(tm)), () => {
+            if (Game.declareWar(S.team[S.player], tm)) Sfx.play('alert');
+            this.refresh(true);
+          });
+          return;
+        }
         if (a === 'unit' || a === 'msl' || a === 'bld' || a === 'upg' || a === 'nuke') {
           const n = a === 'bld' || a === 'upg' ? 1 : this.batch;
           const g = a === 'unit' ? this.recruitArmy() : null;

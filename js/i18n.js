@@ -32,7 +32,15 @@ const STR = {
     evLaunch: 'Feindlicher Raketenstart erkannt!', evLaunchOwn: 'Rakete gestartet', evIntercept: 'Rakete abgefangen', evMissileHit: 'Raketeneinschlag bei {0}',
     evNoPath: 'Kein Weg zum Ziel', evCrash: '{0} ohne Treibstoff abgestürzt', evRout: '{0} zieht sich ungeordnet zurück', evUnderAttack: '{0} wird angegriffen',
     evSaved: 'Spiel gespeichert', evLoaded: 'Spielstand geladen', evAutosave: 'Automatisch gespeichert',
-    victory: 'SIEG', defeat: 'NIEDERLAGE', victoryText: 'Das feindliche Bündnis wurde vollständig besiegt.', defeatText: 'Dein Bündnis hat alle Provinzen verloren.',
+    victory: 'SIEG', defeat: 'NIEDERLAGE', victoryText: 'Alle Gegner wurden vollständig besiegt.', defeatText: 'Dein Land hat alle Provinzen verloren.',
+    ally: 'Verbündet', heldBy: 'Besetzt von {0}', diplomacy: 'Diplomatie', declareWar: 'Krieg erklären',
+    neutralInfo: 'Dieses Land ist neutral und gehört zu: {0}. Eine Kriegserklärung gilt für das ganze Bündnis – Nachbarländer können sich dem Verteidiger anschließen.',
+    confirmWar: 'Wirklich den Krieg erklären? Gegner: {0}. Das Land macht mobil, und seine Nachbarn könnten sich gegen dich stellen.',
+    evWar: 'Krieg: {0} gegen {1}', evJoinWar: '{0} tritt gegen dich in den Krieg ein!', evAllyLost: 'Verbündete haben {0} verloren', evAllyCaptured: 'Verbündete erobern {0}',
+    objAllies: 'Verbündete Länder', gameMode: 'Spielmodus', modeBloc: 'Bündniskrieg', modeFfa: 'Weltkrieg',
+    modeBlocD: 'Dein Bündnis gegen ein feindliches Bündnis. Alle anderen Länder bleiben neutral, bis jemand ihnen den Krieg erklärt.',
+    modeFfaD: 'Jeder gegen jeden: Alle Bündnisse kämpfen gegeneinander. Länder ohne Bündnis bleiben zunächst neutral.',
+    noAlliance: 'Ohne Bündnis', alliesAi: 'Deine Verbündeten werden von der KI gesteuert und kämpfen mit dir.', yourProvinces: 'Deine Provinzen', bloc: 'Bündnis',
     statTime: 'Kriegsdauer', statKills: 'Feindverluste', statLosses: 'Eigene Verluste', statBuilt: 'Rekrutiert', statCaptured: 'Eroberte Provinzen',
     slot: 'Speicherplatz {0}', autosave: 'Automatisch', emptySlot: '— leer —', overwrite: 'Überschreiben', confirmMenu: 'Zum Hauptmenü? Nicht gespeicherter Fortschritt geht verloren.',
     saveNew: 'Neu speichern', saveName: 'Name des Spielstands', del: 'Löschen', confirmDel: 'Wirklich löschen?', noSaves: 'Noch keine Spielstände vorhanden.',
@@ -105,7 +113,15 @@ const STR = {
     evLaunch: 'Enemy missile launch detected!', evLaunchOwn: 'Missile launched', evIntercept: 'Missile intercepted', evMissileHit: 'Missile impact near {0}',
     evNoPath: 'No route to target', evCrash: '{0} ran out of fuel and crashed', evRout: '{0} is routing', evUnderAttack: '{0} under attack',
     evSaved: 'Game saved', evLoaded: 'Game loaded', evAutosave: 'Autosaved',
-    victory: 'VICTORY', defeat: 'DEFEAT', victoryText: 'The enemy alliance has been completely defeated.', defeatText: 'Your alliance has lost all provinces.',
+    victory: 'VICTORY', defeat: 'DEFEAT', victoryText: 'Every enemy has been completely defeated.', defeatText: 'Your country has lost all provinces.',
+    ally: 'Allied', heldBy: 'Occupied by {0}', diplomacy: 'Diplomacy', declareWar: 'Declare war',
+    neutralInfo: 'This country is neutral and belongs to: {0}. A declaration of war applies to the whole alliance – neighbouring countries may join the defender.',
+    confirmWar: 'Really declare war on {0}? The country mobilises, and its neighbours might turn against you.',
+    evWar: 'War: {0} against {1}', evJoinWar: '{0} enters the war against you!', evAllyLost: 'Allies lost {0}', evAllyCaptured: 'Allies captured {0}',
+    objAllies: 'Allied countries', gameMode: 'Game mode', modeBloc: 'Alliance war', modeFfa: 'World war',
+    modeBlocD: 'Your alliance against one enemy alliance. Every other country stays neutral until someone declares war on it.',
+    modeFfaD: 'Free for all: every alliance fights every other. Countries without an alliance stay neutral at first.',
+    noAlliance: 'No alliance', alliesAi: 'Your allies are controlled by the AI and fight alongside you.', yourProvinces: 'Your provinces', bloc: 'Alliance',
     statTime: 'War duration', statKills: 'Enemy losses', statLosses: 'Own losses', statBuilt: 'Recruited', statCaptured: 'Provinces captured',
     slot: 'Slot {0}', autosave: 'Autosave', emptySlot: '— empty —', overwrite: 'Overwrite', confirmMenu: 'Return to main menu? Unsaved progress will be lost.',
     saveNew: 'Save as new', saveName: 'Save name', del: 'Delete', confirmDel: 'Really delete?', noSaves: 'No saved games yet.',
@@ -268,7 +284,6 @@ function provName(p) {
 }
 function unitName(t) { return L(UNIT_TYPES[t]); }
 function modelName(u) {
-  const T = UNIT_TYPES[u.t], S = Game.state;
-  const east = u.s === 'P' ? EAST_DOCTRINE.has(S.player) : EAST_DOCTRINE.has((BLOCS.find((b) => b.id === S.eBloc) || { members: [''] }).members[0]);
-  return east ? T.me : T.mw;
+  const T = UNIT_TYPES[u.t];
+  return EAST_DOCTRINE.has(u.s) ? T.me : T.mw;
 }

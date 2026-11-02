@@ -269,6 +269,25 @@ const Geo = {
     }
   },
 
+  // Land neighbours per country index (sharing a grid edge), computed once on demand.
+  neighbors() {
+    if (this._nb) return this._nb;
+    const nb = this.countries.map(() => new Set()), gw = this.gw, gc = this.gc;
+    for (let i = 0; i < gc.length; i++) {
+      const a = gc[i];
+      if (a < 0) continue;
+      for (const j of [i + 1, i + gw, i + gw + 1, i + gw - 1]) {
+        if (j >= gc.length) continue;
+        const b = gc[j];
+        if (b >= 0 && b !== a) { nb[a].add(b); nb[b].add(a); }
+      }
+    }
+    return (this._nb = nb);
+  },
+
+  // Countries that can be played: everything with provinces except micro-states, Antarctica and unrecognised areas.
+  playable(c) { return c.provinces && c.provinces.length > 0 && c.area >= 0.04 && /^[A-Z]{2}$/.test(c.k) && c.k !== 'AQ'; },
+
   provinceAt(x, y) {
     const ci = this.countryAt(x, y);
     if (ci < 0) return null;

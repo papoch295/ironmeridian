@@ -36,7 +36,8 @@ const Sim = {
     return false;
   },
   isAir(u) { return UNIT_TYPES[u.t].dom === 'air'; },
-  sees(side, u) { return u.s === side || (u.vm & (side === 'P' ? 1 : 2)) !== 0; },
+  // Vision is shared within a team: u.vm holds one bit per team that currently sees the unit.
+  sees(side, u) { return u.s === side || (u.vm & Game.vbit(side)) !== 0; },
 
   // ---------- Visibility (fog of war) ----------
   visibility() {
@@ -44,35 +45,38 @@ const Sim = {
     for (const e of S.units) {
       if (e.inside) continue;
       const T = UNIT_TYPES[e.t];
-      e.vm = e.s === 'P' ? 1 : 2;
-      const otherBit = e.s === 'P' ? 2 : 1;
+      e.vm = Game.vbit(e.s);
       if (e.air && e.air.st === 'ground') continue;
       const stealth = e.rev > S.t ? T.st * 0.3 : T.st;
       const isSub = T.cls === 'sub';
       h.query(e.x, e.y, 2.6, near);
       for (const o of near) {
-        if (o.s === e.s) continue;
+        const ob = Game.vbit(o.s);
+        if (e.vm & ob || Game.allied(o.s, e.s)) continue;
         const OT = UNIT_TYPES[o.t];
         let r = OT.vis * (1 - stealth * 0.6);
         if (isSub) r = OT.w.includes('asw') || OT.w.includes('torpedo') ? OT.vis * 0.55 : 0;
-        if (U.dist2(o.x, o.y, e.x, e.y) <= r * r) { e.vm |= otherBit; break; }
+        if (U.dist2(o.x, o.y, e.x, e.y) <= r * r) e.vm |= ob;
       }
     }
     // Owned provinces see their surroundings.
+    const owned = new Set();
     S.prov.forEach((pr, pid) => {
       if (!pr.o) return;
+      owned.add(pr.o);
+      if (!Game.act[pr.o]) return; // countries at peace do not need to spot anyone
       // Radar stations widen a province's view; infantry stays hard to spot, submarines invisible.
-      const p = Geo.provinces[pid], bit = pr.o === 'P' ? 1 : 2, R = RADAR_RANGE[pr.b.radar || 0];
+      const p = Geo.provinces[pid], bit = Game.vbit(pr.o), R = RADAR_RANGE[pr.b.radar || 0];
       h.query(p.x, p.y, R, near);
       for (const e of near) {
         const ET = UNIT_TYPES[e.t];
-        if (e.s === pr.o || ET.cls === 'sub') continue;
+        if (e.vm & bit || ET.cls === 'sub' || Game.allied(e.s, pr.o)) continue;
         const r = (ET.cls === 'soft' ? Math.max(1.1, R * 0.5) : R) * (1 - ET.st * 0.5);
         if (U.dist(p.x, p.y, e.x, e.y) <= r) e.vm |= bit;
       }
     });
-    // A side without territory has nowhere to hide.
-    for (const sd of ['P', 'E']) if (!Game.countProv(sd)) for (const u of S.units) if (u.s === sd) u.vm |= 3;
+    // A faction without territory has nowhere to hide.
+    for (const u of S.units) if (!owned.has(u.s)) u.vm = 0x7fffffff;
   },
 
   // ---------- Units ----------
@@ -90,7 +94,7 @@ const Sim = {
     if (u.rout > 0) { u.rout -= dt; if (u.rout <= 0) u.rout = 0; }
     else if (T.cls === 'soft' && u.sup >= 95) {
       u.rout = 8; Game.retreat(u);
-      if (u.s === 'P') Game.emit('rout', u);
+      if (u.s === S.player) Game.emit('rout', u);
     }
     if (u.air) { this.plane(u, dt, T); return; }
     u.rt -= dt;
@@ -115,7 +119,7 @@ const Sim = {
         if (o && (o.k === 'move' || o.k === 'fast' || o.k === 'amove')) {
           if (o.retreat) u.rout = 0;
           u.ord = null;
-          if (o.unload && u.cargo.length && Game.unload(u) && u.s === 'P') Game.emit('unloaded', u);
+          if (o.unload && u.cargo.length && Game.unload(u) && u.s === S.player) Game.emit('unloaded', u);
         }
       }
       if (T.dom === 'land') {
@@ -207,7 +211,7 @@ const Sim = {
     const near = Game.hash.query(u.x, u.y, R, this.near2);
     let best = null, bs = -1;
     for (const t of near) {
-      if (t.s === u.s || !this.sees(u.s, t)) continue;
+      if (!Game.hostile(u.s, t.s) || !this.sees(u.s, t)) continue;
       const cls = this.cls(t), d = U.dist(u.x, u.y, t.x, t.y);
       let eff = 0;
       T.w.forEach((k, i) => {
@@ -221,8 +225,10 @@ const Sim = {
     if (u.ord && u.ord.k === 'attack' && Game.unit(u.ord.id)) best = Game.unit(u.ord.id);
     u.tgt = best ? best.id : null;
     u.tgtP = null;
-    // The AI leaves player provinces alone during the opening grace period.
-    if (!best && !(u.s === 'E' && S.t < DIFFICULTY[S.diff].grace)) {
+    // AI factions leave the provinces of the player's team alone during the opening grace period.
+    const grace = S.t < DIFFICULTY[S.diff].grace && !Game.allied(u.s, S.player);
+    const ok = (pr) => Game.hostile(u.s, pr.o) && pr.def > 0 && !(grace && Game.allied(pr.o, S.player));
+    if (!best) {
       // No units around: shell the enemy garrison of a nearby province.
       const gr = this.groundRange(u, T);
       if (gr > 0) {
@@ -230,14 +236,11 @@ const Sim = {
         const cands = p ? Geo.countries[p.country].provinces : [];
         for (const pid of cands) {
           const pr = S.prov[pid], q = Geo.provinces[pid];
-          if (pr.o && pr.o !== u.s && pr.def > 0 && U.dist(u.x, u.y, q.x, q.y) <= gr) { u.tgtP = pid; break; }
+          if (ok(pr) && U.dist(u.x, u.y, q.x, q.y) <= gr) { u.tgtP = pid; break; }
         }
         if (u.tgtP === null) {
           // Also check provinces just across a border.
-          for (const pid of this.provsNear(u.x, u.y, gr)) {
-            const pr = S.prov[pid];
-            if (pr.o && pr.o !== u.s && pr.def > 0) { u.tgtP = pid; break; }
-          }
+          for (const pid of this.provsNear(u.x, u.y, gr)) if (ok(S.prov[pid])) { u.tgtP = pid; break; }
         }
       }
     }
@@ -263,12 +266,12 @@ const Sim = {
       else if (w.aa || !t) {
         // Secondary weapons (e.g. air defense on a destroyer) pick their own target.
         const near = Game.hash.query(u.x, u.y, w.r, this.near2);
-        for (const e of near) if (e.s !== u.s && this.sees(u.s, e) && this.canHit(w, this.cls(e), U.dist(u.x, u.y, e.x, e.y))) { target = e; break; }
+        for (const e of near) if (Game.hostile(u.s, e.s) && this.sees(u.s, e) && this.canHit(w, this.cls(e), U.dist(u.x, u.y, e.x, e.y))) { target = e; break; }
       }
       if (target) { this.shoot(u, w, i, target.x, target.y, target); continue; }
       if (u.tgtP !== null && u.tgtP !== undefined && (w.dmg.soft || w.dmg.light) && !w.aa) {
         const p = Geo.provinces[u.tgtP], pr = S.prov[u.tgtP];
-        if (pr.o && pr.o !== u.s && pr.def > 0 && U.dist(u.x, u.y, p.x, p.y) <= w.r) this.shoot(u, w, i, p.x, p.y, null, u.tgtP);
+        if (Game.hostile(u.s, pr.o) && pr.def > 0 && U.dist(u.x, u.y, p.x, p.y) <= w.r) this.shoot(u, w, i, p.x, p.y, null, u.tgtP);
       }
     }
   },
@@ -302,7 +305,7 @@ const Sim = {
     const base = w.dmg ? w.dmg[cls] || 0 : 0;
     if (!base) return;
     let dmg = base * (0.8 + Math.random() * 0.4) * (mult || 1);
-    if (attacker && attacker.s === 'E') dmg *= DIFFICULTY[S.diff].eDmg;
+    if (attacker) dmg *= Game.eK(attacker.s);
     if (cls === 'soft' && this.inCover(t)) dmg *= 0.7;
     if (t.emb) dmg *= 1.5;
     t.hp -= dmg;
@@ -310,18 +313,18 @@ const Sim = {
     t.lastHit = S.t;
     if (attacker) t.lastAtk = attacker.id;
     if (t.hp <= 0) this.kill(t, attacker);
-    else if (t.s === 'P') Game.emit('underFire', t);
+    else if (t.s === S.player) Game.emit('underFire', t);
   },
 
   inCover(u) {
     const p = Geo.provinceAt(u.x, u.y);
-    return p && Game.state.prov[p.id].o === u.s && U.dist(u.x, u.y, p.x, p.y) < 0.6;
+    return p && Game.allied(Game.state.prov[p.id].o, u.s) && U.dist(u.x, u.y, p.x, p.y) < 0.6;
   },
 
   hitProvince(pid, dmg, side) {
     const pr = Game.state.prov[pid];
-    if (side === 'E') dmg *= DIFFICULTY[Game.state.diff].eDmg;
-    if (!pr.o || pr.o === side) return;
+    if (!Game.hostile(side, pr.o)) return;
+    dmg *= Game.eK(side);
     pr.def = Math.max(0, pr.def - dmg);
     pr.calm = 0;
   },
@@ -366,7 +369,7 @@ const Sim = {
       S.side[u.s].losses++;
       for (const id of u.cargo) { const c = Game.unit(id); if (c) Game.removeUnit(c); }
       Game.removeUnit(u);
-      if (u.s === 'P') Game.emit('crash', u);
+      if (u.s === S.player) Game.emit('crash', u);
       return;
     }
     const base = a.base !== null ? Geo.provinces[a.base] : null;
@@ -474,7 +477,7 @@ const Sim = {
       if (s.t > S.t) { rest.push(s); continue; }
       const w = s.w === 'strike' ? { dmg: { soft: 40, light: 80, armor: 70, ship: 140 }, aoe: 0.35, sup: 60 } : W[s.w];
       const src = Game.unit(s.src);
-      const k = !src && s.side === 'E' ? DIFFICULTY[S.diff].eDmg : 1;
+      const k = !src ? Game.eK(s.side) : 1;
       this.areaDamage(s.x, s.y, w.aoe || 0.15, s.side, (t, f) => this.hitUnit(t, w, src, f * (s.k || 1) * k), w.aa);
       Game.fx.push({ k: 'boom', x0: s.x, y0: s.y, t0: S.t, dur: 0.9, big: w.aoe >= 0.25, side: s.side });
       Game.emit('impact', s);
@@ -486,7 +489,7 @@ const Sim = {
   areaDamage(x, y, r, side, fn, hitsAir) {
     const near = Game.hash.query(x, y, r, []);
     for (const t of near) {
-      if (t.s === side || (this.isAir(t) && !hitsAir)) continue;
+      if (!Game.hostile(side, t.s) || (this.isAir(t) && !hitsAir)) continue;
       const d = U.dist(x, y, t.x, t.y);
       fn(t, 1 - (d / r) * 0.6);
     }
@@ -502,11 +505,11 @@ const Sim = {
       let pass = 1;
       for (const u of Game.hash.query(m.tx, m.ty, 3, [])) {
         const ic = UNIT_TYPES[u.t].intercept;
-        if (u.s !== m.side && ic) pass *= 1 - Math.min(0.9, ic * M.intercept * 0.5);
+        if (ic && Game.hostile(u.s, m.side)) pass *= 1 - Math.min(0.9, ic * M.intercept * 0.5);
       }
       for (const pid of this.provsNear(m.tx, m.ty, 2.5)) {
         const pr = S.prov[pid], A = AAD_LEVELS[pr.b.aad || 0], q = Geo.provinces[pid];
-        if (A && pr.o && pr.o !== m.side && U.dist(q.x, q.y, m.tx, m.ty) <= A.r) pass *= 1 - Math.min(0.9, A.ic * M.intercept * 0.5);
+        if (A && Game.hostile(pr.o, m.side) && U.dist(q.x, q.y, m.tx, m.ty) <= A.r) pass *= 1 - Math.min(0.9, A.ic * M.intercept * 0.5);
       }
       if (Math.random() > Math.max(0.15, pass)) {
         Game.fx.push({ k: 'boom', x0: U.lerp(m.sx, m.tx, 0.92), y0: U.lerp(m.sy, m.ty, 0.92), t0: S.t, dur: 1, big: 1 });
@@ -515,12 +518,12 @@ const Sim = {
       }
       if (m.nuke) { this.nuke(m.side, m.tx, m.ty); Game.emit('missileHit', m); return false; }
       const w = { dmg: { soft: M.dmg, light: M.dmg, armor: M.dmg * 0.8, ship: M.dmg, sub: M.dmg * 0.4, heli: M.dmg * 0.5 }, sup: 100 };
-      const k = m.side === 'E' ? DIFFICULTY[S.diff].eDmg : 1;
+      const k = Game.eK(m.side);
       this.areaDamage(m.tx, m.ty, M.aoe, m.side, (t, f) => this.hitUnit(t, w, null, f * k));
       for (const pid of this.provsNear(m.tx, m.ty, M.aoe + 0.3)) {
         this.hitProvince(pid, M.dmg, m.side);
         const pr = S.prov[pid];
-        if (M.strategic && pr.o && pr.o !== m.side) {
+        if (M.strategic && Game.hostile(pr.o, m.side)) {
           pr.lvl = Math.max(1, pr.lvl - 1);
           for (const b in pr.b) if (pr.b[b] > 0) pr.b[b]--;
           pr.def = Math.min(pr.def, Game.maxDef(pid));
@@ -541,7 +544,7 @@ const Sim = {
     const hit = new Set();
     for (const pid of this.provsNear(x, y, R + 0.3)) {
       const pr = S.prov[pid], q = Geo.provinces[pid];
-      if (!pr.o || pr.o === side || U.dist(q.x, q.y, x, y) > R + 0.3) continue;
+      if (!Game.hostile(side, pr.o) || U.dist(q.x, q.y, x, y) > R + 0.3) continue;
       hit.add(pid);
       pr.lvl = Math.max(1, pr.lvl - 2);
       for (const b in pr.b) if (pr.b[b] > 0) pr.b[b]--;
@@ -549,7 +552,7 @@ const Sim = {
       for (const k in pr.msl) pr.msl[k] = 0;
     }
     // Aircraft parked on the destroyed airfields burn with them.
-    for (const u of S.units.slice()) if (u.air && u.air.st === 'ground' && u.s !== side && hit.has(u.air.base)) this.kill(u, null);
+    for (const u of S.units.slice()) if (u.air && u.air.st === 'ground' && Game.hostile(side, u.s) && hit.has(u.air.base)) this.kill(u, null);
     S.fallout = S.fallout || [];
     S.fallout.push({ x, y, r: NUKE.falloutR, until: S.t + NUKE.fallout, side });
     Game.fx.push({ k: 'boom', x0: x, y0: y, t0: S.t, dur: 5, big: 1, huge: R, nuke: 1 });
@@ -562,14 +565,20 @@ const Sim = {
     const S = Game.state, near = this.near;
     S.prov.forEach((pr, pid) => {
       if (!pr.o) return;
+      // Countries at peace cannot be attacked: only their garrison regenerates.
+      if (!Game.act[pr.o]) { pr.calm = (pr.calm || 0) + dt; if (pr.calm > 8) pr.def = Math.min(Game.maxDef(pid), pr.def + 3 * dt); return; }
       const p = Geo.provinces[pid];
       Game.hash.query(p.x, p.y, 0.7, near);
       let atk = 0, def = 0, capPower = 0, atkSide = null, victim = null;
       for (const u of near) {
         const T = UNIT_TYPES[u.t];
         if (T.dom !== 'land' || u.emb) continue;
-        if (u.s === pr.o) def++;
-        else { atk++; atkSide = u.s; capPower += T.capture || (T.cls === 'soft' ? 1 : 0.5); if (!victim || Math.random() < 0.3) victim = u; }
+        if (Game.allied(u.s, pr.o)) def++;
+        else if (Game.hostile(u.s, pr.o)) {
+          // Several attackers: the province goes to the faction whose unit arrived first in the list.
+          if (!atkSide) atkSide = u.s;
+          atk++; capPower += T.capture || (T.cls === 'soft' ? 1 : 0.5); if (!victim || Math.random() < 0.3) victim = u;
+        }
       }
       pr.fcd = (pr.fcd || 0) - dt;
       if (atk && pr.def > 0 && pr.fcd <= 0 && victim) {
@@ -586,14 +595,14 @@ const Sim = {
           let tgt = null, bd = A.r * A.r;
           for (const e of Game.hash.query(p.x, p.y, A.r, this.near2)) {
             const c = UNIT_TYPES[e.t].cls;
-            if (e.s === pr.o || (c !== 'air' && c !== 'heli') || !this.sees(pr.o, e)) continue;
+            if (!Game.hostile(pr.o, e.s) || (c !== 'air' && c !== 'heli') || !this.sees(pr.o, e)) continue;
             const d = U.dist2(p.x, p.y, e.x, e.y);
             if (d < bd) { bd = d; tgt = e; }
           }
           if (tgt) {
             pr.acd = A.cd;
             Game.fx.push({ k: 'missile', x0: p.x, y0: p.y, x1: tgt.x, y1: tgt.y, t0: S.t, dur: Math.max(0.4, Math.sqrt(bd) / 2.5), side: pr.o });
-            if (Math.random() < 0.7) this.hitUnit(tgt, { dmg: { air: A.air, heli: A.heli }, sup: 10 }, null, pr.o === 'E' ? DIFFICULTY[S.diff].eDmg : 1);
+            if (Math.random() < 0.7) this.hitUnit(tgt, { dmg: { air: A.air, heli: A.heli }, sup: 10 }, null, Game.eK(pr.o));
           }
         }
       }
@@ -638,7 +647,7 @@ const Sim = {
       if (u.inside || (u.air && u.air.st === 'ground')) continue;
       const T = UNIT_TYPES[u.t];
       const p = T.dom === 'land' ? Geo.provinceAt(u.x, u.y) : null;
-      if (p && S.prov[p.id].o === u.s && U.dist(u.x, u.y, p.x, p.y) < 0.8) {
+      if (p && Game.allied(S.prov[p.id].o, u.s) && U.dist(u.x, u.y, p.x, p.y) < 0.8) {
         this.resupply(u, T, 0.05 * dt);
         u.hp = Math.min(T.hp, u.hp + (T.cls === 'soft' ? 0.6 : S.prov[p.id].b.factory ? 0.5 : 0.15) * dt);
       }
@@ -652,7 +661,7 @@ const Sim = {
       if (T.supply || T.heal || T.repair) {
         Game.hash.query(u.x, u.y, 0.45, near);
         for (const f of near) {
-          if (f.s !== u.s || f === u) continue;
+          if (f === u || !Game.allied(f.s, u.s)) continue;
           const FT = UNIT_TYPES[f.t];
           if (T.supply && FT.dom === 'land') this.resupply(f, FT, 0.2 * dt);
           if (T.heal && FT.cls === 'soft') { f.hp = Math.min(FT.hp, f.hp + T.heal * dt); f.sup = Math.max(0, f.sup - 8 * dt); }
@@ -666,10 +675,11 @@ const Sim = {
     T.w.forEach((k, i) => { const a = W[k].ammo; if (a) u.ammo[i] = Math.min(a, u.ammo[i] + a * frac); });
   },
 
+  // The player wins when no faction at war with them holds a province or a unit, and loses with the last own province.
   checkEnd() {
-    const S = Game.state;
-    const ep = Game.countProv('E'), eu = Game.countUnits('E'), pp = Game.countProv('P');
-    if (ep === 0 && eu === 0) { S.over = 'win'; Game.emit('over', 'win'); }
-    else if (pp === 0) { S.over = 'lose'; Game.emit('over', 'lose'); }
+    const S = Game.state, me = S.player;
+    if (!Game.countProv(me)) { S.over = 'lose'; Game.emit('over', 'lose'); return; }
+    if (S.prov.some((p) => Game.hostile(p.o, me)) || S.units.some((u) => Game.hostile(u.s, me))) return;
+    S.over = 'win'; Game.emit('over', 'win');
   },
 };
