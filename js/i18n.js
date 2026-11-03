@@ -14,7 +14,12 @@ const STR = {
     search: 'Land suchen…', notAdjacent: 'Keine Landgrenze – Angriff über See und Luft nötig.', adjacent: 'Gemeinsame Landgrenze.',
     money: 'Geld', industry: 'Industrie', oil: 'Öl', perMin: '/min', incTip: 'Einnahmen {0}/min, Unterhalt der Truppen {1}/min',
     paused: 'PAUSIERT', speed: 'Tempo', objectives: 'Ziele',
-    objWin: 'Erobere alle {0} feindlichen Provinzen und vernichte alle feindlichen Einheiten.',
+    objWin: 'Punktesieg: Nimm den Gegnern {0} % ihrer Siegpunkte ab und halte das {1} Min. lang. Hauptstädte zählen 5 Punkte, Städte, Häfen, Industrie und Ölfelder 2, Luftwaffenbasen 1.',
+    objLose: 'Hält der Feind mehr als {0} % der Siegpunkte deines Heimatlands, kapituliert dein Land nach {1} Min.',
+    objVp: 'Siegpunkte erobert', objOwnVp: 'Heimatland gehalten', objHoldWin: 'Sieg in {0} – Stellung halten!', objHoldLose: 'Kapitulation in {0} – Provinzen zurückerobern!',
+    vpTagWin: 'SIEG IN {0}', vpTagLose: 'KAPITULATION IN {0}',
+    evVpWin: 'Siegpunkte erreicht! Halte die Stellung {0} Min. lang, dann kapituliert der Gegner.', evVpWinBroken: 'Der Gegner hat Siegpunkte zurückgewonnen – der Sieg ist noch nicht sicher.',
+    evVpLose: 'Dein Land steht vor der Kapitulation! Erobere Provinzen zurück, sonst ist die Partie in {0} Min. verloren.', evVpLoseBroken: 'Die Kapitulation ist abgewendet.',
     objProv: 'Erobert', objUnits: 'Feindliche Einheiten', objYourProv: 'Deine Provinzen', objYourUnits: 'Deine Einheiten',
     province: 'Provinz', owner: 'Besitzer', level: 'Stufe', defense: 'Garnison', income: 'Einnahmen', neutral: 'Neutral',
     player: 'Du', enemy: 'Feind', buildings: 'Institutionen', recruit: 'Rekrutieren', queue: 'Produktion', empty: 'Leer',
@@ -33,6 +38,8 @@ const STR = {
     evNoPath: 'Kein Weg zum Ziel', evCrash: '{0} ohne Treibstoff abgestürzt', evRout: '{0} zieht sich ungeordnet zurück', evUnderAttack: '{0} wird angegriffen',
     evSaved: 'Spiel gespeichert', evLoaded: 'Spielstand geladen', evAutosave: 'Automatisch gespeichert',
     victory: 'SIEG', defeat: 'NIEDERLAGE', victoryText: 'Alle Gegner wurden vollständig besiegt.', defeatText: 'Dein Land hat alle Provinzen verloren.',
+    victoryPts: 'Punktesieg: Der Gegner hat {0} % seiner Siegpunkte verloren und kapituliert. Waffenstillstand!',
+    defeatPts: 'Der Feind hält {0} % der Siegpunkte deines Heimatlands – dein Land muss kapitulieren.', statVp: 'Siegpunkte erobert',
     ally: 'Verbündet', heldBy: 'Besetzt von {0}', diplomacy: 'Diplomatie', declareWar: 'Krieg erklären',
     neutralInfo: 'Dieses Land ist neutral und gehört zu: {0}. Eine Kriegserklärung gilt für das ganze Bündnis – Nachbarländer können sich dem Verteidiger anschließen.',
     confirmWar: 'Wirklich den Krieg erklären? Gegner: {0}. Das Land macht mobil, und seine Nachbarn könnten sich gegen dich stellen.',
@@ -106,7 +113,12 @@ const STR = {
     search: 'Search country…', notAdjacent: 'No land border – attack by sea and air required.', adjacent: 'Shared land border.',
     money: 'Money', industry: 'Industry', oil: 'Oil', perMin: '/min', incTip: 'Income {0}/min, troop upkeep {1}/min',
     paused: 'PAUSED', speed: 'Speed', objectives: 'Objectives',
-    objWin: 'Capture all {0} enemy provinces and destroy every enemy unit.',
+    objWin: 'Points victory: take {0} % of the enemies\' victory points and hold that for {1} min. Capitals count 5 points; cities, ports, industry and oil fields 2; air bases 1.',
+    objLose: 'If the enemy holds more than {0} % of the victory points of your homeland, your country surrenders after {1} min.',
+    objVp: 'Victory points taken', objOwnVp: 'Homeland held', objHoldWin: 'Victory in {0} – hold your ground!', objHoldLose: 'Surrender in {0} – retake provinces!',
+    vpTagWin: 'VICTORY IN {0}', vpTagLose: 'SURRENDER IN {0}',
+    evVpWin: 'Victory points reached! Hold your ground for {0} min and the enemy surrenders.', evVpWinBroken: 'The enemy has regained victory points – victory is not secured yet.',
+    evVpLose: 'Your country is about to surrender! Retake provinces or the game is lost in {0} min.', evVpLoseBroken: 'Surrender averted.',
     objProv: 'Captured', objUnits: 'Enemy units', objYourProv: 'Your provinces', objYourUnits: 'Your units',
     province: 'Province', owner: 'Owner', level: 'Level', defense: 'Garrison', income: 'Income', neutral: 'Neutral',
     player: 'You', enemy: 'Enemy', buildings: 'Institutions', recruit: 'Recruit', queue: 'Production', empty: 'Empty',
@@ -125,6 +137,8 @@ const STR = {
     evNoPath: 'No route to target', evCrash: '{0} ran out of fuel and crashed', evRout: '{0} is routing', evUnderAttack: '{0} under attack',
     evSaved: 'Game saved', evLoaded: 'Game loaded', evAutosave: 'Autosaved',
     victory: 'VICTORY', defeat: 'DEFEAT', victoryText: 'Every enemy has been completely defeated.', defeatText: 'Your country has lost all provinces.',
+    victoryPts: 'Points victory: the enemy has lost {0} % of its victory points and surrenders. Ceasefire!',
+    defeatPts: 'The enemy holds {0} % of the victory points of your homeland – your country has to surrender.', statVp: 'Victory points taken',
     ally: 'Allied', heldBy: 'Occupied by {0}', diplomacy: 'Diplomacy', declareWar: 'Declare war',
     neutralInfo: 'This country is neutral and belongs to: {0}. A declaration of war applies to the whole alliance – neighbouring countries may join the defender.',
     confirmWar: 'Really declare war on {0}? The country mobilises, and its neighbours might turn against you.',
@@ -215,6 +229,9 @@ const HELP = {
       <h3>Flugabwehr & Forschung</h3><p>Die <b>Flugabwehrstellung</b> schützt eine Provinz vor Flugzeugen, Hubschraubern und Raketen.
       Im <b>Forschungszentrum</b> entstehen Atomsprengköpfe, die jede Rakete einer Raketenbasis oder ein strategischer Bomber tragen kann.</p>`,
     combat: `<h3>Echtzeit mit Pause</h3><p>Der Krieg läuft in Echtzeit. Pausiere jederzeit und gib in Ruhe Befehle – jede Einheit ist einzeln steuerbar.</p>
+      <h3>Sieg & Niederlage</h3><p>Jede Provinz bringt <b>Siegpunkte</b>: Hauptstadt 5, Stadt, Hafen, Industrie und Ölfeld 2, Luftwaffenbasis 1.
+      Hast du (mit deinen Verbündeten) den Gegnern 70&nbsp;% ihrer Siegpunkte abgenommen und hältst das eine Minute, kapitulieren sie – Punktesieg.
+      Hält der Feind mehr als 70&nbsp;% der Siegpunkte deines Heimatlands, kapituliert dein Land nach einer Minute. Den Stand zeigt das Ziel-Symbol oben.</p>
       <h3>Erobern</h3><p>Jede Provinz hat eine <b>Garnison</b>, die sich wehrt. Zerstöre sie mit Angriffen, dann erobern Bodentruppen ohne feindliche Verteidiger
       in der Nähe die Provinz. Infanterie und Pioniere erobern am schnellsten. Eroberte Provinzen verlieren eine Stufe.</p>
       <h3>Unterdrückung & Moral</h3><p>Beschuss unterdrückt Infanterie: Sie trifft schlechter, bewegt sich langsamer und flieht bei 100&nbsp;% ungeordnet.</p>
@@ -255,6 +272,9 @@ const HELP = {
       <h3>Air defense & research</h3><p>An <b>Air Defense Site</b> protects a province against aircraft, helicopters and missiles.
       A <b>Research Facility</b> builds nuclear warheads that any missile of a missile base or a strategic bomber can carry.</p>`,
     combat: `<h3>Real time with pause</h3><p>The war runs in real time. Pause at any moment and issue orders calmly – every unit can be commanded individually.</p>
+      <h3>Victory & defeat</h3><p>Every province is worth <b>victory points</b>: capital 5; city, port, industry and oil field 2; air base 1.
+      Once you and your allies have taken 70&nbsp;% of the enemies' victory points and hold that for one minute, they surrender – points victory.
+      If the enemy holds more than 70&nbsp;% of your homeland's victory points, your country surrenders after one minute. The objectives icon at the top shows the score.</p>
       <h3>Capturing</h3><p>Every province has a <b>garrison</b> that fights back. Wear it down, then ground troops capture the province when no enemy defenders
       are nearby. Infantry and engineers capture fastest. Captured provinces lose one level.</p>
       <h3>Suppression & morale</h3><p>Incoming fire suppresses infantry: it shoots worse, moves slower and routs at 100&nbsp;%.</p>
@@ -285,7 +305,7 @@ const TUTORIAL = {
     province: { h: 'Provinzen', b: 'Tippe auf das Symbol deiner Hauptstadt (Stern), um ihr Provinzfenster zu öffnen.' },
     recruit: { h: 'Kampfgruppen rekrutieren', b: 'Unter <b>Kampfgruppen</b> rekrutierst du mit einem Tippen eine ganze neue Armee. Sie erscheint nach der Bauzeit. Einzelne Einheiten gibt es in den Reitern der Institutionen.' },
     economy: { h: 'Wirtschaft', b: 'Oben siehst du Geld, Industrie und Öl. Jede Einheit kostet laufend <b>Unterhalt</b> – wird ein Wert rot, ist deine Armee zu groß für deine Wirtschaft (Antippen zeigt Einnahmen und Unterhalt). Unter <b>Ausbau</b> machst du Provinzen ertragreicher.' },
-    objectives: { h: 'Ziele', b: 'Tippe auf das Ziel-Symbol: Dort siehst du, wie viele feindliche Provinzen du schon erobert hast.' },
+    objectives: { h: 'Ziele', b: 'Tippe auf das Ziel-Symbol: Dort siehst du deine Siegpunkte. Nimmst du den Gegnern 70 % ab und hältst das eine Minute, gewinnst du.' },
     ready: { h: 'Bereit', b: 'Achte auf die Meldungen links oben: Die Aufklärung warnt, wenn der Feind Truppen sammelt – antippen springt hin. Alle Details stehen unter <b>Menü → Hilfe & Einheiten</b>. Viel Erfolg!' },
   },
   en: {
@@ -299,7 +319,7 @@ const TUTORIAL = {
     province: { h: 'Provinces', b: 'Tap the icon of your capital (star) to open its province panel.' },
     recruit: { h: 'Recruit battle groups', b: 'Under <b>Battle groups</b> one tap recruits a whole new army. It appears after its build time. Single units are in the institution tabs.' },
     economy: { h: 'Economy', b: 'The top bar shows money, industry and oil. Every unit costs continuous <b>upkeep</b> – when a value turns red, your army is too large for your economy (tap it for income and upkeep). Use <b>Develop</b> to make provinces earn more.' },
-    objectives: { h: 'Objectives', b: 'Tap the objectives icon: it shows how many enemy provinces you have captured.' },
+    objectives: { h: 'Objectives', b: 'Tap the objectives icon: it shows your victory points. Take 70 % of the enemies\' points and hold for a minute to win.' },
     ready: { h: 'Ready', b: 'Watch the messages at the top left: reconnaissance warns you when the enemy gathers troops – tap to jump there. All details are under <b>Menu → Help & Units</b>. Good luck!' },
   },
 };

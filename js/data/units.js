@@ -141,15 +141,18 @@ const FORMATIONS = [
   { id: 'airMob', de: 'Luftlandezug', en: 'Air Assault Platoon', u: { inf: 2, thelo: 1, ahelo: 1 } },
 ];
 
-// Province types and base income per minute at level 1 (scaled by level).
+// Province types, base income per minute at level 1 (scaled by level) and victory points (vp).
 const PROVINCE_TYPES = {
-  capital:  { m: 70, i: 20, o: 10, def: 220, de: 'Hauptstadt', en: 'Capital' },
-  city:     { m: 40, i: 6,  o: 0,  def: 140, de: 'Stadt', en: 'City' },
-  industry: { m: 10, i: 40, o: 4,  def: 120, de: 'Industriegebiet', en: 'Industrial Zone' },
-  oil:      { m: 15, i: 0,  o: 40, def: 90,  de: 'Ölfeld', en: 'Oil Field' },
-  port:     { m: 30, i: 6,  o: 4,  def: 120, de: 'Hafenstadt', en: 'Port City' },
-  airbase:  { m: 15, i: 6,  o: 0,  def: 120, de: 'Luftwaffenbasis', en: 'Air Base' },
+  capital:  { m: 70, i: 20, o: 10, def: 220, vp: 5, de: 'Hauptstadt', en: 'Capital' },
+  city:     { m: 40, i: 6,  o: 0,  def: 140, vp: 2, de: 'Stadt', en: 'City' },
+  industry: { m: 10, i: 40, o: 4,  def: 120, vp: 2, de: 'Industriegebiet', en: 'Industrial Zone' },
+  oil:      { m: 15, i: 0,  o: 40, def: 90,  vp: 2, de: 'Ölfeld', en: 'Oil Field' },
+  port:     { m: 30, i: 6,  o: 4,  def: 120, vp: 2, de: 'Hafenstadt', en: 'Port City' },
+  airbase:  { m: 15, i: 6,  o: 0,  def: 120, vp: 1, de: 'Luftwaffenbasis', en: 'Air Base' },
 };
+// Points victory: the player wins once the enemies have lost VICTORY.win of their victory points and that holds for
+// VICTORY.hold seconds; the player loses once the own country keeps less than VICTORY.lose of its points as long.
+const VICTORY = { win: 0.7, lose: 0.3, hold: 60 };
 
 const WEAPON_NAMES = {
   rifle: ['Sturmgewehre', 'Assault rifles'], carbine: ['Karabiner (schallgedämpft)', 'Suppressed carbines'], rpg: ['Panzerfaust', 'Rocket launcher'],

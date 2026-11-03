@@ -679,11 +679,38 @@ const Sim = {
     T.w.forEach((k, i) => { const a = W[k].ammo; if (a) u.ammo[i] = Math.min(a, u.ammo[i] + a * frac); });
   },
 
-  // The player wins when no faction at war with them holds a province or a unit, and loses with the last own province.
+  // Victory points (PROVINCE_TYPES.vp). The war zone of the enemies is every province of a country at war with the
+  // player plus whatever they have taken; win = share of it no longer held by them. own = share of the home
+  // country's points not occupied by an enemy.
+  score() {
+    const S = Game.state, me = S.player;
+    let eArea = 0, eHeld = 0, oBase = 0, oHeld = 0;
+    for (let i = 0; i < S.prov.length; i++) {
+      const P = Geo.provinces[i], v = PROVINCE_TYPES[P.type].vp, home = Geo.countries[P.country].k, o = S.prov[i].o;
+      const h = Game.hostile(o, me);
+      if (h || Game.hostile(home, me)) { eArea += v; if (h) eHeld += v; }
+      if (home === me) { oBase += v; if (!h) oHeld += v; }
+    }
+    return { win: eArea ? 1 - eHeld / eArea : 0, own: oBase ? oHeld / oBase : 1, eArea, eHeld, oBase, oHeld };
+  },
+
+  // Ends: total victory (no enemy province or unit left) and total defeat (no own province) at once; a points
+  // victory or defeat once the threshold has held for VICTORY.hold seconds (S.vp = { r, t: end time }).
   checkEnd() {
     const S = Game.state, me = S.player;
-    if (!Game.countProv(me)) { S.over = 'lose'; Game.emit('over', 'lose'); return; }
-    if (S.prov.some((p) => Game.hostile(p.o, me)) || S.units.some((u) => Game.hostile(u.s, me))) return;
-    S.over = 'win'; Game.emit('over', 'win');
+    if (!Game.countProv(me)) return this.end('lose', 'total');
+    if (!S.prov.some((p) => Game.hostile(p.o, me)) && !S.units.some((u) => Game.hostile(u.s, me))) return this.end('win', 'total');
+    const sc = this.score(), want = sc.win >= VICTORY.win ? 'win' : sc.own < VICTORY.lose ? 'lose' : null;
+    if ((S.vp ? S.vp.r : null) !== want) {
+      if (S.vp) Game.emit('vpHold', { r: S.vp.r, ev: 'broken' });
+      S.vp = want ? { r: want, t: S.t + VICTORY.hold } : null;
+      if (want) Game.emit('vpHold', { r: want, ev: 'start' });
+    } else if (want && S.t >= S.vp.t) this.end(want, 'points');
+  },
+
+  end(r, why) {
+    const S = Game.state;
+    S.over = r; S.overWhy = why; S.vp = null;
+    Game.emit('over', r);
   },
 };

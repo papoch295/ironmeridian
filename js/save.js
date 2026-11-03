@@ -156,6 +156,7 @@ const Saves = {
     }
     for (const sd in S.side) S.side[sd].nukes = S.side[sd].nukes || 0;
     S.fallout = S.fallout || [];
+    S.vp = S.vp || null; // points victory countdown (Beta 1, step 8)
     for (const k in S.groups || {}) if (Array.isArray(S.groups[k])) S.groups[k] = { ids: S.groups[k], coh: true };
     if (S.cside) this.toFactions(S, keys);
     S.v = this.VERSION;

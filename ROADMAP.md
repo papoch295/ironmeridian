@@ -212,7 +212,7 @@ Vorschläge (bitte bei F3 auswählen):
 | 49 | **Ereignisse:** Wetter, Sanktionen, Ölkrise, Putsch, Waffenlieferung, Atomalarm | Abwechslung, Entscheidungen | P2 |
 | 50 | **Erfahrung / Veteranen-Einheiten und Generäle** | Bindung an eigene Armeen, Anreiz sie zu schonen | P2 |
 | 51 | **Gegenoffensiven der KI** in festen Abständen, Spitzen-KI-Einheiten im Endspiel | Druck bleibt bestehen | P1 |
-| 52 | **Siegpunkte / Waffenstillstand:** Partie kann mit Punktesieg enden, statt jede letzte Einheit zu jagen | kein zähes Aufräumen am Ende | P1 |
+| 52 | **Siegpunkte / Waffenstillstand:** Partie kann mit Punktesieg enden, statt jede letzte Einheit zu jagen (✔ Beta 1) | kein zähes Aufräumen am Ende | P1 |
 | 53 | **Automatisierung:** Fronten an „Generäle“ (Hilfs-KI) übergeben | weniger Klickarbeit bei großen Reichen | P2 |
 | 54 | **Diplomatie (einfach):** Bündnisangebote, Frieden, Kriegserklärung, Waffenlieferungen | Politische Ebene | P2 |
 
@@ -348,6 +348,13 @@ Schritt 7 erledigt (3. Nov.): interaktives Tutorial mit 12 Schritten. Es startet
 Leicht), hebt den jeweils gemeinten echten Knopf golden pulsierend hervor und geht bei Handlungsschritten erst nach der
 Aktion weiter: Armee 1 wählen, Halten, Großangriff auf eine rote Provinz, Zeit starten, Hauptstadt öffnen,
 Kampfgruppe rekrutieren, Ziele öffnen. Der Tipp-Kasten weicht Fenster und Befehlsleiste aus (Quer-, Hochformat, Desktop).
+Schritt 8 erledigt (3. Nov.): **Punktesieg**. Jede Provinz bringt Siegpunkte (Hauptstadt 5, Stadt/Hafen/Industrie/Ölfeld 2,
+Luftwaffenbasis 1). Haben Spieler und Verbündete den Gegnern 70 % ihrer Siegpunkte abgenommen und halten das 1 Spielminute,
+kapitulieren sie (Waffenstillstand, eigener Endtext). Umgekehrt kapituliert das eigene Land, wenn der Feind mehr als 70 %
+seiner Heimat-Siegpunkte 1 Minute lang hält. Countdown als Banner unter der Leiste, Meldungen bei Beginn und Abbruch,
+Ziele-Fenster mit Siegpunkt-Balken und Schwelle (scrollt auf kleinen Bildschirmen). Totaler Sieg/Niederlage gelten weiter
+sofort. Werte: `VICTORY` und `vp` in `PROVINCE_TYPES` (`js/data/units.js`). Der Selbsttest prüft Countdown, Abbruch,
+Punktesieg und Kapitulation.
 
 **Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
 nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt nur der Punktesieg.
@@ -361,7 +368,7 @@ nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt n
 | **5. Einfachere Führung (P0)** | **Kampfgruppen-Vorlagen** (eine Gruppe mit einem Tippen), **Gruppen-Haltungen** per Knopf, **automatische Rollen** in der Gruppe, **Armee-Übersicht** | #67–#70 | erledigt |
 | 6. Web live | Veröffentlichung auf GitHub Pages, Service Worker für Offline und saubere Updates | 5.1, 7 | erledigt |
 | 7. Tutorial | interaktives Tutorial in einfacher Fassung (Hervorhebungen, Schritt erst nach Aktion), erklärt Kampfgruppen und Haltungen | #28 | erledigt |
-| 8. Punktesieg | Partie endet mit Punktesieg statt Aufräumen bis zur letzten Einheit | #52 | offen |
+| 8. Punktesieg | Partie endet mit Punktesieg statt Aufräumen bis zur letzten Einheit | #52 | erledigt |
 
 Reihenfolge innerhalb von Schritt 4: erst Tempo, Unterhalt und Eingraben (Regeln, die für alle gelten), dann die
 KI-Kampfgruppen darauf abstimmen; Balance jeweils per Testskript KI gegen untätigen Spieler und KI gegen KI.

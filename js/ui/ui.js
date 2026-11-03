@@ -418,8 +418,15 @@ const UI = {
     p.classList.toggle('on', S.paused);
     p.innerHTML = S.paused ? ICON.play : ICON.pause;
     $('#pausedTag').hidden = !S.paused || !!S.over;
+    // Points victory / surrender countdown, always visible while it runs.
+    const vt = $('#vpTag');
+    vt.hidden = !S.vp || !!S.over;
+    if (S.vp) { vt.className = S.vp.r; vt.textContent = t(S.vp.r === 'win' ? 'vpTagWin' : 'vpTagLose', this.clockStr(S.vp.t - S.t)); }
     $$('#speedSeg button').forEach((b) => b.classList.toggle('on', !S.paused && +b.dataset.speed === S.speed));
   },
+
+  // Seconds as m:ss (countdowns).
+  clockStr(sec) { const s = Math.max(0, Math.ceil(sec)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); },
 
   renderObjectives() {
     const box = $('#objBox');
@@ -430,9 +437,15 @@ const UI = {
     const eTotal = S.prov.filter((p, i) => Game.hostile(Geo.countries[Geo.provinces[i].country].k, me) || Game.hostile(p.o, me)).length;
     const ep = S.prov.filter((p) => Game.hostile(p.o, me)).length, eu = S.units.filter((u) => Game.hostile(u.s, me)).length;
     const allies = Object.keys(S.team).filter((k) => k !== me && Game.allied(k, me) && Game.countProv(k)).length;
-    box.innerHTML = `<h2>${U.esc(t('objectives'))}</h2><p class="desc">${U.esc(t('objWin', eTotal))}</p>
+    // Victory points: meter with a mark at the threshold; own country turns red below the surrender line.
+    const sc = Sim.score(), pct = (x) => Math.round(x * 100), mins = VICTORY.hold / 60;
+    const hold = S.vp ? `<p class="vp-hold ${S.vp.r}">${U.esc(t(S.vp.r === 'win' ? 'objHoldWin' : 'objHoldLose', this.clockStr(S.vp.t - S.t)))}</p>` : '';
+    box.innerHTML = `<h2>${U.esc(t('objectives'))}</h2><p class="desc">${U.esc(t('objWin', pct(VICTORY.win), mins))}</p>${hold}
+      <div class="stat-line"><span>${U.esc(t('objVp'))}</span><b>${pct(sc.win)} % / ${pct(VICTORY.win)} %</b></div>
+      <div class="meter vp"><i style="width:${Math.min(100, pct(sc.win))}%"></i><s style="left:${pct(VICTORY.win)}%"></s></div>
+      <div class="stat-line"><span>${U.esc(t('objOwnVp'))}</span><b class="${sc.own < VICTORY.lose ? 'neg' : ''}">${pct(sc.own)} %</b></div>
+      <p class="desc small">${U.esc(t('objLose', 100 - pct(VICTORY.lose), mins))}</p>
       <div class="stat-line"><span>${U.esc(t('objProv'))}</span><b>${eTotal - ep} / ${eTotal}</b></div>
-      <div class="meter"><i style="width:${(1 - ep / Math.max(1, eTotal)) * 100}%"></i></div>
       <div class="stat-line"><span>${U.esc(t('objUnits'))}</span><b>${eu}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv(me)}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourUnits'))}</span><b>${Game.countUnits(me)}</b></div>
@@ -541,6 +554,14 @@ const UI = {
     Game.on('noPath', () => this.toast(t('evNoPath'), 'bad'));
     Game.on('crash', (u) => this.log(t('evCrash', unitName(u.t)), 'warn', u.x, u.y));
     Game.on('rout', (u) => { if (this.sel.has(u.id)) this.log(t('evRout', unitName(u.t)), 'warn', u.x, u.y); });
+    Game.on('vpHold', ({ r, ev }) => {
+      const key = r === 'win' ? (ev === 'start' ? 'evVpWin' : 'evVpWinBroken') : ev === 'start' ? 'evVpLose' : 'evVpLoseBroken';
+      const kind = (r === 'win') === (ev === 'start') ? 'good' : 'bad';
+      const msg = t(key, VICTORY.hold / 60);
+      this.toast(msg, kind); this.log(msg, kind);
+      if (!SelfTest.active) Sfx.play(kind === 'good' ? 'capture' : 'alert');
+      this.renderTime();
+    });
     Game.on('over', (r) => {
       if (SelfTest.active) return;
       const S = Game.state;

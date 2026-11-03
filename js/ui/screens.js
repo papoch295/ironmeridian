@@ -347,10 +347,13 @@ const Screens = {
     if (!S || !S.over) return;
     const s = S.side[S.player];
     const days = Math.floor(S.t * 120 / 86400) + 1;
+    const sc = Sim.score(), pts = S.overWhy === 'points';
+    const text = pts ? t(r === 'win' ? 'victoryPts' : 'defeatPts', Math.round((r === 'win' ? sc.win : 1 - sc.own) * 100)) : t(r === 'win' ? 'victoryText' : 'defeatText');
     this.modal(`<div class="end-title ${r === 'win' ? 'win' : 'lose'}">${U.esc(t(r === 'win' ? 'victory' : 'defeat'))}</div>
-      <p style="text-align:center" class="muted">${U.esc(t(r === 'win' ? 'victoryText' : 'defeatText'))}</p>
+      <p style="text-align:center" class="muted">${U.esc(text)}</p>
       <div class="end-stats">
         <div class="stat-line"><span>${U.esc(t('statTime'))}</span><b>${U.esc(t('days', days))}</b></div>
+        <div class="stat-line"><span>${U.esc(t('statVp'))}</span><b>${Math.round(sc.win * 100)} %</b></div>
         <div class="stat-line"><span>${U.esc(t('statCaptured'))}</span><b>${s.captured}</b></div>
         <div class="stat-line"><span>${U.esc(t('statKills'))}</span><b>${s.kills}</b></div>
         <div class="stat-line"><span>${U.esc(t('statLosses'))}</span><b>${s.losses}</b></div>

@@ -104,6 +104,50 @@ const SelfTest = {
     return JSON.stringify(after) === JSON.stringify(ref) ? null : 'geladener Stand weicht vom gespeicherten ab';
   },
 
+  // Points victory and surrender: hand provinces over directly and check that the countdown starts, breaks when
+  // the threshold is lost again and ends the game only after VICTORY.hold seconds.
+  async vpTest() {
+    try {
+      const country = 'DE', own = Screens.ownTeam(country);
+      const foe = BLOCS.find((b) => b.id !== own.id && b.members.some((k) => Geo.byKey[k]));
+      const setup = () => { Game.newGame({ country, mode: 'bloc', enemyBloc: foe.id, difficulty: 'easy', seed: 7 }); Game.state.paused = true; return Game.state; };
+      // Victory: give the player enemy provinces (largest first) until 75 % of the enemy points are taken.
+      let S = setup();
+      const ids = S.prov.map((p, i) => i).filter((i) => Game.hostile(S.prov[i].o, country))
+        .sort((a, b) => PROVINCE_TYPES[Geo.provinces[b].type].vp - PROVINCE_TYPES[Geo.provinces[a].type].vp);
+      const moved = [];
+      for (const i of ids) { if (Sim.score().win >= 0.75) break; moved.push([i, S.prov[i].o]); S.prov[i].o = country; }
+      Sim.checkEnd();
+      if (!S.vp || S.vp.r !== 'win') return 'Countdown startet nicht (' + Math.round(Sim.score().win * 100) + ' %)';
+      // Losing the points again breaks the countdown.
+      for (const [i, o] of moved) S.prov[i].o = o;
+      Sim.checkEnd();
+      if (S.vp) return 'Countdown bricht nicht ab';
+      for (const [i] of moved) S.prov[i].o = country;
+      Sim.checkEnd();
+      const t0 = S.t;
+      await this.simulate(VICTORY.hold - 5);
+      if (S.over) return 'Spiel endet vor Ablauf des Countdowns (' + Math.round(S.t - t0) + ' s)';
+      // Units keep fighting meanwhile; if the AI won points back the countdown restarts, so shorten it then.
+      for (const [i] of moved) S.prov[i].o = country;
+      Sim.checkEnd();
+      if (S.vp) S.vp.t = Math.min(S.vp.t, S.t + 6);
+      await this.simulate(12);
+      if (S.over !== 'win' || S.overWhy !== 'points') return 'kein Punktesieg nach dem Countdown (Ende: ' + S.over + ')';
+      // Surrender: the player keeps only a fifth of the own country's points.
+      S = setup();
+      const home = Geo.byKey[country].provinces.slice().sort((a, b) => PROVINCE_TYPES[Geo.provinces[b].type].vp - PROVINCE_TYPES[Geo.provinces[a].type].vp);
+      const enemyK = foe.members.find((k) => Geo.byKey[k] && S.side[k]);
+      for (const i of home) { if (Sim.score().own < 0.2) break; S.prov[i].o = enemyK; }
+      if (!Game.countProv(country)) S.prov[home[home.length - 1]].o = country;
+      Sim.checkEnd();
+      if (!S.vp || S.vp.r !== 'lose') return 'Kapitulations-Countdown startet nicht';
+      S.vp.t = S.t; Sim.checkEnd();
+      if (S.over !== 'lose' || S.overWhy !== 'points') return 'keine Kapitulation';
+      return null;
+    } catch (e) { return (e && e.stack) || String(e); }
+  },
+
   async run() {
     const q = new URLSearchParams(location.search);
     const runs = Math.max(1, parseInt(q.get('selftest'), 10) || 3), minutes = parseFloat(q.get('min')) || 20;
@@ -164,6 +208,9 @@ const SelfTest = {
       this.log(`${ok ? 'OK  ' : 'FEHL'} #${i + 1} ${country} vs. ${res.enemy} (${mode}, ${diff}): t=${res.t}s, Einheiten eigen ${res.units.own} / Feind ${res.units.foe} / gesamt ${res.units.all}, Provinzen ${res.prov.own}/${res.prov.foe}${res.over ? ', Ende: ' + res.over : ''}, ${(res.ms / 1000).toFixed(1)} s`);
       for (const p of problems) this.log('     ' + p);
     }
+    const vp = await this.vpTest();
+    this.log(vp ? 'FEHL Punktesieg: ' + vp : 'OK   Punktesieg und Kapitulation');
+    allOk = allOk && !vp;
     this.active = false;
     window.SELFTEST = { ok: allOk, results: this.results };
     this.log(allOk ? 'ERGEBNIS: alles in Ordnung' : 'ERGEBNIS: Probleme gefunden');

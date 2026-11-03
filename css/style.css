@@ -176,10 +176,23 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 #pausedTag::before { content: '❚❚'; letter-spacing: 1px; margin-right: 10px; font-size: 10px; }
 @keyframes pausedPulse { 50% { opacity: .78; } }
 
-#objBox { position: absolute; top: calc(var(--top-h) + 8px); right: calc(10px + var(--safe-r)); width: 300px; padding: 16px; z-index: 2; animation: fadeUp .2s ease-out; }
+#objBox { position: absolute; top: calc(var(--top-h) + 8px); right: calc(10px + var(--safe-r)); width: 300px; max-width: calc(100vw - 20px); padding: 16px; z-index: 2; animation: fadeUp .2s ease-out;
+  max-height: calc(100% - var(--top-h) - 16px); overflow-y: auto; overscroll-behavior: contain; }
 #objBox h2 { font-size: 14px; color: var(--accent); letter-spacing: .14em; }
 #objBox .meter { height: 8px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; margin: 6px 0 12px; box-shadow: inset 0 0 0 1px var(--line); }
 #objBox .meter i { display: block; height: 100%; background: linear-gradient(90deg, #3f86c4, var(--blue)); box-shadow: 0 0 10px rgba(111,179,234,.6); }
+#objBox .meter.vp { position: relative; height: 10px; }
+#objBox .meter.vp s { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent); box-shadow: 0 0 6px rgba(232,181,74,.8); }
+#objBox .stat-line b.neg { color: var(--bad, #e2553c); }
+#objBox .desc.small { font-size: 11px; margin: 0 0 10px; }
+#objBox .vp-hold { margin: 0 0 8px; padding: 6px 10px; border-radius: 3px; font-weight: 700; font-size: 12px; background: rgba(143,209,106,.15); color: #c6efad; border: 1px solid rgba(143,209,106,.5); }
+#objBox .vp-hold.lose { background: rgba(226,85,60,.15); color: #ffd2c8; border-color: rgba(226,85,60,.6); }
+
+/* Points victory / surrender countdown under the top bar. */
+#vpTag { position: absolute; top: calc(var(--top-h) + 42px); left: 50%; transform: translateX(-50%); padding: 5px 16px; font-weight: 700; letter-spacing: .2em; font-size: 12px; border-radius: 3px; pointer-events: none; white-space: nowrap; animation: pausedPulse 1.4s ease-in-out infinite; z-index: 2; }
+#vpTag.win { background: linear-gradient(180deg, rgba(120,190,90,.96), rgba(70,140,55,.96)); color: #0d1a0a; box-shadow: 0 4px 18px rgba(143,209,106,.35); }
+#vpTag.lose { background: linear-gradient(180deg, rgba(226,85,60,.96), rgba(170,50,35,.96)); color: #fff; box-shadow: 0 4px 18px rgba(226,85,60,.35); }
+#vpTag[hidden] { display: none; }
 
 #log { position: absolute; top: calc(var(--top-h) + 10px); left: calc(10px + var(--safe-l)); width: 310px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
 .log-item { position: relative; font-size: 12px; line-height: 1.35; padding: 6px 10px 6px 26px; background: linear-gradient(90deg, rgba(10,17,23,.9), rgba(10,17,23,.65)); border: 1px solid var(--line); border-left: 3px solid var(--muted); border-radius: 3px; animation: logIn .25s ease-out; transition: opacity .6s, background .15s; box-shadow: 0 3px 10px rgba(0,0,0,.25); }
