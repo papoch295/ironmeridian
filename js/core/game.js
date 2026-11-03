@@ -204,12 +204,23 @@ const Game = {
     const land = { inf: Math.max(1, f(1 + p)), at: f(Math.ceil(p / 2)), recon: p >= 2 ? 1 : 0, mortar: p >= 2 ? f(1) : 0, eng: p >= 3 ? 1 : 0, medic: p >= 4 ? 1 : 0,
       ifv: f(Math.ceil(p / 2)), apc: p >= 2 ? f(1) : 0, mbt: f(Math.floor(p / 2)), lt: p >= 3 ? f(1) : 0, aa: f(Math.ceil(p / 3)), arty: p >= 3 ? f(1) : 0,
       spg: p >= 5 ? f(1) : 0, mlrs: p >= 5 ? f(1) : 0, td: p >= 4 ? f(1) : 0, truck: p >= 3 ? 1 : 0, seal: p >= 6 ? 1 : 0, sniper: p >= 4 ? 1 : 0, tbm: p >= 8 ? 1 : 0 };
+    // The player starts with ready-made armies: land units are dealt round-robin into mixed battle groups,
+    // the first ones at the front, the last one at the capital.
+    const total = Object.values(land).reduce((s, n) => s + n, 0);
+    const nG = side === this.state.player ? U.clamp(Math.round(total / 8), 1, 3) : 0;
+    const spots = nG ? Array.from({ length: nG }, (_, i) => (nG > 1 && i === nG - 1 ? cap.id : provs[Math.min(i, provs.length - 1)])) : null;
+    const armies = spots && spots.map(() => []);
     let k = 0;
     for (const t in land) for (let n = 0; n < land[t]; n++) {
       // Front provinces get most troops; every country keeps some at the capital.
-      const pr = Geo.provinces[k % 3 === 2 ? cap.id : provs[Math.min(provs.length - 1, Math.floor(rnd() * Math.min(provs.length, 3)))]];
+      const pr = Geo.provinces[armies ? spots[k % nG] : k % 3 === 2 ? cap.id : provs[Math.min(provs.length - 1, Math.floor(rnd() * Math.min(provs.length, 3)))]];
+      const u = this.spawn(t, side, pr.x + rnd.range(-0.25, 0.25), pr.y + rnd.range(-0.25, 0.25));
+      if (armies) armies[k % nG].push(u.id);
       k++;
-      this.spawn(t, side, pr.x + rnd.range(-0.25, 0.25), pr.y + rnd.range(-0.25, 0.25));
+    }
+    if (armies) {
+      const G = (this.state.groups = this.state.groups || {});
+      armies.forEach((ids, i) => { if (ids.length) G[String(i + 1)] = { ids, coh: true }; });
     }
     const air = { ahelo: p >= 4 ? f(1) : 0, thelo: p >= 3 ? 1 : 0, jet: f(Math.floor(p / 3)), tplane: p >= 5 ? 1 : 0, bomber: p >= 9 ? 1 : 0 };
     for (const t in air) for (let n = 0; n < air[t]; n++) this.spawnAt(t, side, cap.id);

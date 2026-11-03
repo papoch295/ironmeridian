@@ -3,7 +3,7 @@
 
 const STR = {
   de: {
-    title: 'IRON MERIDIAN', subtitle: 'Globaler Konflikt 2026', alpha: 'Alpha-Version',
+    title: 'IRON MERIDIAN', subtitle: 'Globaler Konflikt 2026', alpha: 'Beta-Version',
     newGame: 'Neues Spiel', cont: 'Fortsetzen', load: 'Laden', save: 'Speichern', settings: 'Einstellungen', help: 'Hilfe & Einheiten',
     tutorial: 'Tutorial', mainMenu: 'Hauptmenü', resume: 'Weiter spielen', back: 'Zurück', close: 'Schließen', start: 'Kampagne starten',
     loading: 'Lade Weltkarte…', loadingProv: 'Erzeuge Provinzen…',
@@ -95,7 +95,7 @@ const STR = {
     dir: { N: 'Nord', NE: 'Nordost', E: 'Ost', SE: 'Südost', S: 'Süd', SW: 'Südwest', W: 'West', NW: 'Nordwest', C: 'Zentral' },
   },
   en: {
-    title: 'IRON MERIDIAN', subtitle: 'Global Conflict 2026', alpha: 'Alpha build',
+    title: 'IRON MERIDIAN', subtitle: 'Global Conflict 2026', alpha: 'Beta build',
     newGame: 'New Game', cont: 'Continue', load: 'Load', save: 'Save', settings: 'Settings', help: 'Help & Units',
     tutorial: 'Tutorial', mainMenu: 'Main Menu', resume: 'Resume', back: 'Back', close: 'Close', start: 'Start Campaign',
     loading: 'Loading world map…', loadingProv: 'Generating provinces…',
@@ -276,11 +276,11 @@ const TUTORIAL = {
   de: [
     { h: 'Willkommen, Kommandant', b: 'Dein Bündnis ist <b>blau</b>, der Feind <b>rot</b>. Ziel: Erobere alle roten Provinzen und vernichte alle feindlichen Einheiten.' },
     { h: 'Die Karte', b: 'Verschiebe die Karte durch Ziehen und zoome mit dem Mausrad oder zwei Fingern. Symbole zeigen Städte, Fabriken, Ölfelder, Häfen und Flugplätze.' },
-    { h: 'Einheiten wählen', b: 'Tippe oder klicke auf eine deiner blauen Einheiten. Mit einem Rahmen wählst du mehrere aus.', until: 'select' },
-    { h: 'Bewegen', b: 'Tippe mit Auswahl auf einen Punkt der Karte (Maus: Rechtsklick). Jede Einheit lässt sich einzeln steuern.', until: 'move' },
+    { h: 'Armeen wählen', b: 'Deine Truppen starten in <b>Armeen</b>. Tippe links auf eine Armee-Nummer, um die ganze Kampfgruppe zu wählen (oder tippe eine Einheit auf der Karte an).', until: 'select' },
+    { h: 'Bewegen', b: 'Tippe mit Auswahl auf einen Punkt der Karte (Maus: Rechtsklick). Eine ganze Armee bekommt vorn in der Befehlsleiste Aufträge wie <b>Großangriff</b> und <b>Halten</b> und führt sie selbst aus.', until: 'move' },
     { h: 'Pause', b: 'Drücke den Pause-Knopf oben (oder Leertaste). Im Pausenmodus kannst du in Ruhe Befehle geben.', until: 'pause' },
     { h: 'Provinzen', b: 'Tippe auf das Symbol einer eigenen Provinz, z. B. deine Hauptstadt (Stern).', until: 'province' },
-    { h: 'Rekrutieren', b: 'Wähle im Provinzfenster eine Institution und rekrutiere eine Einheit. Sie erscheint nach der Bauzeit.', until: 'recruit' },
+    { h: 'Rekrutieren', b: 'Unter <b>Kampfgruppen</b> rekrutierst du mit einem Tippen eine ganze Armee. Sie erscheint nach der Bauzeit; einzelne Einheiten gibt es in den Reitern der Institutionen.', until: 'recruit' },
     { h: 'Wirtschaft', b: 'Oben siehst du Geld, Industrie und Öl. Jede Einheit kostet laufend <b>Unterhalt</b> – wird ein Wert rot, ist deine Armee zu groß für deine Wirtschaft (Antippen zeigt Einnahmen und Unterhalt). Baue Provinzen aus, um mehr zu verdienen.' },
     { h: 'Angreifen & Erobern', b: 'Zermürbe die Garnison einer feindlichen Provinz und rücke mit Bodentruppen ein. Nutze Artillerie, Luftwaffe und Raketen zur Unterstützung.' },
     { h: 'Bereit', b: 'Unter <b>Menü → Hilfe & Einheiten</b> findest du alle Details. Viel Erfolg!' },
@@ -288,11 +288,11 @@ const TUTORIAL = {
   en: [
     { h: 'Welcome, Commander', b: 'Your alliance is <b>blue</b>, the enemy <b>red</b>. Goal: capture every red province and destroy all enemy units.' },
     { h: 'The map', b: 'Drag to pan and zoom with the mouse wheel or two fingers. Icons mark cities, factories, oil fields, ports and airfields.' },
-    { h: 'Select units', b: 'Tap or click one of your blue units. Drag a box to select several.', until: 'select' },
-    { h: 'Move', b: 'With a selection, tap a point on the map (mouse: right click). Every unit can be controlled individually.', until: 'move' },
+    { h: 'Select armies', b: 'Your troops start in <b>armies</b>. Tap an army number on the left to select the whole battle group (or tap a unit on the map).', until: 'select' },
+    { h: 'Move', b: 'With a selection, tap a point on the map (mouse: right click). A whole army gets tasks such as <b>Assault</b> and <b>Hold</b> at the front of the command bar and carries them out on its own.', until: 'move' },
     { h: 'Pause', b: 'Press the pause button at the top (or space). While paused you can issue orders calmly.', until: 'pause' },
     { h: 'Provinces', b: 'Tap the icon of one of your provinces, e.g. your capital (star).', until: 'province' },
-    { h: 'Recruit', b: 'In the province panel pick an institution and recruit a unit. It appears after its build time.', until: 'recruit' },
+    { h: 'Recruit', b: 'Under <b>Battle groups</b> one tap recruits a whole army. It appears after its build time; single units are in the institution tabs.', until: 'recruit' },
     { h: 'Economy', b: 'The top bar shows money, industry and oil. Every unit costs continuous <b>upkeep</b> – when a value turns red, your army is too large for your economy (tap it for income and upkeep). Develop provinces to earn more.' },
     { h: 'Attack & capture', b: 'Wear down an enemy province’s garrison and move ground troops in. Support them with artillery, air power and missiles.' },
     { h: 'Ready', b: 'All details are under <b>Menu → Help & Units</b>. Good luck!' },

@@ -2,7 +2,7 @@
 'use strict';
 
 const Panels = {
-  tab: 'barracks',
+  tab: 'form',
   view: 'recruit',     // province panel: recruit | build
   batch: 1,            // how many units one click recruits
   army: null,          // army that recruited units join: null | 'new' | army key
@@ -110,7 +110,8 @@ const Panels = {
       return h + '</div>';
     }
     const tabs = Object.keys(BUILDINGS).filter((b) => pr.b[b] > 0 && !BUILDINGS[b].noRecruit);
-    if (['barracks', 'factory', 'airfield'].some((b) => pr.b[b] > 0)) tabs.push('form');
+    // Battle groups come first: one tap recruits a whole army.
+    if (['barracks', 'factory', 'airfield'].some((b) => pr.b[b] > 0)) tabs.unshift('form');
     // Two views keep the panel short: recruitment and construction. The queue is visible in both.
     h += `<div class="seg view-seg"><button data-act="view" data-k="recruit" class="${this.view === 'recruit' ? 'on' : ''}">${U.esc(t('recruit'))}</button><button data-act="view" data-k="build" class="${this.view === 'build' ? 'on' : ''}">${U.esc(t('develop'))}</button></div>`;
     h += `<h3>${U.esc(t('queue'))} <span class="muted small">${pr.q.length} / ${Game.QUEUE_MAX}</span></h3>`;
@@ -345,7 +346,7 @@ const Panels = {
           this.refresh(true); return;
         }
         if (a === 'split') { UI.splitArmy(); return; }
-        if (a === 'disband') { const ak = UI.selectedArmy(); if (ak) { delete UI.groups()[ak]; UI.groupSig = ''; UI.renderGroups(); UI.toast(t('armyDisbanded', ak)); } this.refresh(true); return; }
+        if (a === 'disband') { const ak = UI.selectedArmy(); if (ak) { delete UI.groups()[ak]; UI.groupSig = ''; UI.renderGroups(); UI.renderCmdbar(); UI.toast(t('armyDisbanded', ak)); } this.refresh(true); return; }
         if (a === 'attackIt' && this.enemy) { UI.issue({ k: 'attack', id: this.enemy.id }); this.show(); }
       };
     });

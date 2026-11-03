@@ -234,6 +234,8 @@ const Render = {
   // ---------- Frame ----------
   frame() {
     const ctx = this.ctx, dpr = this.dpr, S = Game.state;
+    // A window of size 0 (hidden tab, split screen, rotation) has nothing to draw; canvases of size 0 cannot be drawn.
+    if (!this.w || !this.h) return;
     if (this.dirty || this.layerKey !== this.camKey()) this.drawLayer();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(this.layer, 0, 0);

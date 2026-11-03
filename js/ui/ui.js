@@ -606,9 +606,11 @@ const UI = {
     G[k] = { ids: ids.slice(), coh: G[k] ? G[k].coh : true };
     this.groupSig = '';
     this.renderGroups();
+    // Army tasks (attack, advance, hold) appear as soon as the selection is an army.
+    this.renderCmdbar();
   },
   addToGroup(k, ids) { const cur = this.armyIds(k); this.setGroup(k, cur.concat(ids.filter((id) => !cur.includes(id)))); },
-  removeFromGroups(ids) { const G = this.groups(); for (const g in G) G[g].ids = G[g].ids.filter((id) => !ids.includes(id)); this.groupSig = ''; this.renderGroups(); },
+  removeFromGroups(ids) { const G = this.groups(); for (const g in G) G[g].ids = G[g].ids.filter((id) => !ids.includes(id)); this.groupSig = ''; this.renderGroups(); this.renderCmdbar(); },
   // Reserve an army number for units that are still being recruited.
   reserveArmy() {
     const k = this.freeArmyKey();

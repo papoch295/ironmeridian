@@ -337,6 +337,11 @@ Ein direkter Befehl hebt den Auftrag auf.
 Web: Das Spiel läuft unter **https://papoch295.github.io/ironmeridian/** (GitHub Pages, aktualisiert sich bei jedem Push).
 Schritt 6 erledigt (3. Nov.): Service Worker `sw.js` – Web-Version startet auch offline, Updates sind beim nächsten
 Start da (Netz zuerst, Cache als Rückfall). Der Selbsttest prüft, dass jede Datei aus `index.html` im Offline-Cache steht.
+Einstieg überarbeitet (3. Nov., nach Gesamtdurchsicht): Der Spieler startet mit 1–3 fertigen, gemischten Armeen (vorn an
+der Front, die letzte an der Hauptstadt) statt mit losen Einzeleinheiten; „Kampfgruppen“ ist der erste, vorgewählte
+Rekrutierungs-Reiter; Armee-Befehle erscheinen sofort nach „Neue Armee“; Tutorial-Texte erklären Armeen; Menü zeigt „Beta“.
+Offen aus der Durchsicht: Handy-Layout im Querformat (Seitenfenster und Befehlsleiste verdecken viel Karte, Leiste läuft
+über), Setup-Knöpfe über dem Spielmodus, Ziel-Anzeige „51 / 51“ missverständlich, Symbole der Schnellleiste.
 
 **Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
 nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt nur der Punktesieg.
