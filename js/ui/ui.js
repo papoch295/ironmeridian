@@ -26,7 +26,7 @@ const UI = {
     $('#btnMenu').onclick = () => Screens.pauseMenu();
     $$('#quick button').forEach((b) => { b.innerHTML = ICON['q' + b.dataset.q] + '<span>' + U.esc(t('q' + b.dataset.q[0].toUpperCase() + b.dataset.q.slice(1))) + '</span>'; b.onclick = () => { Sfx.play('click'); this.quickSelect(b.dataset.q); }; });
     $('#groups').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { Sfx.play('click'); b.dataset.g === 'new' ? this.newGroup() : this.selectGroup(b.dataset.g); } });
-    $('#btnObj').onclick = () => { const o = $('#objBox'); o.hidden = !o.hidden; this.renderObjectives(); };
+    $('#btnObj').onclick = () => { const o = $('#objBox'); o.hidden = !o.hidden; this.renderObjectives(); if (!o.hidden) this.tutDone('obj'); };
     for (const [id, k] of [['#resM', 'money'], ['#resI', 'industry'], ['#resO', 'oil']]) $(id).innerHTML = `${ICON[k]}<span class="num"><span class="v">0</span><span class="inc"></span></span>`;
     this.applyLang();
     this.wireGameEvents();
@@ -48,7 +48,7 @@ const UI = {
   select(ids, add) {
     if (!add) Render.selection.clear();
     for (const id of ids) Render.selection.add(id);
-    if (Render.selection.size) { Render.selProv = null; Render.dirty = true; this.tutDone('select'); Sfx.play('select'); }
+    if (Render.selection.size) { Render.selProv = null; Render.dirty = true; this.tutDone('select'); if (this.selectedArmy()) this.tutDone('army'); Sfx.play('select'); }
     this.setMode(null);
     Panels.show();
     this.renderCmdbar();
@@ -243,7 +243,7 @@ const UI = {
     a.task = g;
     if (kind !== 'hold') Render.ping(x, y, kind === 'attack' ? 'attack' : 'move');
     this.toast(t('task_' + kind, ak));
-    if (kind !== 'hold') this.tutDone('move');
+    this.tutDone(kind === 'hold' ? 'hold' : 'move');
     Sfx.play('order');
     this.groupSig = ''; this.renderGroups(); Panels.show();
   },
@@ -295,10 +295,10 @@ const UI = {
     const S = Game.state;
     if (!S) return;
     S.paused = force ?? !S.paused;
-    if (S.paused) this.tutDone('pause');
+    this.tutDone(S.paused ? 'pause' : 'play');
     this.renderTime();
   },
-  setSpeed(v) { if (!Game.state) return; Game.state.speed = v; Game.state.paused = false; this.renderTime(); },
+  setSpeed(v) { if (!Game.state) return; Game.state.speed = v; Game.state.paused = false; this.tutDone('play'); this.renderTime(); },
 
   // ---------- Command bar ----------
   renderCmdbar() {
@@ -550,25 +550,57 @@ const UI = {
   },
 
   // ---------- Tutorial ----------
+  // Each step: text id (TUTORIAL), the action that completes it (until, see tutDone) and the real buttons to highlight
+  // (hl: the first visible match wins, so a fallback can point at the step before, e.g. the army button).
+  TUT_STEPS: [
+    { id: 'welcome' },
+    { id: 'map' },
+    { id: 'army', until: 'army', hl: ['#groups .grp[data-g="1"]'] },
+    { id: 'armyPanel', hl: ['#panel .army-box'] },
+    { id: 'hold', until: 'hold', hl: ['#cmdbar [data-c="tHold"]', '#groups .grp[data-g="1"]'] },
+    { id: 'attack', until: 'move', hl: ['#cmdbar [data-c="tAttack"].on', '#cmdbar [data-c="tAttack"]', '#groups .grp[data-g="1"]'] },
+    { id: 'time', until: 'play', hl: ['#btnPause'] },
+    { id: 'province', until: 'province', enter: () => { const c = Game.state && Geo.byKey[Game.me()].provinces.map((pid) => Geo.provinces[pid]).find((p) => p.type === 'capital'); if (c) Render.flyTo(c.x, c.y, Math.max(Render.cam.z, 16)); } },
+    { id: 'recruit', until: 'recruit', hl: ['#panel .fcard:not(.off)', '#panel .tabs [data-k="form"]'] },
+    { id: 'economy', hl: ['.res-group'] },
+    { id: 'objectives', until: 'obj', hl: ['#btnObj'] },
+    { id: 'ready' },
+  ],
   startTutorial() { this.tutStep = 0; this.tutFlags = {}; this.renderTut(); },
   tutDone(flag) {
     this.tutFlags[flag] = true;
-    const st = TUTORIAL[I18N.lang][this.tutStep];
+    const st = this.TUT_STEPS[this.tutStep];
     if (st && st.until === flag) { this.tutStep++; this.renderTut(); }
   },
+  endTut() { this.tutStep = -1; $('#tut').hidden = true; this.tutHighlight(); },
   renderTut() {
-    const box = $('#tut');
-    const steps = TUTORIAL[I18N.lang];
+    const box = $('#tut'), steps = this.TUT_STEPS;
     const st = steps[this.tutStep];
-    if (!st) { box.hidden = true; this.tutStep = -1; return; }
+    if (!st) { this.endTut(); return; }
     if (st.until && this.tutFlags[st.until]) { this.tutStep++; this.renderTut(); return; }
-    const last = this.tutStep === steps.length - 1;
-    box.innerHTML = `<h4>${U.esc(st.h)}</h4><p>${st.b}</p><div class="row"><span class="steps">${this.tutStep + 1} / ${steps.length}</span>
+    const tx = TUTORIAL[I18N.lang][st.id], last = this.tutStep === steps.length - 1;
+    box.innerHTML = `<h4>${U.esc(tx.h)}</h4><p>${tx.b}</p><div class="row"><span class="steps">${this.tutStep + 1} / ${steps.length}</span>
       <span class="row"><button class="btn sm" id="tutSkip">${U.esc(t('skip'))}</button>${st.until ? '' : `<button class="btn sm primary" id="tutNext">${U.esc(last ? t('done') : t('next'))}</button>`}</span></div>`;
     box.hidden = false;
-    $('#tutSkip').onclick = () => { this.tutStep = -1; box.hidden = true; };
+    $('#tutSkip').onclick = () => this.endTut();
     const n = $('#tutNext');
     if (n) n.onclick = () => { this.tutStep++; this.renderTut(); };
+    if (st.enter) st.enter();
+    this.tutHighlight();
+  },
+  // Marks the button the current step talks about; runs again with the HUD refresh, because bars and panels re-render.
+  tutHighlight() {
+    const st = this.tutStep >= 0 ? this.TUT_STEPS[this.tutStep] : null;
+    let el = null;
+    if (st && st.hl) for (const s of st.hl) { el = $$(s).find((e) => e.offsetParent); if (el) break; }
+    $$('.tut-hl').forEach((e) => e !== el && e.classList.remove('tut-hl'));
+    // A newly marked button inside a scrolling panel is scrolled into view once.
+    if (el && !el.classList.contains('tut-hl')) { el.classList.add('tut-hl'); if (el.closest('.p-body')) el.scrollIntoView({ block: 'nearest' }); }
+    // Portrait: the tip moves to the top when the highlighted button or the open panel fills the lower half.
+    const box = $('#tut');
+    if (box.hidden) return;
+    const low = !$('#panel').hidden || (el && el.getBoundingClientRect().bottom > innerHeight * 0.55);
+    box.classList.toggle('top', innerHeight > innerWidth && low);
   },
 
   // Called every frame.
@@ -582,6 +614,7 @@ const UI = {
       Panels.refresh();
       this.renderObjectives();
       this.renderGroups();
+      if (this.tutStep >= 0) this.tutHighlight();
     }
   },
 

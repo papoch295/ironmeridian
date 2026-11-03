@@ -272,31 +272,36 @@ const HELP = {
   },
 };
 
+// Tutorial texts by step id; order, triggers and highlighted buttons are in UI.TUT_STEPS.
 const TUTORIAL = {
-  de: [
-    { h: 'Willkommen, Kommandant', b: 'Dein Bündnis ist <b>blau</b>, der Feind <b>rot</b>. Ziel: Erobere alle roten Provinzen und vernichte alle feindlichen Einheiten.' },
-    { h: 'Die Karte', b: 'Verschiebe die Karte durch Ziehen und zoome mit dem Mausrad oder zwei Fingern. Symbole zeigen Städte, Fabriken, Ölfelder, Häfen und Flugplätze.' },
-    { h: 'Armeen wählen', b: 'Deine Truppen starten in <b>Armeen</b>. Tippe links auf eine Armee-Nummer, um die ganze Kampfgruppe zu wählen (oder tippe eine Einheit auf der Karte an).', until: 'select' },
-    { h: 'Bewegen', b: 'Tippe mit Auswahl auf einen Punkt der Karte (Maus: Rechtsklick). Eine ganze Armee bekommt vorn in der Befehlsleiste Aufträge wie <b>Großangriff</b> und <b>Halten</b> und führt sie selbst aus.', until: 'move' },
-    { h: 'Pause', b: 'Drücke den Pause-Knopf oben (oder Leertaste). Im Pausenmodus kannst du in Ruhe Befehle geben.', until: 'pause' },
-    { h: 'Provinzen', b: 'Tippe auf das Symbol einer eigenen Provinz, z. B. deine Hauptstadt (Stern).', until: 'province' },
-    { h: 'Rekrutieren', b: 'Unter <b>Kampfgruppen</b> rekrutierst du mit einem Tippen eine ganze Armee. Sie erscheint nach der Bauzeit; einzelne Einheiten gibt es in den Reitern der Institutionen.', until: 'recruit' },
-    { h: 'Wirtschaft', b: 'Oben siehst du Geld, Industrie und Öl. Jede Einheit kostet laufend <b>Unterhalt</b> – wird ein Wert rot, ist deine Armee zu groß für deine Wirtschaft (Antippen zeigt Einnahmen und Unterhalt). Baue Provinzen aus, um mehr zu verdienen.' },
-    { h: 'Angreifen & Erobern', b: 'Zermürbe die Garnison einer feindlichen Provinz und rücke mit Bodentruppen ein. Nutze Artillerie, Luftwaffe und Raketen zur Unterstützung.' },
-    { h: 'Bereit', b: 'Unter <b>Menü → Hilfe & Einheiten</b> findest du alle Details. Viel Erfolg!' },
-  ],
-  en: [
-    { h: 'Welcome, Commander', b: 'Your alliance is <b>blue</b>, the enemy <b>red</b>. Goal: capture every red province and destroy all enemy units.' },
-    { h: 'The map', b: 'Drag to pan and zoom with the mouse wheel or two fingers. Icons mark cities, factories, oil fields, ports and airfields.' },
-    { h: 'Select armies', b: 'Your troops start in <b>armies</b>. Tap an army number on the left to select the whole battle group (or tap a unit on the map).', until: 'select' },
-    { h: 'Move', b: 'With a selection, tap a point on the map (mouse: right click). A whole army gets tasks such as <b>Assault</b> and <b>Hold</b> at the front of the command bar and carries them out on its own.', until: 'move' },
-    { h: 'Pause', b: 'Press the pause button at the top (or space). While paused you can issue orders calmly.', until: 'pause' },
-    { h: 'Provinces', b: 'Tap the icon of one of your provinces, e.g. your capital (star).', until: 'province' },
-    { h: 'Recruit', b: 'Under <b>Battle groups</b> one tap recruits a whole army. It appears after its build time; single units are in the institution tabs.', until: 'recruit' },
-    { h: 'Economy', b: 'The top bar shows money, industry and oil. Every unit costs continuous <b>upkeep</b> – when a value turns red, your army is too large for your economy (tap it for income and upkeep). Develop provinces to earn more.' },
-    { h: 'Attack & capture', b: 'Wear down an enemy province’s garrison and move ground troops in. Support them with artillery, air power and missiles.' },
-    { h: 'Ready', b: 'All details are under <b>Menu → Help & Units</b>. Good luck!' },
-  ],
+  de: {
+    welcome: { h: 'Willkommen, Kommandant', b: 'Dein Bündnis ist <b>blau</b> (Verbündete türkis), der Feind <b>rot</b>. Das Spiel ist pausiert – in Ruhe lernst du jetzt, deine Armeen zu führen.' },
+    map: { h: 'Die Karte', b: 'Verschiebe die Karte durch Ziehen und zoome mit zwei Fingern oder dem Mausrad. Symbole zeigen Städte, Fabriken, Ölfelder, Häfen und Flugplätze.' },
+    army: { h: 'Armeen', b: 'Deine Truppen sind in <b>Armeen</b> eingeteilt: gemischte Kampfgruppen mit Panzern, Infanterie, Artillerie und Unterstützung. Tippe auf <b>Armee 1</b>.' },
+    armyPanel: { h: 'Die Armee', b: 'Rechts siehst du Auftrag und Zusammensetzung. <b>Rückzug bei Verlusten</b>: Die Armee bricht einen Angriff bei hohen Verlusten selbst ab. <b>Formation halten</b>: alle Einheiten bleiben zusammen.' },
+    hold: { h: 'Halten', b: 'Ein Auftrag genügt, den Rest führt die Armee selbst aus. Tippe auf <b>Halten</b>: Die Armee bleibt stehen und gräbt sich ein – mit der Zeit verteidigt sie sich immer besser.' },
+    attack: { h: 'Großangriff', b: 'Tippe auf <b>Großangriff</b> und dann auf eine feindliche (rote) Provinz. Die Armee klärt auf, lässt die Artillerie feuern, stürmt und hält das Ziel. <b>Vorrücken</b> marschiert und kämpft unterwegs, <b>Bewegen</b> ist ein einfacher Marschbefehl.' },
+    time: { h: 'Zeit starten', b: 'Bisher war alles pausiert. Tippe auf <b>▶</b>, damit die Zeit läuft. Mit Pause kannst du jederzeit anhalten und in Ruhe Befehle geben.' },
+    province: { h: 'Provinzen', b: 'Tippe auf das Symbol deiner Hauptstadt (Stern), um ihr Provinzfenster zu öffnen.' },
+    recruit: { h: 'Kampfgruppen rekrutieren', b: 'Unter <b>Kampfgruppen</b> rekrutierst du mit einem Tippen eine ganze neue Armee. Sie erscheint nach der Bauzeit. Einzelne Einheiten gibt es in den Reitern der Institutionen.' },
+    economy: { h: 'Wirtschaft', b: 'Oben siehst du Geld, Industrie und Öl. Jede Einheit kostet laufend <b>Unterhalt</b> – wird ein Wert rot, ist deine Armee zu groß für deine Wirtschaft (Antippen zeigt Einnahmen und Unterhalt). Unter <b>Ausbau</b> machst du Provinzen ertragreicher.' },
+    objectives: { h: 'Ziele', b: 'Tippe auf das Ziel-Symbol: Dort siehst du, wie viele feindliche Provinzen du schon erobert hast.' },
+    ready: { h: 'Bereit', b: 'Achte auf die Meldungen links oben: Die Aufklärung warnt, wenn der Feind Truppen sammelt – antippen springt hin. Alle Details stehen unter <b>Menü → Hilfe & Einheiten</b>. Viel Erfolg!' },
+  },
+  en: {
+    welcome: { h: 'Welcome, Commander', b: 'Your alliance is <b>blue</b> (allies teal), the enemy <b>red</b>. The game is paused – take your time to learn how to lead your armies.' },
+    map: { h: 'The map', b: 'Drag to pan and zoom with two fingers or the mouse wheel. Icons mark cities, factories, oil fields, ports and airfields.' },
+    army: { h: 'Armies', b: 'Your troops are organised in <b>armies</b>: mixed battle groups with tanks, infantry, artillery and support. Tap <b>army 1</b>.' },
+    armyPanel: { h: 'The army', b: 'On the right you see its task and units. <b>Retreat on losses</b>: the army breaks off an attack on its own when losses are high. <b>Keep together</b>: all units stay in formation.' },
+    hold: { h: 'Hold', b: 'One task is enough, the army carries out the rest itself. Tap <b>Hold</b>: the army stops and digs in – the longer it stays, the better it defends.' },
+    attack: { h: 'Assault', b: 'Tap <b>Assault</b>, then an enemy (red) province. The army scouts, lets the artillery fire, storms and holds the target. <b>Advance</b> marches and fights on the way, <b>Move</b> is a plain march order.' },
+    time: { h: 'Start the clock', b: 'Everything was paused so far. Tap <b>▶</b> to let time run. Pause at any moment to give orders calmly.' },
+    province: { h: 'Provinces', b: 'Tap the icon of your capital (star) to open its province panel.' },
+    recruit: { h: 'Recruit battle groups', b: 'Under <b>Battle groups</b> one tap recruits a whole new army. It appears after its build time. Single units are in the institution tabs.' },
+    economy: { h: 'Economy', b: 'The top bar shows money, industry and oil. Every unit costs continuous <b>upkeep</b> – when a value turns red, your army is too large for your economy (tap it for income and upkeep). Use <b>Develop</b> to make provinces earn more.' },
+    objectives: { h: 'Objectives', b: 'Tap the objectives icon: it shows how many enemy provinces you have captured.' },
+    ready: { h: 'Ready', b: 'Watch the messages at the top left: reconnaissance warns you when the enemy gathers troops – tap to jump there. All details are under <b>Menu → Help & Units</b>. Good luck!' },
+  },
 };
 
 const I18N = {

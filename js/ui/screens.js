@@ -42,7 +42,8 @@ const Screens = {
   setupScreen(tutorial) {
     this.tutorial = tutorial;
     this.attract = false;
-    if (tutorial) Object.assign(this.setup, { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'easy' });
+    // The tutorial skips the setup: a fixed, easy scenario starts right away.
+    if (tutorial) { Object.assign(this.setup, { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'easy' }); this.startGame(); return; }
     this.show('#setup');
     $('#setupSearch').value = '';
     $('#setupSearch').oninput = () => this.renderNations();

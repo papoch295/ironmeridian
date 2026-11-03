@@ -344,6 +344,10 @@ Handy-Layout (3. Nov.): Seitenfenster schmaler und per Knopf einklappbar (nur Ti
 kleinen Bildschirmen zweistufig (Hauptbefehle + „Mehr“), im Hochformat zweizeilig statt Überlauf; Schnellleiste
 zweispaltig; Setup mit festem Fußbereich, Schwierigkeit vor der Feindliste; Ziel-Anzeige „Erobert 0 / 50“; neue Symbole
 für Bodentruppen und Untätige; keine Tastatur-Hinweise auf Touch-Geräten.
+Schritt 7 erledigt (3. Nov.): interaktives Tutorial mit 12 Schritten. Es startet aus dem Menü direkt (Deutschland,
+Leicht), hebt den jeweils gemeinten echten Knopf golden pulsierend hervor und geht bei Handlungsschritten erst nach der
+Aktion weiter: Armee 1 wählen, Halten, Großangriff auf eine rote Provinz, Zeit starten, Hauptstadt öffnen,
+Kampfgruppe rekrutieren, Ziele öffnen. Der Tipp-Kasten weicht Fenster und Befehlsleiste aus (Quer-, Hochformat, Desktop).
 
 **Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
 nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt nur der Punktesieg.
@@ -356,7 +360,7 @@ nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt n
 | **4. Taktisches Gameplay (P0)** | **Unterhalt**, **langsameres Tempo**, **Eingraben**; KI mit **Kampfgruppen**, **Angriff in Phasen**, **Rückzug bei Verlusten** | #55–#60 | erledigt |
 | **5. Einfachere Führung (P0)** | **Kampfgruppen-Vorlagen** (eine Gruppe mit einem Tippen), **Gruppen-Haltungen** per Knopf, **automatische Rollen** in der Gruppe, **Armee-Übersicht** | #67–#70 | erledigt |
 | 6. Web live | Veröffentlichung auf GitHub Pages, Service Worker für Offline und saubere Updates | 5.1, 7 | erledigt |
-| 7. Tutorial | interaktives Tutorial in einfacher Fassung (Hervorhebungen, Schritt erst nach Aktion), erklärt Kampfgruppen und Haltungen | #28 | offen |
+| 7. Tutorial | interaktives Tutorial in einfacher Fassung (Hervorhebungen, Schritt erst nach Aktion), erklärt Kampfgruppen und Haltungen | #28 | erledigt |
 | 8. Punktesieg | Partie endet mit Punktesieg statt Aufräumen bis zur letzten Einheit | #52 | offen |
 
 Reihenfolge innerhalb von Schritt 4: erst Tempo, Unterhalt und Eingraben (Regeln, die für alle gelten), dann die
