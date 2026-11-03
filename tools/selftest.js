@@ -21,6 +21,14 @@ const browsers = [
 if (!browsers.length) { console.error('Kein Edge/Chrome gefunden (Pfad per Umgebungsvariable BROWSER angeben).'); process.exit(2); }
 
 const index = path.resolve(__dirname, '..', 'index.html');
+
+// The offline cache of the web version must list every file index.html loads.
+{
+  const html = fs.readFileSync(index, 'utf8');
+  const sw = fs.readFileSync(path.resolve(__dirname, '..', 'sw.js'), 'utf8');
+  const missing = [...html.matchAll(/(?:src|href)="([^"#:]+)"/g)].map((m) => m[1]).filter((f) => !sw.includes(`'${f}'`));
+  if (missing.length) { console.error('sw.js: Dateien fehlen im Offline-Cache (FILES und CACHE-Version anpassen): ' + missing.join(', ')); process.exit(1); }
+}
 const url = 'file:///' + index.replace(/\\/g, '/').replace(/ /g, '%20') + `?selftest=${runs}&min=${minutes}`;
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'im-selftest-'));
 const proc = spawn(browsers[0], ['--headless=new', '--disable-gpu', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,

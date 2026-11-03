@@ -24,6 +24,7 @@ Dieses Projekt ist ausschließlich das Spiel **IRON MERIDIAN – Globaler Konfli
 ## Technik
 - Reines HTML/CSS/JavaScript, Canvas 2D, keine Abhängigkeiten, kein Build-Schritt, läuft offline und per `file://`.
 - Klassische `<script>`-Dateien mit globalen Objekten (keine ES-Module, sonst geht `file://` kaputt). Reihenfolge in `index.html`.
+  Neue oder umbenannte Dateien auch in `FILES` in `sw.js` (Offline-Cache der Web-Version) eintragen und `CACHE` hochzählen.
 - `js/data/world.js` ist generiert (`node tools/build-world.js <50m.json> <110m.json>`, Quelle world-atlas@2.0.2) – nicht von Hand ändern.
 - Wichtige Stellen:
   - Balance/Schwierigkeit: `DIFFICULTY` in `js/core/game.js`; Einheiten, Waffen, Gebäude, `TIME_SCALE`, `RADAR_RANGE` in `js/data/units.js`.

@@ -26,6 +26,10 @@
     const S = Game.state;
     if (document.hidden && S && !S.over && !SelfTest.active) Saves.autosave();
   });
+  // Web version: offline start and clean updates (sw.js). Not available over file:// (desktop install, self test).
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Service Worker:', e)));
+  }
 
   let last = performance.now(), acc = 0, drift = 1;
   function loop(now) {

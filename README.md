@@ -7,7 +7,7 @@ Industriegebieten, Ölfeldern, Häfen und Luftwaffenbasen, moderne Einheiten (20
 **https://papoch295.github.io/ironmeridian/**
 
 Einfach auf dem Handy öffnen, am besten im Querformat. Über „Zum Startbildschirm hinzufügen“ (Android: Chrome-Menü,
-iPhone: Safari → Teilen) lässt es sich wie eine App starten.
+iPhone: Safari → Teilen) lässt es sich wie eine App starten. Nach dem ersten Öffnen läuft es auch offline.
 
 ## Starten
 - **Desktop:** Verknüpfung „Iron Meridian“ auf dem Desktop (öffnet das Spiel als App-Fenster in Microsoft Edge).

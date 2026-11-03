@@ -224,8 +224,9 @@ Das Spiel ist eine reine Web-App (HTML/CSS/JS, keine Abhängigkeiten). Es gibt z
 
 ### 5.1 Weg A: Web-Version + „Zum Startbildschirm hinzufügen“ (PWA) – schnellster Weg
 1. **Online stellen** (siehe 7). Die Seite muss über `https://` erreichbar sein.
-2. **Service Worker** ergänzen (fehlt noch): eine kleine Datei `sw.js`, die alle Spieldateien zwischenspeichert.
-   Dadurch läuft das Spiel offline und startet schnell. Aufwand: S.
+2. ~~**Service Worker**~~ – erledigt (3. Nov.): `sw.js` speichert alle Spieldateien zwischen. Online wird jede Datei
+   kurz beim Server nachgefragt (neue Version sofort beim nächsten Start), offline kommt die gespeicherte Kopie.
+   Neue Dateien in `FILES` eintragen und `CACHE` hochzählen; der Selbsttest bricht ab, wenn eine Datei fehlt.
 3. `manifest.webmanifest` prüfen: Name, Symbole (192 und 512 px PNG), `display: fullscreen`, `orientation: landscape`.
 4. Auf dem Handy die Seite in Chrome öffnen → Menü → **„Zum Startbildschirm hinzufügen“**. Es erscheint ein App-Symbol,
    das Spiel startet im Vollbild wie eine App.
@@ -281,7 +282,7 @@ Aufwand gesamt: M (erstes Mal), danach S pro Update.
 Schritte (Beispiel GitHub Pages):
 1. ~~Git-Repository anlegen~~ – erledigt (papoch295/ironmeridian, öffentlich).
 2. ~~Pages aktivieren~~ – erledigt: **https://papoch295.github.io/ironmeridian/**, Link steht oben in der README.
-3. Service Worker (5.1) ergänzen, damit Spieler nach Updates die neue Version bekommen (Versionsnummer im Cache-Namen).
+3. ~~Service Worker (5.1)~~ – erledigt.
 4. Optional eigene Domain, Versionsanzeige im Hauptmenü, Kanal für Feedback (Formular oder Discord).
 
 ---
@@ -334,6 +335,8 @@ Versorgung folgen selbst, Artillerie bleibt in Reichweite; **Rückzug bei Verlus
 Armee-Leiste und das Armee-Panel zeigen Auftrag/Phase und Kampfkraft; Meldungen bei Rückzug und eingenommenem Ziel.
 Ein direkter Befehl hebt den Auftrag auf.
 Web: Das Spiel läuft unter **https://papoch295.github.io/ironmeridian/** (GitHub Pages, aktualisiert sich bei jedem Push).
+Schritt 6 erledigt (3. Nov.): Service Worker `sw.js` – Web-Version startet auch offline, Updates sind beim nächsten
+Start da (Netz zuerst, Cache als Rückfall). Der Selbsttest prüft, dass jede Datei aus `index.html` im Offline-Cache steht.
 
 **Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
 nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt nur der Punktesieg.
@@ -345,7 +348,7 @@ nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt n
 | 3. KI-Angriffsmuster | **feste Angriffsmuster** (Achsen, Zeitpunkte), einfache Vorwarnung durch Aufklärung | #16, #17 | erledigt |
 | **4. Taktisches Gameplay (P0)** | **Unterhalt**, **langsameres Tempo**, **Eingraben**; KI mit **Kampfgruppen**, **Angriff in Phasen**, **Rückzug bei Verlusten** | #55–#60 | erledigt |
 | **5. Einfachere Führung (P0)** | **Kampfgruppen-Vorlagen** (eine Gruppe mit einem Tippen), **Gruppen-Haltungen** per Knopf, **automatische Rollen** in der Gruppe, **Armee-Übersicht** | #67–#70 | erledigt |
-| 6. Web live | ~~Veröffentlichung, Link für die Prüfer~~ (GitHub Pages läuft); fehlt noch: Service Worker für Offline und saubere Updates | 5.1, 7 | teilweise, als Nächstes |
+| 6. Web live | Veröffentlichung auf GitHub Pages, Service Worker für Offline und saubere Updates | 5.1, 7 | erledigt |
 | 7. Tutorial | interaktives Tutorial in einfacher Fassung (Hervorhebungen, Schritt erst nach Aktion), erklärt Kampfgruppen und Haltungen | #28 | offen |
 | 8. Punktesieg | Partie endet mit Punktesieg statt Aufräumen bis zur letzten Einheit | #52 | offen |
 
