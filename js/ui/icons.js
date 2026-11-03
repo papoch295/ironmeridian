@@ -28,11 +28,13 @@ const ICON = {
   deselect: svg('<circle cx="12" cy="12" r="9"/><path d="M8 8l8 8M16 8l-8 8"/>'),
   build: svg('<path d="M14 6l4 4M4 20l9-9M12 4l8 8-3 3-8-8z"/>'),
   up: svg('<path d="M12 19V5M6 11l6-6 6 6"/>'),
+  chevDown: svg('<path d="M6 9l6 6 6-6"/>'),
+  chevUp: svg('<path d="M6 15l6-6 6 6"/>'),
   save: svg('<path d="M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-7h8v7"/>'),
-  qland: svg('<rect x="3" y="7" width="18" height="11" rx="1"/><path d="M3 7l18 11M21 7L3 18"/>'),
+  qland: svg('<path d="M3 14h18v3.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M6 14v-3h10l2 3M10 11V8h4M14 9.5h7"/>'),
   qair: svg('<path d="M21 12l-8-2-3-7H8l1 7-4 1-2-2H2l1 3-1 3h1l2-2 4 1-1 7h2l3-7 8-2z"/>'),
   qsea: svg('<path d="M3 15h18l-3 4H6zM7 15V9h7l2 6M10 9V5"/>'),
-  qidle: svg('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'),
+  qidle: svg('<path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/>'),
   globe: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>'),
 };
 

@@ -7,6 +7,7 @@ const Panels = {
   batch: 1,            // how many units one click recruits
   army: null,          // army that recruited units join: null | 'new' | army key
   enemy: null,
+  min: false,          // folded to its head
   sig: '',
 
   el() { return $('#panel'); },
@@ -47,6 +48,7 @@ const Panels = {
     const body = this.el().querySelector('.p-body');
     const scroll = body ? body.scrollTop : 0;
     this.el().innerHTML = render();
+    this.el().classList.toggle('min', this.min);
     this.el().hidden = false;
     const nb = this.el().querySelector('.p-body');
     if (nb) nb.scrollTop = scroll;
@@ -62,7 +64,8 @@ const Panels = {
   },
 
   head(title, sub, tag) {
-    return `<div class="p-head"><div class="ttl"><h2>${U.esc(title)}</h2><div class="sub">${sub}</div></div>${tag || ''}<button class="ibtn x" data-act="close">${ICON.close}</button></div>`;
+    // The fold button shrinks the panel to its head so the map stays visible (mainly for phones).
+    return `<div class="p-head"><div class="ttl" data-act="unfold"><h2>${U.esc(title)}</h2><div class="sub">${sub}</div></div>${tag || ''}<button class="ibtn x fold" data-act="fold" title="${U.esc(t(this.min ? 'panelOpen' : 'panelFold'))}">${this.min ? ICON.chevDown : ICON.chevUp}</button><button class="ibtn x" data-act="close">${ICON.close}</button></div>`;
   },
 
   // Owner tag: relation colour plus the owning country (o = faction key).
@@ -208,7 +211,7 @@ const Panels = {
     if (ak) {
       const a = G[ak];
       const ret = a.ret !== false, str = a.task && a.task.hp0 ? Math.round(Tactics.strength(a.task) * 100) : null;
-      return `<div class="army-box"><div class="army-row"><b class="army-badge">${U.esc(ak)}</b><span class="nm">${U.esc(t('army'))} ${U.esc(ak)}</span><span class="muted small">${U.esc(t('armyKeys', ak, ak))}</span></div>
+      return `<div class="army-box"><div class="army-row"><b class="army-badge">${U.esc(ak)}</b><span class="nm">${U.esc(t('army'))} ${U.esc(ak)}</span>${Input.touch ? '' : `<span class="muted small">${U.esc(t('armyKeys', ak, ak))}</span>`}</div>
         <div class="army-row"><span class="muted small">${U.esc(t('task'))}:</span><b class="small">${U.esc(UI.armyState(a, us))}</b>${str !== null ? `<span class="muted small">· ${U.esc(t('strength'))} ${str} %</span>` : ''}</div>
         <div class="army-row"><button class="achip ${ret ? 'on' : ''}" data-act="ret" title="${U.esc(t('autoRetreatTip'))}">${ret ? '✓ ' : ''}${U.esc(t('autoRetreat'))}</button>
         <button class="achip ${a.coh ? 'on' : ''}" data-act="coh">${a.coh ? '✓ ' : ''}${U.esc(t('keepTogether'))}</button>
@@ -293,6 +296,8 @@ const Panels = {
         const a = b.dataset.act, k = b.dataset.k, pid = Render.selProv;
         Sfx.play('click');
         if (a === 'close') { UI.deselect(); this.close(); return; }
+        if (a === 'fold' || (a === 'unfold' && this.min)) { this.min = !this.min; this.refresh(true); return; }
+        if (a === 'unfold') return;
         if (a === 'tab') { this.tab = k; this.refresh(true); return; }
         if (a === 'view') { this.view = k; this.refresh(true); return; }
         if (a === 'batch') { this.batch = +k; this.refresh(true); return; }

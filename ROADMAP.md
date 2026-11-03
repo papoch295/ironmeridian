@@ -340,8 +340,10 @@ Start da (Netz zuerst, Cache als Rückfall). Der Selbsttest prüft, dass jede Da
 Einstieg überarbeitet (3. Nov., nach Gesamtdurchsicht): Der Spieler startet mit 1–3 fertigen, gemischten Armeen (vorn an
 der Front, die letzte an der Hauptstadt) statt mit losen Einzeleinheiten; „Kampfgruppen“ ist der erste, vorgewählte
 Rekrutierungs-Reiter; Armee-Befehle erscheinen sofort nach „Neue Armee“; Tutorial-Texte erklären Armeen; Menü zeigt „Beta“.
-Offen aus der Durchsicht: Handy-Layout im Querformat (Seitenfenster und Befehlsleiste verdecken viel Karte, Leiste läuft
-über), Setup-Knöpfe über dem Spielmodus, Ziel-Anzeige „51 / 51“ missverständlich, Symbole der Schnellleiste.
+Handy-Layout (3. Nov.): Seitenfenster schmaler und per Knopf einklappbar (nur Titelzeile bleibt); Befehlsleiste auf
+kleinen Bildschirmen zweistufig (Hauptbefehle + „Mehr“), im Hochformat zweizeilig statt Überlauf; Schnellleiste
+zweispaltig; Setup mit festem Fußbereich, Schwierigkeit vor der Feindliste; Ziel-Anzeige „Erobert 0 / 50“; neue Symbole
+für Bodentruppen und Untätige; keine Tastatur-Hinweise auf Touch-Geräten.
 
 **Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
 nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt nur der Punktesieg.

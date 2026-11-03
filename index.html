@@ -47,20 +47,22 @@
         <div id="blocList" class="scroll"></div>
       </div>
       <div class="setup-col panel-glass" id="setupDetail">
-        <div id="setupInfo"></div>
-        <h3 data-t="gameMode"></h3>
-        <div class="seg" id="modeSeg">
-          <button data-mode="bloc" data-t="modeBloc"></button><button data-mode="ffa" data-t="modeFfa"></button>
+        <div class="setup-scroll">
+          <div id="setupInfo"></div>
+          <h3 data-t="gameMode"></h3>
+          <div class="seg" id="modeSeg">
+            <button data-mode="bloc" data-t="modeBloc"></button><button data-mode="ffa" data-t="modeFfa"></button>
+          </div>
+          <p id="modeDesc" class="muted small"></p>
+          <h3 data-t="difficulty"></h3>
+          <div class="seg" id="diffSeg">
+            <button data-diff="easy" data-t="easy"></button><button data-diff="normal" data-t="normal"></button><button data-diff="hard" data-t="hard"></button>
+          </div>
+          <p id="diffDesc" class="muted small"></p>
+          <h3 id="enemyHead" data-t="chooseEnemy"></h3>
+          <div id="enemyList" class="scroll chips-list"></div>
         </div>
-        <p id="modeDesc" class="muted small"></p>
-        <h3 id="enemyHead" data-t="chooseEnemy"></h3>
-        <div id="enemyList" class="scroll chips-list"></div>
-        <h3 data-t="difficulty"></h3>
-        <div class="seg" id="diffSeg">
-          <button data-diff="easy" data-t="easy"></button><button data-diff="normal" data-t="normal"></button><button data-diff="hard" data-t="hard"></button>
-        </div>
-        <p id="diffDesc" class="muted small"></p>
-        <div class="row end">
+        <div class="row end setup-foot">
           <button class="btn" id="setupBack" data-t="back"></button>
           <button class="btn primary" id="setupStart" data-t="start"></button>
         </div>

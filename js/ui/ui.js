@@ -304,7 +304,7 @@ const UI = {
   renderCmdbar() {
     const bar = $('#cmdbar');
     const us = this.selUnits();
-    if (!us.length) { bar.hidden = true; bar.innerHTML = ''; return; }
+    if (!us.length) { bar.hidden = true; bar.innerHTML = ''; this.cmdMore = false; return; }
     const types = us.map((u) => UNIT_TYPES[u.t]);
     const anyLand = types.some((T) => T.dom === 'land'), anyPlane = types.some((T) => T.plane);
     const soft = us.some((u) => UNIT_TYPES[u.t].dom === 'land' && !UNIT_TYPES[u.t].cap);
@@ -312,7 +312,8 @@ const UI = {
     const kh = (id) => { const k = Keys.of(id); return k ? `<span class="k">${U.esc(Keys.label(k))}</span>` : ''; };
     const btn = (id, icon, label, mode) => `<button class="cmd" data-c="${id}" ${mode ? `data-mode="${mode}"` : ''}>${KEY_GROUP[id] ? kh(id) : ''}${ICON[icon]}<span>${U.esc(label)}</span></button>`;
     // A whole army gets tasks first: it then fights on its own (see Tactics).
-    let h = '';
+    // Small screens show the main orders first; stop, retreat, stance, box and close sit behind "More".
+    let h = '<div class="cmd-main">';
     if (this.selectedArmy() && anyLand) {
       h += btn('tAttack', 'target', t('cmdTaskAttack'), 'tAttack') + btn('tAdvance', 'fast', t('cmdTaskAdvance'), 'tAdvance') + btn('tHold', 'shield', t('cmdTaskHold'));
       h += '<div class="sep"></div>';
@@ -325,21 +326,27 @@ const UI = {
     const ls = this.loadSplit(us);
     if (ls.carriers.length && ls.cargo.length && ls.room > 0) c += btn('autoload', 'load', t('cmdAutoLoad'));
     else if (ls.carriers.length && ls.room > 0) c += btn('pickup', 'load', t('cmdPickup'));
-    if (soft && !ls.carriers.length) c += btn('load', 'load', t('cmdLoad'), 'load');
+    // Boarding a transport is rare, so it waits behind "More" with the other secondary orders.
+    const board = soft && !ls.carriers.length ? btn('load', 'load', t('cmdLoad'), 'load') : '';
     if (us.some((u) => u.cargo.length)) { c += btn('unloadAt', 'drop', t('cmdUnloadAt'), 'unloadAt'); c += btn('unload', 'unload', t('cmdUnload')); }
     if (us.some((u) => UNIT_TYPES[u.t].plane && u.cargo.length)) c += btn('drop', 'drop', t('cmdDrop'), 'drop');
     if (anyPlane) c += btn('rtb', 'rtb', t('cmdRtb'));
     if (us.some((u) => UNIT_TYPES[u.t].strike)) c += btn('strike', 'strike', t('cmdStrike'), 'strike');
     if (us.some((u) => u.slbm > 0)) c += btn('slbm', 'missile', t('cmdSlbm'), 'slbm');
     if (us.some((u) => UNIT_TYPES[u.t].w.includes('bombs') && (u.nuke || Game.state.side[Game.me()].nukes > 0))) c += `<button class="cmd nuke" data-c="nuke" data-mode="nuke"><b class="nuke-ico">☢</b><span>${U.esc(t('cmdNuke'))}</span></button>`;
-    if (c) h += '<div class="sep"></div>' + c + '<div class="sep"></div>';
+    // A whole army leads with its tasks; its situational orders move behind "More" as well.
+    const armyBar = this.selectedArmy() && anyLand;
+    if (c && !armyBar) h += '<div class="sep"></div>' + c + '<div class="sep"></div>';
+    h += '</div><div class="cmd-more">' + (armyBar ? c : '') + board;
     h += btn('stop', 'stop', t('cmdStop'));
     if (anyLand) h += btn('retreat', 'retreat', t('cmdRetreat'));
     const st = us[0].stance;
     h += `<button class="cmd" data-c="stance">${kh('stance')}${ICON.fire}<span>${U.esc({ free: t('stFree'), return: t('stReturn'), hold: t('stHold') }[st])}</span></button>`;
     h += btn('box', 'box', t('cmdBox'), 'box');
     h += btn('deselect', 'deselect', t('close'));
+    h += '</div>' + btn('more', this.cmdMore ? 'retreat' : 'menu', t(this.cmdMore ? 'cmdLess' : 'cmdMore'));
     bar.innerHTML = h;
+    bar.classList.toggle('more', !!this.cmdMore);
     bar.hidden = false;
     bar.querySelectorAll('.cmd').forEach((b) => (b.onclick = () => this.command(b.dataset.c)));
     this.setMode(this.mode, this.modeData);
@@ -376,6 +383,7 @@ const UI = {
         Game.order(us, { k: 'stance', v: next }); this.renderCmdbar(); Panels.show(); break;
       }
       case 'deselect': this.deselect(); break;
+      case 'more': this.cmdMore = !this.cmdMore; this.renderCmdbar(); break;
     }
   },
 
@@ -423,7 +431,7 @@ const UI = {
     const ep = S.prov.filter((p) => Game.hostile(p.o, me)).length, eu = S.units.filter((u) => Game.hostile(u.s, me)).length;
     const allies = Object.keys(S.team).filter((k) => k !== me && Game.allied(k, me) && Game.countProv(k)).length;
     box.innerHTML = `<h2>${U.esc(t('objectives'))}</h2><p class="desc">${U.esc(t('objWin', eTotal))}</p>
-      <div class="stat-line"><span>${U.esc(t('objProv'))}</span><b>${ep} / ${eTotal}</b></div>
+      <div class="stat-line"><span>${U.esc(t('objProv'))}</span><b>${eTotal - ep} / ${eTotal}</b></div>
       <div class="meter"><i style="width:${(1 - ep / Math.max(1, eTotal)) * 100}%"></i></div>
       <div class="stat-line"><span>${U.esc(t('objUnits'))}</span><b>${eu}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv(me)}</b></div>

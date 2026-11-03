@@ -47,7 +47,7 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .row { display: flex; gap: 8px; align-items: center; }
 .row.end { justify-content: flex-end; margin-top: 18px; }
 .scroll { overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
-.scroll, .p-body, .modal-box, #setupDetail { scrollbar-width: thin; scrollbar-color: #2e4251 transparent; }
+.scroll, .p-body, .modal-box, .setup-scroll { scrollbar-width: thin; scrollbar-color: #2e4251 transparent; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: #2e4251; border-radius: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -113,8 +113,10 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .setup-wrap { width: 100%; height: 100%; display: flex; justify-content: space-between; gap: 16px; }
 .setup-col { pointer-events: auto; width: min(390px, 46vw); padding: 20px; display: flex; flex-direction: column; min-height: 0; animation: fadeUp .35s ease-out both; }
 .setup-col + .setup-col { animation-delay: .06s; }
-/* Back / Start stay visible at the bottom of the scrolling detail column (long enemy list on small screens). */
-#setupDetail > .row.end { position: sticky; bottom: -20px; margin: 10px -20px -20px; padding: 10px 20px 14px; background: linear-gradient(180deg, rgba(11,18,25,0), rgba(11,18,25,.97) 30%); z-index: 1; }
+#setupDetail { overflow: hidden; }
+.setup-scroll { flex: 1; min-height: 0; overflow-y: auto; margin-right: -8px; padding-right: 8px; }
+/* Back / Start always stay visible below the scrolling settings. */
+.setup-foot { flex: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } }
 #blocList { flex: 1; min-height: 0; margin-right: -8px; padding-right: 8px; }
 .bloc { margin-bottom: 14px; }
@@ -126,8 +128,6 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .nation:active { transform: scale(.98); }
 .nation.on { border-color: var(--blue); background: linear-gradient(180deg, rgba(111,179,234,.28), rgba(111,179,234,.12)); box-shadow: 0 0 0 1px rgba(111,179,234,.35), 0 0 16px rgba(111,179,234,.18); }
 .nation.on small { opacity: 1; }
-#setupDetail { overflow-y: auto; }
-#setupDetail > * { flex-shrink: 0; }
 #setupInfo h2 { font-size: 22px; color: #fff; }
 #blocList { overflow-x: hidden; }
 .chips-list { max-height: 34vh; min-height: 120px; display: flex; flex-direction: column; gap: 6px; }
@@ -203,6 +203,12 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 /* Side panel */
 #panel { position: absolute; top: calc(var(--top-h) + 8px); right: calc(10px + var(--safe-r)); bottom: calc(82px + var(--safe-b)); width: 350px; display: flex; flex-direction: column; overflow: hidden; animation: panelIn .2s ease-out; }
 @keyframes panelIn { from { opacity: 0; transform: translateX(14px); } }
+/* Folded: only the head stays, the map behind is free. */
+#panel.min { bottom: auto; height: auto; animation: none; }
+#panel.min .p-body { display: none; }
+#panel.min .p-head { border-bottom: 0; }
+#panel.min .ttl { cursor: pointer; }
+.p-head .fold { margin-right: -6px; }
 .p-head { padding: 14px 14px 12px 16px; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: flex-start; background: linear-gradient(180deg, rgba(255,255,255,.035), transparent); }
 .p-head .ttl { flex: 1; min-width: 0; }
 .p-head h2 { font-size: 17px; margin: 0; text-transform: none; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
@@ -319,6 +325,9 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .cmd:disabled { opacity: .35; }
 .cmd .k { position: absolute; top: 3px; right: 4px; font-size: 9px; color: var(--dim); letter-spacing: 0; font-weight: 700; }
 .sep { width: 1px; background: var(--line-2); margin: 8px 3px; flex: none; }
+/* Secondary orders: inline on large screens, behind "More" on small ones. */
+.cmd-main, .cmd-more { display: contents; }
+.cmd[data-c="more"] { display: none; }
 
 #quick { position: absolute; left: calc(10px + var(--safe-l)); bottom: calc(150px + var(--safe-b)); display: flex; flex-direction: column; gap: 4px; padding: 5px; }
 #quick button { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-s); padding: 7px 10px; cursor: pointer; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; min-height: 34px; transition: border-color .15s, background .15s, color .15s; color: #cbd7de; }
@@ -435,10 +444,19 @@ input[type=range] { accent-color: var(--accent); width: 170px; }
   #quick { gap: 3px; padding: 4px; }
   #quick button { padding: 6px; min-height: 34px; min-width: 38px; justify-content: center; }
   #groups { gap: 3px; margin-top: 2px; padding-top: 4px; }
+  /* Two columns keep filters and armies short enough for ~375 px high screens. */
+  #quick { display: grid; grid-template-columns: repeat(2, auto); top: calc(var(--top-h) + 8px); transform: none; }
+  #groups { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); }
   #cmdbar { max-width: calc(100vw - 20px); left: calc(10px + var(--safe-l)); transform: none; animation: none; }
   #panel:not([hidden]) ~ #cmdbar { max-width: calc(100vw - min(310px, 44vw) - 30px); }
-  .cmd { min-width: 54px; height: 54px; padding: 2px 5px; }
+  #cmdbar { gap: 3px; padding: 5px; }
+  .cmd { min-width: 50px; height: 54px; padding: 2px 4px; font-size: 9px; letter-spacing: .02em; }
   .cmd .k { display: none; }
+  .cmd[data-c="more"] { display: flex; }
+  #cmdbar:not(.more) .cmd-more { display: none; }
+  #cmdbar.more .cmd-main { display: none; }
+  #panel { width: min(290px, 40vw); }
+  #panel:not([hidden]) ~ #cmdbar { max-width: calc(100vw - min(290px, 40vw) - 30px); }
   /* Short screens: tighter province panel so recruitment needs less scrolling. */
   .p-head { padding: 8px 10px 8px 12px; }
   .p-head h2 { font-size: 15px; }
@@ -449,7 +467,7 @@ input[type=range] { accent-color: var(--accent); width: 170px; }
   .qitem { padding: 5px 8px; }
   #hint { bottom: calc(76px + var(--safe-b)); }
   .setup-col { width: 50%; padding: 14px; }
-  #setupDetail > .row.end { bottom: -14px; margin: 8px -14px -14px; padding: 8px 14px 10px; }
+  .setup-foot { margin-top: 8px; padding-top: 8px; }
   .chips-list { max-height: none; }
   .modal-box { padding: 18px; }
 }
@@ -481,7 +499,10 @@ input[type=range] { accent-color: var(--accent); width: 170px; }
   .save-new .input, .save-new .btn { flex-basis: 100%; }
   .slot { flex-wrap: wrap; }
   .slot-actions { width: 100%; justify-content: flex-end; }
-  #panel { left: 8px; right: 8px; width: auto; top: auto; bottom: calc(76px + var(--safe-b)); height: 46vh; animation-name: fadeUp; }
+  #panel { left: 8px; right: 8px; width: auto; top: auto; bottom: calc(146px + var(--safe-b)); height: 42vh; animation-name: fadeUp; }
+  /* Narrow screens: the orders wrap into two rows instead of scrolling out of sight. */
+  #cmdbar { flex-wrap: wrap; justify-content: center; overflow: visible; right: calc(10px + var(--safe-r)); }
+  #cmdbar .sep { display: none; }
   #panel:not([hidden]) ~ #cmdbar { max-width: calc(100vw - 20px); }
   #quick { top: calc(var(--top-h) + 110px); transform: none; }
   #panel:not([hidden]) ~ #quick { display: none; }
