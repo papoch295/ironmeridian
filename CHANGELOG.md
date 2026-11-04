@@ -21,6 +21,8 @@
     nächsten Ufer ab („Transport nach“ und das Ufer antippen).
   - Die KI baut Drohnen und Flugabwehr und schickt Aufklärungsdrohnen über die Front; große Länder starten mit einigen
     der neuen Einheiten. Hilfe im Spiel ergänzt.
+- **Dokumentation:** Spielanleitung mit Screenshots (`SPIELANLEITUNG.md`), Quellen und Lizenzen (`QUELLEN.md`),
+  Skript `tools/screenshots.js`. Hauptmenü: Titel „MERIDIAN“ wurde auf breiten Bildschirmen abgeschnitten – behoben.
 - **Handy (nach dem ersten Test):** Im Querformat liegen die Befehlsknöpfe nicht mehr hinter der Schnellleiste oder dem
   Seitenfenster. Verschieben und Zoomen der Karte laufen deutlich flüssiger, der Nebel des Krieges wird schneller gezeichnet.
 

@@ -407,7 +407,7 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 
 | Schritt | Inhalt | Stand |
 |---|---|---|
-| 9. Dokumentation | README und Roadmap auf Beta 1, kurze Spielanleitung, Screenshots, Quellen/Lizenzen (Natural Earth), `CHANGELOG.md` | README/Roadmap erledigt |
+| 9. Dokumentation | README und Roadmap auf Beta 1, kurze Spielanleitung, Screenshots, Quellen/Lizenzen (Natural Earth), `CHANGELOG.md` | erledigt (`SPIELANLEITUNG.md`, `QUELLEN.md`, `docs/screenshots/`) |
 | 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | erledigt (Nachtest ohne Fehler) |
 | 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | erledigt (TESTPROTOKOLL.md, Abschnitte 6–7) |
 | 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | Version und Tag erledigt, Freeze offen |

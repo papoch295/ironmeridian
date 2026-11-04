@@ -87,6 +87,8 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 #loading::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px); }
 .brand { text-align: center; position: relative; }
 .brand h1 { font-size: clamp(30px, 6vw, 60px); letter-spacing: .22em; font-weight: 700; line-height: 1.02; background: linear-gradient(180deg, #ffffff 0%, #d5dee4 60%, #9fb0bb 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 12px rgba(0,0,0,.6)); }
+/* The gradient is clipped to the text box, so the box must be as wide as the (letter-spaced) title, not the column. */
+.brand.left h1 { display: inline-block; }
 .brand p { margin: 10px 0 0; color: var(--accent); letter-spacing: .42em; text-transform: uppercase; font-size: clamp(11px, 1.5vw, 15px); font-weight: 600; }
 .brand.left { text-align: left; }
 .brand-mark { width: 54px; height: 54px; margin: 0 auto 18px; border: 2px solid var(--accent); transform: rotate(45deg); position: relative; box-shadow: 0 0 24px rgba(232,181,74,.25); animation: markPulse 3.2s ease-in-out infinite; }

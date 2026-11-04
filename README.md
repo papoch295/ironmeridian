@@ -11,6 +11,10 @@ Phasen ausführen.
 Einfach auf dem Handy öffnen, am besten im Querformat. Über „Zum Startbildschirm hinzufügen“ (Android: Chrome-Menü,
 iPhone: Safari → Teilen) lässt es sich wie eine App starten. Nach dem ersten Öffnen läuft es auch offline.
 Für den Einstieg im Hauptmenü **Tutorial** wählen (12 kurze Schritte direkt an den echten Knöpfen).
+Ausführlich: **[Spielanleitung](SPIELANLEITUNG.md)** mit Screenshots · [Quellen und Lizenzen](QUELLEN.md) ·
+[Testprotokoll](TESTPROTOKOLL.md) · [Änderungsprotokoll](CHANGELOG.md)
+
+![Gefecht mit Angriffswarnung](docs/screenshots/05-gefecht.png)
 
 ## Spielmodi und Spielziel
 - **Freie Länderwahl:** Jedes Land der Welt ist spielbar (außer Zwergstaaten wie dem Vatikan). Jedes Land ist eine eigene
@@ -65,6 +69,8 @@ nach Kartenänderungen ladbar bleiben. Stürzt das Spiel ab, wird es angehalten 
   Fehler, kaputte Werte, Speichern/Laden, Punktesieg und Kapitulation sowie den Offline-Cache. Exit-Code 0 = alles in Ordnung.
 - Im Browser: `index.html?selftest=3&min=20` zeigt dasselbe Ergebnis unten links an.
 - **Modell-Galerie:** `tools/gallery.html?only=land` (bzw. `air`, `sea` oder einzelne Typen wie `only=mbt,ifv&sz=90`).
+- **Screenshots für die Doku:** `node tools/screenshots.js` stellt sieben Szenen nach und speichert sie als PNG in
+  `docs/screenshots/`.
 
 ## Technik
 - Reines HTML5 / CSS / JavaScript (Canvas 2D), keine Abhängigkeiten, kein Build-Schritt, läuft offline und per `file://`
