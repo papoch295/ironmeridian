@@ -1,6 +1,6 @@
 # Iron Meridian – Roadmap: von der Alpha zur Beta
 
-Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0 und 9 aktualisiert am 4. November 2026 (Beta 1). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
+Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
 Prioritäten: **P0** = höchste Priorität, kommt vor allem anderen (taktisches Gameplay, siehe 2.9 und 2.10) ·
 **P1** = nötig, um die Alpha zu verlassen · **P2** = macht das Spiel deutlich besser · **P3** = später.
 Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
@@ -24,6 +24,7 @@ Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
 - **Punktesieg** über Siegpunkte (70 % eine Minute halten) und Kapitulation des eigenen Landes.
 - Spielstände: beliebig viele mit Namen, Löschen, IndexedDB, Migration, 3 rotierende Autosaves, Notfall-Spielstand.
 - **Interaktives Tutorial** mit 12 Schritten an den echten Knöpfen. Deutsch/Englisch.
+- Luftwaffen- und Raketen-Fenster, Dauereinsatz für Flugzeuge, Reichweitenkreise beim Zielen.
 - Handy-Layout (einklappbare Fenster, zweistufige Befehlsleiste), Touch-Steuerung, Web-Version auf GitHub Pages mit
   Service Worker (offline), automatischer Selbsttest `node tools/selftest.js`.
 
@@ -167,23 +168,38 @@ Panzerhaubitze, Raketenwerfer (kurz/lang), Transport- und Kampfhubschrauber, Tra
 Korvette, U-Boot, Zerstörer, Flugzeugträger, Atom-U-Boot.
 
 ### 3.1 Einheiten (Vorschläge, du entscheidest – Frage F7)
+Überarbeitet am 4. November 2026 auf Wunsch nach neuen Einheiten. Jede neue Einheit braucht West- und Ost-Modell, Werte,
+Texte DE/EN und KI-Einbindung; bis zum Feature-Freeze (ca. 15. Nov.) sind realistisch **3–4 Einheiten** machbar.
+
+**Top 4 – Vorschlag für Beta 1** (passen zu „taktisch statt Spam“ und nutzen Kampfgruppen und Raketen, die es schon gibt):
+
+| Einheit | Vorbild West / Ost | Rolle im Spiel | Warum | Prio |
+|---|---|---|---|---|
+| **Aufklärungsdrohne** | MQ-9 Reaper / Orion | langsam, billig, sehr große Sichtweite, unbewaffnet | passt zu 2026; erkennt KI-Offensiven früh (ergänzt die Vorwarnung) | P1 |
+| **Kamikaze-Drohne** | Switchblade / Lancet | Einweg-Präzisionsschlag mit hohem Schaden gegen ein Fahrzeug | billiges Mittel gegen Panzer, auch für kleine Länder | P1 |
+| **Weitreichende Flugabwehr** | Patriot / S-400 | schützt ein großes Gebiet, fängt feindliche Raketen ab | Gegenstück zu den Raketen, die heute kaum abzuwehren sind | P1 |
+| **Landungsschiff** | San-Antonio-Klasse / Iwan-Rogow | trägt eine ganze Kampfgruppe, landet an jeder Küste | Landungen als echte Mechanik (Inseln: Taiwan, Großbritannien, Japan) | P1 |
+
+Offene Entscheidungen dazu: Drohnen aus einer eigenen **Drohnenfabrik** oder vom Flugplatz (weniger Aufwand)?
+Patriot / S-400 als **Einheit** oder als Ausbaustufe der bestehenden Flugabwehrstellung?
+
+**Weitere Kandidaten (Beta 2):**
+
 | Bereich | Einheit | Rolle im Spiel | Prio |
 |---|---|---|---|
-| Drohnen | **Aufklärungsdrohne** (MQ-9 / Orion) | große Sicht, langsam, billig – passt zu 2026 | P1 |
-| Drohnen | **Kamikaze-/Loitering-Drohne** (Switchblade / Lancet) | billige Präzisionswaffe gegen Fahrzeuge | P1 |
-| Flugabwehr | **Weitreichende SAM** (Patriot / S-400) | schützt große Gebiete, fängt Raketen ab | P1 |
-| Land | **Elektronische Kampfführung** (EloKa-Fahrzeug) | stört Drohnen, Radar, Lenkwaffen | P2 |
-| Land | **Hauptquartier / Gefechtsstand** | Bonus für Armee in Reichweite, Ziel für Feind | P2 |
-| Land | **Brückenleger / Minenleger / Minenräumer** | Flüsse, Sperren, Verteidigungslinien | P2 |
+| Land | **Elektronische Kampfführung** (EloKa-Fahrzeug) | stört Drohnen, Radar, Lenkwaffen in der Nähe | P2 |
+| Land | **Hauptquartier / Gefechtsstand** | Bonus für Armee in Reichweite, lohnendes Ziel für den Feind | P2 |
 | Land | **Küsten-Seezielbatterie** (NSM / Bastion) | Küstenverteidigung | P2 |
+| Land | **Brückenleger / Minenleger / Minenräumer** | Flüsse, Sperren, Verteidigungslinien | P2 |
 | Land | **Bergepanzer** | repariert/birgt Panzer | P3 |
+| Luft | **Erdkampfflugzeug** (A-10 / Su-25) | billiger und robuster als der Kampfjet gegen Bodentruppen | P2 |
 | Luft | **AWACS** | Luftlagebild, Bonus für Jäger | P2 |
+| Luft | **Tarnkappen-Jäger** | schwer zu orten, teuer | P2 |
 | Luft | **Tankflugzeug** | größere Reichweite für Jets | P3 |
-| Luft | **Tarnkappen-Jäger / Erdkampfflugzeug** (A-10 / Su-25) | Spezialisierung Luft | P2 |
 | See | **Fregatte** (U-Jagd/Flugabwehr) | Lücke zwischen Korvette und Zerstörer | P2 |
-| See | **Landungsschiff / Amphibisches Angriffsschiff** | Landungen als echte Spielmechanik | P1 |
-| See | **Minensucher, Schnellboot** | Küstenkrieg | P3 |
-| Infanterie | **Gebirgs-/Marineinfanterie** | Gelände- bzw. Landungsbonus | P3 |
+| See | **Schnellboot, Minensucher** | Küstenkrieg | P3 |
+| Infanterie | **Marineinfanterie** | Landungsbonus (passt zum Landungsschiff) | P2 |
+| Infanterie | **Gebirgsjäger** | Geländebonus (braucht erst Gelände, F14) | P3 |
 
 ### 3.2 Gebäude / Institutionen
 | Gebäude | Wirkung | Prio |
@@ -391,10 +407,17 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 | Schritt | Inhalt | Stand |
 |---|---|---|
 | 9. Dokumentation | README und Roadmap auf Beta 1, kurze Spielanleitung, Screenshots, Quellen/Lizenzen (Natural Earth), `CHANGELOG.md` | README/Roadmap erledigt |
-| 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | offen |
+| 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | 1. Test erledigt, Nachtest offen |
 | 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | offen |
 | 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | Version und Tag erledigt, Freeze offen |
 | optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | offen |
+| optional | **neue Einheiten** vor dem Freeze: Top 4 aus Abschnitt 3.1 (Aufklärungsdrohne, Kamikaze-Drohne, Patriot/S-400, Landungsschiff) | Auswahl durch dich offen |
+
+**Nachtrag 4. Nov.:** Bedienung von Luftwaffe und Raketen verbessert (Luftwaffen- und Raketen-Fenster, Dauereinsatz,
+Reichweitenkreise). Erster Handy-Test: Es ruckelte, und im Querformat lagen Befehlsknöpfe hinter anderen Fenstern. Behoben:
+Die Schnellleiste endet über der Befehlsleiste (scrollt bei vielen Armeen), die Befehlsleiste nutzt die volle Breite; die
+Karte wird beim Verschieben/Zoomen nur verschoben statt neu gezeichnet (am PC ca. 2 statt 11–17 ms pro Bild), Nebel
+schneller, Touch-Geräte zeichnen mit 1,5-facher Auflösung. Nachtest auf dem Handy steht aus.
 
 ### Beta 2 und folgende – Dezember 2026 bis Februar 2027
 | Block | Inhalt | Punkte |

@@ -36,6 +36,9 @@ Spielminute lang halten (zu Beginn hält jedes Bündnis höchstens etwa 5 %).
   **Vorrücken**, **Halten**, schaltbarer **Rückzug bei Verlusten**. Flak, Sanitäter und Versorgung folgen selbst.
 - **Taktik:** Sichtweite und Nebel des Krieges, Radar, Niederhalten durch Beschuss, **Eingraben** (bis −40 % Schaden nach
   längerem Stillstand), Nachschub, Reparatur, Transport über See und Luft, Raketen bis hin zu Atomwaffen mit Fallout.
+- **Luftwaffe und Raketen:** Das Luftwaffen-Fenster zeigt alle Flugzeuge und Hubschrauber im Land mit Status und Treibstoff.
+  Im **Dauereinsatz** greifen Flugzeuge ein Gebiet an, tanken auf und kehren von selbst zurück. Das Raketen-Fenster zeigt den
+  Vorrat aller Basen und U-Boote; die nächste Basis in Reichweite feuert automatisch. Beim Zielen zeigen Kreise die Reichweite.
 - **KI:** Greift in festen Offensiven an (erst Truppen sammeln, dann gemeinsamer Angriff entlang einer Hauptachse) und nutzt
   dieselbe Kampfgruppen-Taktik wie der Spieler, inklusive Rückzug. Aufklärung warnt rechtzeitig vor dem Truppensammeln.
 - **30 Einheitentypen** mit eigenen Modellen für West und Ost, Deutsch und Englisch, Touch- und Maussteuerung.
@@ -93,12 +96,17 @@ npx cap init "Iron Meridian" com.ironmeridian.game --web-dir .
 npx cap add android
 npx cap open android
 ```
-Touch-Steuerung (Tippen, Ziehen, Pinch-Zoom, Auswahlrahmen per langem Druck) und das Layout für Hoch- und Querformat sind bereits eingebaut.
+Touch-Steuerung (Tippen, Ziehen, Pinch-Zoom, Auswahlrahmen per langem Druck) und das Layout für Hoch- und Querformat sind bereits eingebaut,
+auch für niedrige Querformat-Bildschirme mit sichtbarer Browserleiste. Für flüssiges Verschieben und Zoomen wird die Karte während
+der Bewegung nur verschoben und erst im Stillstand neu gezeichnet; Touch-Geräte zeichnen mit 1,5-facher statt 2-facher Auflösung.
 
 ## Bekannte Grenzen der Beta
 - Die Karte wiederholt sich nicht über die Datumsgrenze.
 - Bodentruppen betreten neutrale Länder erst nach einer Kriegserklärung; Luftwaffe und Marine dürfen sie überqueren.
 - Balancing ist auf „Leicht“ und „Normal“ abgestimmt; „Schwer“ wird in späteren Versionen verfeinert.
 - Noch nicht enthalten (geplant ab Beta 2): Diplomatie, Technologiebaum, Eskalation, Szenarien mit Briefing, Musik, Android-App.
+- **Neue Einheiten in Planung** (`ROADMAP.md` Abschnitt 3.1): Aufklärungsdrohne, Kamikaze-Drohne, weitreichende Flugabwehr
+  (Patriot / S-400) und Landungsschiff als Kandidaten für Beta 1; danach u. a. Erdkampfflugzeug, Fregatte, EloKa-Fahrzeug,
+  Gefechtsstand und Marineinfanterie.
 
 Weitere Planung: [`ROADMAP.md`](ROADMAP.md).

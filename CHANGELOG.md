@@ -10,6 +10,8 @@
   Basis mit genug Reichweite feuert automatisch.
 - **Reichweite auf der Karte**: Kreise beim Zielen mit Raketen, Luftschlägen und Flugzeugen; mit der Maus zeigt eine
   grüne bzw. rote Linie, ob das Ziel erreichbar ist.
+- **Handy (nach dem ersten Test):** Im Querformat liegen die Befehlsknöpfe nicht mehr hinter der Schnellleiste oder dem
+  Seitenfenster. Verschieben und Zoomen der Karte laufen deutlich flüssiger, der Nebel des Krieges wird schneller gezeichnet.
 
 ## Beta 1.0 – 4. November 2026 (`v1.0-beta`)
 
