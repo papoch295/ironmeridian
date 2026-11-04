@@ -1,4 +1,4 @@
-# IRON MERIDIAN – Globaler Konflikt 2026 (Beta 1)
+# IRON MERIDIAN – Globaler Konflikt 2026 (Beta 1.0)
 
 Globales Echtzeit-Strategiespiel mit Pause für Einzelspieler gegen KI. Weltkarte mit allen Ländern, Provinzen mit Städten,
 Industriegebieten, Ölfeldern, Häfen und Luftwaffenbasen, moderne Einheiten (2000–2026) zu Land, Luft und See sowie Raketen.
