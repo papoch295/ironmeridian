@@ -1,6 +1,6 @@
 # Iron Meridian – Roadmap: von der Alpha zur Beta
 
-Stand: 2. November 2026 (Alpha 0.1). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
+Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0 und 9 aktualisiert am 4. November 2026 (Beta 1). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
 Prioritäten: **P0** = höchste Priorität, kommt vor allem anderen (taktisches Gameplay, siehe 2.9 und 2.10) ·
 **P1** = nötig, um die Alpha zu verlassen · **P2** = macht das Spiel deutlich besser · **P3** = später.
 Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
@@ -9,19 +9,25 @@ Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
 
 ## 0. Was schon da ist (damit klar ist, worauf wir aufbauen)
 
+**Stand Beta 1 (4. Nov.)** – alle acht Beta-1-Schritte aus Abschnitt 9 sind erledigt:
 - Weltkarte mit allen Ländern, Provinzen (Hauptstadt, Stadt, Industrie, Ölfeld, Hafen, Luftwaffenbasis), Provinzstufen 1–5.
-- Wirtschaft mit Geld, Industrie und Öl; Institutionen: Kaserne, Rüstungswerk, Flugplatz, Werft, Raketenbasis, Radar,
-  Flugabwehrstellung, Forschungszentrum (nur für Atomsprengköpfe).
+- Wirtschaft mit Geld, Industrie und Öl plus **Unterhalt** je Einheit; Institutionen: Kaserne, Rüstungswerk, Flugplatz, Werft,
+  Raketenbasis, Radar, Flugabwehrstellung, Forschungszentrum (nur für Atomsprengköpfe).
 - 30 Einheitentypen zu Land, Luft und See mit West- und Ost-Modellen, Raketen (SRBM, Marschflugkörper, ICBM, SLBM), Atomwaffen
-  mit Fallout, Verbände (Kompanien, Panzerzug, Batterie, Luftlandezug), Armeen, Transport, Nachschub, Reparatur, Sanitäter.
-- Sichtweite und Nebel des Krieges, Radar, Unterdrückung (Feuer drückt Einheiten nieder), Rückzug.
-- KI mit Wellenangriffen, Verteidigung bedrohter Provinzen, Luftwaffe, Marine, Raketen; Schwierigkeit Leicht/Normal/Schwer.
-- Spielstände: 3 Slots + Autosave im Browser-Speicher. Tutorial mit 10 Textschritten. Deutsch/Englisch.
-- Touch-Steuerung (Tippen, Ziehen, Pinch-Zoom, langer Druck) und `manifest.webmanifest` sind vorhanden.
+  mit Fallout, Transport, Nachschub, Reparatur, Sanitäter.
+- **Beliebig viele Fraktionen:** jedes Land mit eigener Wirtschaft und KI, Bündnisse als Teams, freie Länderwahl, Modi
+  „Bündniskrieg“ und „Weltkrieg“, Kriegserklärung an neutrale Länder mit Reaktion der Nachbarn.
+- **Kampfgruppen und Armeen** (`js/core/tactics.js`) für Spieler und KI: Vorlagen, Großangriff in Phasen, Vorrücken, Halten,
+  Rückzug bei Verlusten, automatische Rollen; Spieler startet mit 1–3 fertigen Armeen.
+- Sichtweite und Nebel des Krieges, Radar, Niederhalten, **Eingraben**, langsameres Tempo.
+- KI mit **festen Offensiven** (Sammeln, Hauptachse, Nebenangriff) und Vorwarnung durch Aufklärung; Leicht/Normal/Schwer.
+- **Punktesieg** über Siegpunkte (70 % eine Minute halten) und Kapitulation des eigenen Landes.
+- Spielstände: beliebig viele mit Namen, Löschen, IndexedDB, Migration, 3 rotierende Autosaves, Notfall-Spielstand.
+- **Interaktives Tutorial** mit 12 Schritten an den echten Knöpfen. Deutsch/Englisch.
+- Handy-Layout (einklappbare Fenster, zweistufige Befehlsleiste), Touch-Steuerung, Web-Version auf GitHub Pages mit
+  Service Worker (offline), automatischer Selbsttest `node tools/selftest.js`.
 
-**Wichtigste technische Grenze:** Das Spiel kennt genau **zwei Seiten** (`P` und `E`, fest im Code: `OTHER`, Sichtbits,
-KI nur für `E`). Alle anderen Bündnisse sind neutral und für Bodentruppen gesperrt. „Jeder gegen jeden“ und
-„befreundete KI“ brauchen deshalb zuerst einen Umbau auf beliebig viele Seiten (siehe 2.1). Das ist der größte Einzelposten.
+Der frühere größte Umbau (nur zwei feste Seiten `P`/`E`) ist mit Schritt 2 erledigt.
 
 ---
 
@@ -376,6 +382,16 @@ Schritt 5 kann parallel zu den KI-Kampfgruppen entstehen, weil KI und Spieler di
 
 Puffer: Wenn die Zeit knapp wird, fällt zuerst Schritt 8 weg, dann wird Schritt 7 auf eine verbesserte Textfassung
 reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2. Schritte 4 und 5 im Kern sowie 6 sind gesetzt.
+
+**Bis zur Abgabe (Vorschlag vom 4. Nov.):** keine großen neuen Funktionen mehr, stattdessen absichern und vorzeigbar machen.
+
+| Schritt | Inhalt | Stand |
+|---|---|---|
+| 9. Dokumentation | README und Roadmap auf Beta 1, kurze Spielanleitung, Screenshots, Quellen/Lizenzen (Natural Earth), `CHANGELOG.md` | README/Roadmap erledigt |
+| 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | offen |
+| 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | offen |
+| 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | offen |
+| optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | offen |
 
 ### Beta 2 und folgende – Dezember 2026 bis Februar 2027
 | Block | Inhalt | Punkte |
