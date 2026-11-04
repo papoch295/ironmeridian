@@ -68,3 +68,53 @@ Nachtest im Weltkrieg (KI führt auch das Spielerland, bis 180 Spielminuten):
 Der Anteil wächst anfangs und flacht dann ab. Mit KI-Führung sind 35 % in drei Spielstunden nicht erreichbar.
 **Daher am 4. Nov. auf 25 % gesenkt** (etwa das Fünffache des Startwerts). Selbsttest danach: Exit-Code 0.
 Eine echte Weltkrieg-Partie von Hand steht noch aus und zeigt, ob 25 % in 2–3 Spielstunden passt.
+
+---
+
+# Nachtest 4. November 2026 – Handy-Korrekturen und vier neue Einheiten
+
+Stand: Commit `4252345` (Aufklärungsdrohne, Kamikaze-Drohnentrupp, Patriot / S-400, Landungsschiff) plus Balance-Anpassung.
+
+## 5. Handy-Test (Android, Chrome, Web-Version)
+
+1. Test: Ruckeln beim Verschieben/Zoomen, im Querformat lagen Befehlsknöpfe hinter der Schnellleiste bzw. dem Seitenfenster.
+Behoben (Commit `811832f`), Nachtest auf dem Handy inklusive der neuen Einheiten: **keine Fehler**.
+
+## 6. Partien KI gegen KI mit den neuen Einheiten (120 Spielminuten)
+
+Gleiches Verfahren wie Abschnitt 2 (KI führt auch das Spielerland). „Sieg %“ wie oben; im Weltkrieg Anteil an allen
+Siegpunkten der Welt (Schwelle 25 %).
+
+| Land | Modus | Gegner | Stufe | Ende | Sieg % nach 30 / 60 / 90 / 120 min | Heimat % | Einheiten max. |
+|---|---|---|---|---|---|---|---|
+| DE | Bündniskrieg | Eurasische Union | Normal | offen | 13 / 23 / 30 / 40 | 100 | 207 |
+| US | Bündniskrieg | Ostasiatischer Pakt | Normal | offen | 0 / 6 / 8 / 8 | 100 | 235 |
+| PL | Bündniskrieg | Eurasische Union | Leicht | offen | 13 / 23 / 30 / 39 | 100 | 173 |
+| FR | Weltkrieg | alle | Normal | offen | 5 / 6 / 7 / 8 | 100 | 977 |
+| IN | Weltkrieg | alle | Normal | offen | 3 / 4 / 5 / 6 | 90 | 942 |
+| TR | Weltkrieg | alle | Leicht | offen | 5 / 6 / 7 / 7 | 100 | 807 |
+
+Keine Ausnahmen, Werteprüfung (`SelfTest.check`) nach jeder Partie ohne Befund. Wie schon in Abschnitt 2 endet mit
+KI-Führung keine Partie in 2 Spielstunden; ein Mensch mit Großangriff ist deutlich schneller.
+
+## 7. Balance der neuen Einheiten
+
+Abschüsse nach Typ der schießenden Einheit, Weltkrieg Frankreich, Normal, 60 Spielminuten:
+
+| Einheit | vorher: Abschüsse (Anteil) / gebaut | nachher: Abschüsse (Anteil) / gebaut |
+|---|---|---|
+| Kamikaze-Drohnentrupp | **412 (21 %, Platz 1)** / 201 | 87 (5 %) / 89 |
+| Korvette | 297 (15 %) | 306 (18 %) |
+| Schützenpanzer | 122 (6 %) | 180 (11 %) |
+| Abschüsse gesamt | 1946 | 1676 |
+
+**Befund:** Der Kamikaze-Drohnentrupp war billig, ohne Öl, schnell gebaut und in eigenen Provinzen in 20 s wieder
+aufgefüllt – die KI baute ihn massenhaft und er lieferte die meisten Abschüsse (widerspricht „kein Spam“).
+**Angepasst:** Kosten 450 / 150 / 10 Öl statt 300 / 100 / 0, Bauzeit 26 statt 20 s, 3 statt 4 Drohnen, 12 statt 9 s
+zwischen zwei Starts, Schaden 45 / 60 statt 55 / 70 (leicht / gepanzert); KI-Gewicht am Flugplatz 0,5 statt 1.
+Aufklärungsdrohne: schwerer zu entdecken (Tarnung 0,5 statt 0,4), KI-Gewicht 0,3 statt 0,5.
+
+Weitere Beobachtungen: Patriot / S-400 erscheint selten (Rüstungswerk Stufe 3) und ist unauffällig; im Einzeltest
+fing es rund 62 % der Kurzstreckenraketen ab. Das Landungsschiff wird von der KI nicht gebaut (nur Startausstattung
+des Spielers) und hat im Test Truppen sicher an die polnische Küste gebracht. Aufklärungsdrohnen gehen oft verloren
+(Flugabwehr), sind aber billig.

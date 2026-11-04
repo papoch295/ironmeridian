@@ -6,7 +6,7 @@
 const AI_MIX = {
   barracks: { inf: 4, at: 2, recon: 0.8, mortar: 1, eng: 1, medic: 0.5, sniper: 0.5, seal: 0.5 },
   factory: { ifv: 3, mbt: 3, apc: 1, lt: 1, aa: 1.5, arty: 1, spg: 1, mlrs: 1, td: 1, truck: 0.4, tbm: 0.4, sam2: 0.4 },
-  airfield: { ahelo: 2, jet: 2, thelo: 0.3, bomber: 0.5, uav: 0.5, loit: 1 },
+  airfield: { ahelo: 2, jet: 2, thelo: 0.3, bomber: 0.5, uav: 0.3, loit: 0.5 },
   shipyard: { corv: 1, sub: 1, dd: 1 },
 };
 const AI = {

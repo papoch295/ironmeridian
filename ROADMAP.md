@@ -408,8 +408,8 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 | Schritt | Inhalt | Stand |
 |---|---|---|
 | 9. Dokumentation | README und Roadmap auf Beta 1, kurze Spielanleitung, Screenshots, Quellen/Lizenzen (Natural Earth), `CHANGELOG.md` | README/Roadmap erledigt |
-| 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | 1. Test erledigt, Nachtest offen |
-| 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | offen |
+| 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | erledigt (Nachtest ohne Fehler) |
+| 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | erledigt (TESTPROTOKOLL.md, Abschnitte 6–7) |
 | 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | Version und Tag erledigt, Freeze offen |
 | optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | offen |
 | optional | **neue Einheiten** vor dem Freeze: Top 4 aus Abschnitt 3.1 (Aufklärungsdrohne, Kamikaze-Drohne, Patriot/S-400, Landungsschiff) | erledigt |
@@ -418,7 +418,9 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 Reichweitenkreise). Erster Handy-Test: Es ruckelte, und im Querformat lagen Befehlsknöpfe hinter anderen Fenstern. Behoben:
 Die Schnellleiste endet über der Befehlsleiste (scrollt bei vielen Armeen), die Befehlsleiste nutzt die volle Breite; die
 Karte wird beim Verschieben/Zoomen nur verschoben statt neu gezeichnet (am PC ca. 2 statt 11–17 ms pro Bild), Nebel
-schneller, Touch-Geräte zeichnen mit 1,5-facher Auflösung. Nachtest auf dem Handy steht aus.
+schneller, Touch-Geräte zeichnen mit 1,5-facher Auflösung. Nachtest auf dem Handy: keine Fehler.
+Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kamikaze-Drohnentrupp war zu stark
+(21 % aller Abschüsse) und wurde abgeschwächt (jetzt 5 %), Details in `TESTPROTOKOLL.md`.
 
 ### Beta 2 und folgende – Dezember 2026 bis Februar 2027
 | Block | Inhalt | Punkte |
