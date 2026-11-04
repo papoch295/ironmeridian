@@ -23,6 +23,8 @@ Für den Einstieg im Hauptmenü **Tutorial** wählen (12 kurze Schritte direkt a
 **Sieg:** Jede Provinz bringt Siegpunkte (Hauptstadt 5, Stadt/Hafen/Industrie/Ölfeld 2, Luftwaffenbasis 1). Halten du und
 deine Verbündeten **70 % der feindlichen Siegpunkte eine Spielminute lang**, kapituliert der Gegner (Punktesieg). Der
 Countdown erscheint als Banner; das Ziele-Fenster zeigt den Fortschritt. Wer alles erobert, gewinnt sofort.
+**Im Weltkrieg** gilt stattdessen der **Weltmacht-Sieg**: Dein Bündnis muss **25 % aller Siegpunkte der Welt** eine
+Spielminute lang halten (zu Beginn hält jedes Bündnis höchstens etwa 5 %).
 **Niederlage:** Hält der Feind mehr als 70 % der Siegpunkte deines Heimatlands eine Minute lang, kapituliert dein Land.
 
 ## Spielprinzip

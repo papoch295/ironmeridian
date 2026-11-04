@@ -152,7 +152,8 @@ const PROVINCE_TYPES = {
 };
 // Points victory: the player wins once the enemies have lost VICTORY.win of their victory points and that holds for
 // VICTORY.hold seconds; the player loses once the own country keeps less than VICTORY.lose of its points as long.
-const VICTORY = { win: 0.7, lose: 0.3, hold: 60 };
+// World war (mode 'ffa'): the player's alliance has to hold VICTORY.world of all victory points on the map instead.
+const VICTORY = { win: 0.7, world: 0.25, lose: 0.3, hold: 60 };
 
 const WEAPON_NAMES = {
   rifle: ['Sturmgewehre', 'Assault rifles'], carbine: ['Karabiner (schallgedämpft)', 'Suppressed carbines'], rpg: ['Panzerfaust', 'Rocket launcher'],

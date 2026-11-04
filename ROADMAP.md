@@ -361,6 +361,9 @@ seiner Heimat-Siegpunkte 1 Minute lang hält. Countdown als Banner unter der Lei
 Ziele-Fenster mit Siegpunkt-Balken und Schwelle (scrollt auf kleinen Bildschirmen). Totaler Sieg/Niederlage gelten weiter
 sofort. Werte: `VICTORY` und `vp` in `PROVINCE_TYPES` (`js/data/units.js`). Der Selbsttest prüft Countdown, Abbruch,
 Punktesieg und Kapitulation.
+Nachtrag 4. Nov. (nach den Testpartien): Im **Weltkrieg** war die 70 %-Regel unerreichbar, weil die ganze Welt als
+Feindgebiet zählt. Dort gilt jetzt der **Weltmacht-Sieg**: das eigene Bündnis hält 25 % aller Siegpunkte der Welt (zuerst 35 %, nach Nachtest gesenkt) eine
+Minute lang (`VICTORY.world`). Ziele-Fenster, Endbildschirm und Setup-Text passen sich an; der Selbsttest prüft auch das.
 
 **Neu priorisiert am 2. Nov.:** Taktisches Gameplay (2.9) und einfachere Führung (2.10) haben **P0** und kommen direkt
 nach Schritt 3. Die Eskalation rutscht nach Beta 2, vom alten Schritt 4 bleibt nur der Punktesieg.

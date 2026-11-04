@@ -440,9 +440,9 @@ const UI = {
     // Victory points: meter with a mark at the threshold; own country turns red below the surrender line.
     const sc = Sim.score(), pct = (x) => Math.round(x * 100), mins = VICTORY.hold / 60;
     const hold = S.vp ? `<p class="vp-hold ${S.vp.r}">${U.esc(t(S.vp.r === 'win' ? 'objHoldWin' : 'objHoldLose', this.clockStr(S.vp.t - S.t)))}</p>` : '';
-    box.innerHTML = `<h2>${U.esc(t('objectives'))}</h2><p class="desc">${U.esc(t('objWin', pct(VICTORY.win), mins))}</p>${hold}
-      <div class="stat-line"><span>${U.esc(t('objVp'))}</span><b>${pct(sc.win)} % / ${pct(VICTORY.win)} %</b></div>
-      <div class="meter vp"><i style="width:${Math.min(100, pct(sc.win))}%"></i><s style="left:${pct(VICTORY.win)}%"></s></div>
+    box.innerHTML = `<h2>${U.esc(t('objectives'))}</h2><p class="desc">${U.esc(t(sc.world ? 'objWinWorld' : 'objWin', pct(sc.need), mins))}</p>${hold}
+      <div class="stat-line"><span>${U.esc(t(sc.world ? 'objVpWorld' : 'objVp'))}</span><b>${pct(sc.win)} % / ${pct(sc.need)} %</b></div>
+      <div class="meter vp"><i style="width:${Math.min(100, pct(sc.win))}%"></i><s style="left:${pct(sc.need)}%"></s></div>
       <div class="stat-line"><span>${U.esc(t('objOwnVp'))}</span><b class="${sc.own < VICTORY.lose ? 'neg' : ''}">${pct(sc.own)} %</b></div>
       <p class="desc small">${U.esc(t('objLose', 100 - pct(VICTORY.lose), mins))}</p>
       <div class="stat-line"><span>${U.esc(t('objProv'))}</span><b>${eTotal - ep} / ${eTotal}</b></div>

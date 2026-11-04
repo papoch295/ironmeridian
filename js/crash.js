@@ -144,6 +144,15 @@ const SelfTest = {
       if (!S.vp || S.vp.r !== 'lose') return 'Kapitulations-Countdown startet nicht';
       S.vp.t = S.t; Sim.checkEnd();
       if (S.over !== 'lose' || S.overWhy !== 'points') return 'keine Kapitulation';
+      // World war: the alliance has to hold VICTORY.world of all points on the map, not 70 % of the enemies'.
+      Game.newGame({ country, mode: 'ffa', enemyBloc: foe.id, difficulty: 'easy', seed: 7 }); Game.state.paused = true; S = Game.state;
+      if (Sim.score().win >= VICTORY.world) return 'Weltkrieg: Sieg schon zu Beginn erreicht';
+      const rest = S.prov.map((p, i) => i).filter((i) => !Game.allied(S.prov[i].o, country));
+      for (const i of rest) { if (Sim.score().win >= VICTORY.world + 0.01) break; S.prov[i].o = country; }
+      Sim.checkEnd();
+      if (!S.vp || S.vp.r !== 'win') return 'Weltkrieg: Countdown startet nicht (' + Math.round(Sim.score().win * 100) + ' %)';
+      S.vp.t = S.t; Sim.checkEnd();
+      if (S.over !== 'win' || S.overWhy !== 'points') return 'Weltkrieg: kein Weltmacht-Sieg';
       return null;
     } catch (e) { return (e && e.stack) || String(e); }
   },
@@ -209,7 +218,7 @@ const SelfTest = {
       for (const p of problems) this.log('     ' + p);
     }
     const vp = await this.vpTest();
-    this.log(vp ? 'FEHL Punktesieg: ' + vp : 'OK   Punktesieg und Kapitulation');
+    this.log(vp ? 'FEHL Punktesieg: ' + vp : 'OK   Punktesieg, Kapitulation und Weltmacht-Sieg');
     allOk = allOk && !vp;
     this.active = false;
     window.SELFTEST = { ok: allOk, results: this.results };

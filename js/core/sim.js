@@ -680,18 +680,21 @@ const Sim = {
   },
 
   // Victory points (PROVINCE_TYPES.vp). The war zone of the enemies is every province of a country at war with the
-  // player plus whatever they have taken; win = share of it no longer held by them. own = share of the home
-  // country's points not occupied by an enemy.
+  // player plus whatever they have taken; win = share of it no longer held by them. In a world war the whole world
+  // is at stake, so win = share of all points on the map held by the player's alliance (threshold VICTORY.world).
+  // need = threshold for win. own = share of the home country's points not occupied by an enemy.
   score() {
-    const S = Game.state, me = S.player;
-    let eArea = 0, eHeld = 0, oBase = 0, oHeld = 0;
+    const S = Game.state, me = S.player, world = S.mode === 'ffa';
+    let eArea = 0, eHeld = 0, oBase = 0, oHeld = 0, all = 0, mine = 0;
     for (let i = 0; i < S.prov.length; i++) {
       const P = Geo.provinces[i], v = PROVINCE_TYPES[P.type].vp, home = Geo.countries[P.country].k, o = S.prov[i].o;
       const h = Game.hostile(o, me);
       if (h || Game.hostile(home, me)) { eArea += v; if (h) eHeld += v; }
       if (home === me) { oBase += v; if (!h) oHeld += v; }
+      all += v; if (Game.allied(o, me)) mine += v;
     }
-    return { win: eArea ? 1 - eHeld / eArea : 0, own: oBase ? oHeld / oBase : 1, eArea, eHeld, oBase, oHeld };
+    const win = world ? (all ? mine / all : 0) : eArea ? 1 - eHeld / eArea : 0;
+    return { win, need: world ? VICTORY.world : VICTORY.win, world, own: oBase ? oHeld / oBase : 1, eArea, eHeld, oBase, oHeld };
   },
 
   // Ends: total victory (no enemy province or unit left) and total defeat (no own province) at once; a points
@@ -700,7 +703,7 @@ const Sim = {
     const S = Game.state, me = S.player;
     if (!Game.countProv(me)) return this.end('lose', 'total');
     if (!S.prov.some((p) => Game.hostile(p.o, me)) && !S.units.some((u) => Game.hostile(u.s, me))) return this.end('win', 'total');
-    const sc = this.score(), want = sc.win >= VICTORY.win ? 'win' : sc.own < VICTORY.lose ? 'lose' : null;
+    const sc = this.score(), want = sc.win >= sc.need ? 'win' : sc.own < VICTORY.lose ? 'lose' : null;
     if ((S.vp ? S.vp.r : null) !== want) {
       if (S.vp) Game.emit('vpHold', { r: S.vp.r, ev: 'broken' });
       S.vp = want ? { r: want, t: S.t + VICTORY.hold } : null;
