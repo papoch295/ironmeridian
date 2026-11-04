@@ -143,7 +143,8 @@ const Input = {
   },
 
   hover(e) {
-    if (!Game.state || e.target !== Render.cv) return;
+    if (!Game.state || e.target !== Render.cv) { Render.mouse = null; return; }
+    Render.mouse = [e.clientX, e.clientY];
     const c = this.clusterAt(e.clientX, e.clientY), u = c ? c.rep : null;
     if (Render.hover !== c) Render.hover = c;
     Render.cv.style.cursor = UI.mode && UI.mode !== 'box' ? 'crosshair' : u ? 'pointer' : this.siteAt(e.clientX, e.clientY) !== null ? 'pointer' : 'default';

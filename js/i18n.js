@@ -64,6 +64,17 @@ const STR = {
     helpControls: 'Steuerung', helpEconomy: 'Wirtschaft', helpCombat: 'Kampf', helpUnits: 'Einheiten',
     cost: 'Kosten', time: 'Bauzeit', range: 'Reichweite', speedStat: 'Tempo', vision: 'Sicht', stealth: 'Tarnung', requires: 'Benötigt',
     land: 'Boden', air: 'Luft', sea: 'See', missile: 'Rakete',
+    qMsl: 'Raketen', cmdCas: 'Dauereinsatz', hintCas: 'Einsatzgebiet antippen – die Flugzeuge greifen dort an und fliegen nach dem Auftanken von selbst wieder hin',
+    hintMissileAuto: 'Ziel für {0} antippen – die nächste Basis in Reichweite feuert', casSet: 'Dauereinsatz befohlen – jeder andere Befehl beendet ihn',
+    casPartial: 'Nur {0} von {1} Flugzeugen erreichen das Gebiet von ihrem Flugplatz aus', evCasLost: '{0}: Einsatzgebiet vom neuen Flugplatz aus nicht erreichbar – Dauereinsatz beendet',
+    mslNoSource: 'Keine Basis mit {0} erreicht dieses Ziel', mslLaunched: '{0} gestartet von {1}',
+    airField: 'im Feld', airCasRefuel: 'Dauereinsatz – tankt auf', airRtb: 'Rückflug', airNuke: 'Atomschlag', airCas: 'Dauereinsatz', airMission: 'im Einsatz',
+    airCount: '{0} Luftfahrzeuge', airCount1: '1 Luftfahrzeug', airNone: 'Keine Luftfahrzeuge. Baue einen Flugplatz und rekrutiere dort Hubschrauber und Flugzeuge.',
+    airSelReady: 'Bereite wählen ({0})', airSelAll: 'Alle wählen', airSelCas: 'Im Dauereinsatz ({0})',
+    airInfo: 'Antippen wählt aus. Dann „Dauereinsatz“: Die Flugzeuge greifen im Gebiet an, tanken auf und kehren immer wieder zurück.',
+    mslSub: 'Vorrat im ganzen Land', mslNone: 'Keine Raketen. Baue in einer Provinz eine Raketenbasis und stelle dort Raketen her; U-Boote mit SLBM erscheinen hier ebenfalls.',
+    mslInfo: '„Starten“ und dann das Ziel antippen: Die nächste Basis mit genug Reichweite feuert. Kreise auf der Karte zeigen die Reichweite.',
+    mslBases: '{0} Standorte', mslBase1: '1 Standort', mslSites: 'Standorte',
     qLand: 'Bodentruppen', qAir: 'Luftwaffe', qSea: 'Marine', qIdle: 'Untätige', qNone: 'Keine passenden Einheiten im Bild',
     army: 'Armee', groupHint: 'Erst Einheiten auswählen, dann + Armee (oder Strg+Zahl)', groupMade: 'Armee {0} gebildet – Klick wählt sie, zweiter Klick zentriert', groupFight: 'Armee {0} unter Beschuss',
     unitStyle: 'Einheitendarstellung', styleModels: 'Modelle', styleNato: 'NATO-Symbole',
@@ -165,6 +176,17 @@ const STR = {
     helpControls: 'Controls', helpEconomy: 'Economy', helpCombat: 'Combat', helpUnits: 'Units',
     cost: 'Cost', time: 'Build time', range: 'Range', speedStat: 'Speed', vision: 'Vision', stealth: 'Stealth', requires: 'Requires',
     land: 'Ground', air: 'Air', sea: 'Naval', missile: 'Missile',
+    qMsl: 'Missiles', cmdCas: 'Standing mission', hintCas: 'Tap the mission area – the aircraft attack there and return on their own after refuelling',
+    hintMissileAuto: 'Tap a target for {0} – the closest base in range fires', casSet: 'Standing mission ordered – any other order ends it',
+    casPartial: 'Only {0} of {1} aircraft can reach the area from their airfield', evCasLost: '{0}: mission area out of reach from the new airfield – standing mission ended',
+    mslNoSource: 'No base with {0} reaches this target', mslLaunched: '{0} launched from {1}',
+    airField: 'in the field', airCasRefuel: 'Standing mission – refuelling', airRtb: 'Returning', airNuke: 'Nuclear strike', airCas: 'Standing mission', airMission: 'On mission',
+    airCount: '{0} aircraft', airCount1: '1 aircraft', airNone: 'No aircraft. Build an airfield and recruit helicopters and planes there.',
+    airSelReady: 'Select ready ({0})', airSelAll: 'Select all', airSelCas: 'On standing mission ({0})',
+    airInfo: 'Tap to select. Then "Standing mission": the aircraft attack in the area, refuel and keep coming back.',
+    mslSub: 'Stock across the country', mslNone: 'No missiles. Build a missile base in a province and produce missiles there; submarines with SLBMs show up here too.',
+    mslInfo: '"Launch", then tap the target: the closest base with enough range fires. Circles on the map show the range.',
+    mslBases: '{0} sites', mslBase1: '1 site', mslSites: 'Sites',
     qLand: 'Ground', qAir: 'Air force', qSea: 'Navy', qIdle: 'Idle', qNone: 'No matching units on screen',
     army: 'Army', groupHint: 'Select units first, then + Army (or Ctrl+number)', groupMade: 'Army {0} formed – click selects it, second click centers', groupFight: 'Army {0} under fire',
     unitStyle: 'Unit display', styleModels: 'Models', styleNato: 'NATO symbols',
@@ -212,7 +234,7 @@ const HELP = {
     controls: `<h3>Maus & Tastatur</h3><ul>
       <li><b>Klick auf eigene Einheiten</b> wählt den ganzen Stapel. Danach <b>Klick auf ein Ziel</b>: Bewegen – in Feindgebiet automatisch mit Angriff. Klick auf Feind: Angreifen.</li>
       <li><b>Ziehen</b> verschiebt die Karte, <b>Shift + Ziehen</b> zieht einen Auswahlrahmen. <b>Mausrad</b>: Zoom. Rechtsklick gibt ebenfalls Befehle.</li>
-      <li>Die Knöpfe <b>Bodentruppen / Luftwaffe / Marine</b> links wählen alle passenden Einheiten im Bild, <b>Untätige</b> springt zu Einheiten ohne Befehl.</li>
+      <li>Die Knöpfe <b>Bodentruppen / Marine</b> links wählen alle passenden Einheiten im Bild, <b>Untätige</b> springt zu Einheiten ohne Befehl. <b>Luftwaffe</b> und <b>Raketen</b> öffnen eine Übersicht über alle Flugzeuge bzw. den Raketenvorrat im ganzen Land.</li>
       <li>Im Auswahlfenster wählst du per Klick einen Typ oder eine <b>einzelne Einheit</b> aus dem Stapel.</li>
       <li><b>Leertaste</b>: Pause. <b>1–3</b>: Tempo. <b>Strg+1–9</b>: Armee bilden, <b>Umschalt+1–9</b>: zur Armee hinzufügen, <b>1–9</b>: Armee wählen (zweimal: zentrieren).</li>
       <li><b>A</b> Angriffsbewegung, <b>F</b> schnell, <b>S</b> Stopp, <b>R</b> Rückzug, <b>E</b> Aussteigen, <b>Esc</b> Abbrechen/Menü.</li>
@@ -240,7 +262,7 @@ const HELP = {
       in der Nähe die Provinz. Infanterie und Pioniere erobern am schnellsten. Eroberte Provinzen verlieren eine Stufe.</p>
       <h3>Unterdrückung & Moral</h3><p>Beschuss unterdrückt Infanterie: Sie trifft schlechter, bewegt sich langsamer und flieht bei 100&nbsp;% ungeordnet.</p>
       <h3>Nebel des Krieges</h3><p>Du siehst Feinde nur in Sichtweite deiner Einheiten und Provinzen. Aufklärer, Scharfschützen und U-Boote sind schwer zu entdecken.</p>
-      <h3>Versorgung</h3><p>Munition und Zustand regenerieren in eigenen Provinzen, bei Versorgungs-LKW, Sanitätern und Pionieren. Flugzeuge kehren zum Tanken zur Basis zurück.</p>
+      <h3>Versorgung</h3><p>Munition und Zustand regenerieren in eigenen Provinzen, bei Versorgungs-LKW, Sanitätern und Pionieren. Flugzeuge kehren zum Tanken zur Basis zurück. Mit <b>Dauereinsatz</b> fliegen sie danach von selbst wieder ins Einsatzgebiet; der gestrichelte Kreis beim Zielen zeigt, wie weit sie von ihrem Flugplatz kommen.</p>
       <h3>Über See</h3><p>Bodentruppen schiffen sich an der Küste automatisch ein, sind auf See aber sehr verwundbar. Transportflugzeuge fliegen Truppen zwischen Flugplätzen.</p>
       <h3>Transport</h3><p>Wähle Transporter und Truppen gemeinsam und tippe <b>Verladen</b> – alles wird automatisch verteilt, Hubschrauber fliegen den Truppen entgegen.
       Nur Transporter gewählt: <b>Aufnehmen</b> lädt Einheiten in der Nähe. <b>Transport nach</b> fährt bzw. fliegt zum Ziel und lädt dort aus.</p>
@@ -255,7 +277,7 @@ const HELP = {
     controls: `<h3>Mouse & keyboard</h3><ul>
       <li><b>Click your units</b> to select the whole stack, then <b>click a target</b>: move – automatically attack-move into enemy territory. Click an enemy: attack.</li>
       <li><b>Drag</b> pans the map, <b>Shift + drag</b> draws a selection box. <b>Mouse wheel</b>: zoom. Right click also gives orders.</li>
-      <li>The <b>Ground / Air force / Navy</b> buttons on the left select matching units on screen, <b>Idle</b> jumps to units without orders.</li>
+      <li>The <b>Ground / Navy</b> buttons on the left select matching units on screen, <b>Idle</b> jumps to units without orders. <b>Air force</b> and <b>Missiles</b> open an overview of every aircraft and of the missile stock across the country.</li>
       <li>In the selection panel, click a type or a <b>single unit</b> from the stack.</li>
       <li><b>Space</b>: pause. <b>1–3</b>: speed. <b>Ctrl+1–9</b>: form army, <b>Shift+1–9</b>: add to army, <b>1–9</b>: select army (twice: center).</li>
       <li><b>A</b> attack-move, <b>F</b> fast, <b>S</b> stop, <b>R</b> retreat, <b>E</b> unload, <b>Esc</b> cancel/menu.</li>
@@ -283,7 +305,7 @@ const HELP = {
       are nearby. Infantry and engineers capture fastest. Captured provinces lose one level.</p>
       <h3>Suppression & morale</h3><p>Incoming fire suppresses infantry: it shoots worse, moves slower and routs at 100&nbsp;%.</p>
       <h3>Fog of war</h3><p>You only see enemies within sight of your units and provinces. Recon, snipers and submarines are hard to spot.</p>
-      <h3>Supply</h3><p>Ammo and condition recover in your own provinces, near supply trucks, medics and engineers. Aircraft return to base to refuel.</p>
+      <h3>Supply</h3><p>Ammo and condition recover in your own provinces, near supply trucks, medics and engineers. Aircraft return to base to refuel. With a <b>standing mission</b> they then fly back to the mission area on their own; the dashed circle while aiming shows how far they reach from their airfield.</p>
       <h3>Across the sea</h3><p>Ground troops embark automatically at the coast but are very vulnerable at sea. Transport aircraft fly troops between airfields.</p>
       <h3>Transport</h3><p>Select transports and troops together and tap <b>Load up</b> – everyone is distributed automatically, helicopters fly to meet the troops.
       Transports only: <b>Pick up</b> loads nearby units. <b>Transport to</b> drives or flies to the destination and unloads there.</p>

@@ -7,14 +7,26 @@ const Panels = {
   batch: 1,            // how many units one click recruits
   army: null,          // army that recruited units join: null | 'new' | army key
   enemy: null,
+  special: null,       // overview instead of selection/province: null | 'air' | 'msl'
   min: false,          // folded to its head
   sig: '',
 
   el() { return $('#panel'); },
-  close() { this.enemy = null; this.el().hidden = true; this.sig = ''; },
+  close() { this.enemy = null; this.special = null; this.el().hidden = true; this.sig = ''; },
+
+  // Air force / missile overview from the quick bar; a second tap closes it again.
+  toggleSpecial(k) {
+    if (this.special === k && !this.el().hidden) { this.close(); return; }
+    Render.selection.clear();
+    if (Render.selProv !== null) { Render.selProv = null; Render.dirty = true; }
+    UI.setMode(null); UI.renderCmdbar();
+    this.enemy = null; this.special = k; this.min = false; this.sig = '';
+    this.refresh(true);
+  },
 
   show() {
     this.enemy = null;
+    this.special = null;
     this.sig = '';
     this.refresh(true);
   },
@@ -30,6 +42,13 @@ const Panels = {
       if (!u || !Sim.sees(S.player, u)) { this.close(); return; }
       sig = 'e' + u.id + Math.round(u.hp);
       render = () => this.enemyHtml(u);
+    } else if (this.special === 'air') {
+      const us = this.airUnits();
+      sig = 'A' + us.map((u) => u.id + (u.air ? u.air.st + Math.round(u.air.fuel / (UNIT_TYPES[u.t].fuel || 400) * 10) + (u.air.base ?? '') : '') + (u.ord ? u.ord.k : '') + (u.cas ? 'C' : '')).join('|');
+      render = () => this.airHtml(us);
+    } else if (this.special === 'msl') {
+      sig = 'M' + ['srbm', 'cruise', 'icbm', 'slbm'].map((k) => UI.missileSources(k).map((s) => s.name + s.n).join()).join('|') + (S.side[S.player].nukes || 0) + (UI.mode === 'missile' && UI.modeData ? UI.modeData.key : '');
+      render = () => this.mslHtml();
     } else if (UI.sel.size) {
       const us = UI.selUnits();
       sig = 'u' + us.map((u) => u.id + ':' + Math.round(u.hp) + ':' + u.ammo.join(',') + ':' + u.cargo.length + u.stance + Math.round(u.sup / 10) + (u.nuke ? 'N' : '') + (u.air ? u.air.st + Math.round(u.air.fuel / 5) : '')).join('|') +
@@ -179,6 +198,60 @@ const Panels = {
       h += `<h3>${U.esc(t('aircraftHere'))}</h3><div class="groups">` + parked.map((u) => `<button class="gchip" data-act="selu" data-id="${u.id}"><img src="${UnitIcon.get(u.t)}" alt=""><span>${U.esc(unitName(u.t))}${u.cargo.length ? ' +' + u.cargo.length : ''}${u.nuke ? ' ☢' : ''}</span></button>`).join('') + '</div>';
     }
     return h + '</div>';
+  },
+
+  // ---------- Air force overview ----------
+  airUnits() {
+    const me = Game.me(), order = Object.keys(UNIT_TYPES);
+    return Game.state.units.filter((u) => u.s === me && UNIT_TYPES[u.t].dom === 'air' && !u.inside)
+      .sort((a, b) => order.indexOf(a.t) - order.indexOf(b.t) || a.id - b.id);
+  },
+  // Ready = parked, refuelled and rearmed without a standing mission, or a helicopter with nothing to do.
+  airReady(u) {
+    const T = UNIT_TYPES[u.t];
+    if (!u.air) return !u.ord && !u.path;
+    return u.air.st === 'ground' && !u.cas && u.air.fuel >= (T.fuel || 400) * 0.95 && T.w.every((k, i) => !W[k].ammo || u.ammo[i] >= W[k].ammo * 0.9);
+  },
+
+  airHtml(us) {
+    let h = this.head(t('qAir'), U.esc(us.length === 1 ? t('airCount1') : t('airCount', us.length)));
+    h += '<div class="p-body">';
+    if (!us.length) return h + `<p class="muted small">${U.esc(t('airNone'))}</p></div>`;
+    const ready = us.filter((u) => this.airReady(u)), cas = us.filter((u) => u.cas);
+    h += `<div class="btn-row"><button class="btn sm primary" data-act="airReady" ${ready.length ? '' : 'disabled'}>${U.esc(t('airSelReady', ready.length))}</button>
+      <button class="btn sm" data-act="airAll">${U.esc(t('airSelAll'))}</button>${cas.length ? `<button class="btn sm" data-act="airCasAll">${U.esc(t('airSelCas', cas.length))}</button>` : ''}</div>`;
+    // Types: one tap selects every aircraft of that type.
+    const types = {};
+    for (const u of us) (types[u.t] = types[u.t] || []).push(u);
+    h += '<div class="groups">' + Object.keys(types).map((k) => `<button class="gchip" data-act="airType" data-k="${k}" title="${U.esc(unitName(k))}"><img src="${UnitIcon.get(k)}" alt=""><b>${types[k].length}</b><span>${U.esc(unitName(k))}</span></button>`).join('') + '</div>';
+    h += `<p class="small muted">${U.esc(t('airInfo'))}</p><div class="alist">`;
+    for (const u of us) {
+      const T = UNIT_TYPES[u.t], fuel = u.air ? u.air.fuel / (T.fuel || 400) : 1;
+      const base = u.air && u.air.base !== null ? provName(Geo.provinces[u.air.base]) : '—';
+      const cls = u.cas ? 'cas' : u.air && u.air.st === 'ground' ? 'ground' : 'fly';
+      h += `<button class="arow ${cls}" data-act="selu" data-id="${u.id}"><img src="${UnitIcon.get(u.t)}" alt=""><span class="nm">${U.esc(unitName(u.t))}${u.nuke ? ' ☢' : ''}<small>${U.esc(base)} · ${U.esc(UI.airStatus(u))}</small></span>${u.air ? `<div class="bar blue" title="${U.esc(t('fuel'))}"><i style="width:${Math.round(fuel * 100)}%"></i></div>` : ''}</button>`;
+    }
+    return h + '</div></div>';
+  },
+
+  // ---------- Missile overview ----------
+  mslHtml() {
+    const S = Game.state, nukes = S.side[S.player].nukes || 0;
+    let h = this.head(t('missiles'), nukes ? `☢ ${nukes} · ${U.esc(t('nukeStock'))}` : U.esc(t('mslSub')));
+    h += '<div class="p-body">';
+    const keys = ['srbm', 'cruise', 'icbm', 'slbm'].map((k) => ({ k, src: UI.missileSources(k) })).filter((x) => x.src.length);
+    if (!keys.length) return h + `<p class="muted small">${U.esc(t('mslNone'))}</p></div>`;
+    h += `<p class="small muted">${U.esc(t('mslInfo'))}</p>`;
+    for (const { k, src } of keys) {
+      const M = MISSILES[k], n = src.reduce((s, x) => s + x.n, 0), on = UI.mode === 'missile' && UI.modeData && UI.modeData.auto && UI.modeData.key === k;
+      h += `<div class="mrow${on ? ' on' : ''}"><img src="${UnitIcon.missile()}" alt=""><span class="nm">${U.esc(L(M))} <b>× ${n}</b><small>${Math.round(M.r * 111)} km · ${U.esc(src.length === 1 ? t('mslBase1') : t('mslBases', src.length))}</small></span>
+        <button class="btn sm primary" data-act="mslFire" data-k="${k}">${U.esc(t('launch'))}</button>${nukes ? `<button class="btn sm nuke" data-act="mslNuke" data-k="${k}" title="${U.esc(t('launchNuke'))}">☢</button>` : ''}</div>`;
+    }
+    h += `<h3>${U.esc(t('mslSites'))}</h3><div class="alist">`;
+    const sites = {};
+    for (const { k, src } of keys) for (const s of src) { const id = s.pid !== undefined ? 'p' + s.pid : 'u' + s.uid; (sites[id] = sites[id] || { s, list: [] }).list.push(`${L(MISSILES[k])} × ${s.n}`); }
+    for (const id in sites) { const { s, list } = sites[id]; h += `<button class="arow" data-act="mslSite" data-k="${id}"><span class="nm">${U.esc(s.name)}<small>${U.esc(list.join(', '))}</small></span></button>`; }
+    return h + '</div></div>';
   },
 
   // Army that newly recruited units join.
@@ -338,7 +411,18 @@ const Panels = {
         if (a === 'cancel') { Game.cancel(pid, +b.dataset.i); this.refresh(true); return; }
         if (a === 'launch') { UI.setMode('missile', { pid, key: k }); return; }
         if (a === 'launchN') { UI.setMode('missile', { pid, key: k, nuke: true }); return; }
-        if (a === 'selu') { UI.select([+b.dataset.id]); return; }
+        if (a === 'selu') { const u = Game.unit(+b.dataset.id), fromList = this.special === 'air'; UI.select([+b.dataset.id]); if (u && fromList) Render.flyTo(u.x, u.y); return; }
+        if (a === 'airReady' || a === 'airAll' || a === 'airCasAll' || a === 'airType') {
+          const us = this.airUnits().filter((u) => a === 'airAll' || (a === 'airReady' ? this.airReady(u) : a === 'airCasAll' ? u.cas : u.t === k));
+          if (us.length) UI.select(us.map((u) => u.id));
+          return;
+        }
+        if (a === 'mslFire' || a === 'mslNuke') { UI.setMode('missile', { key: k, auto: true, nuke: a === 'mslNuke' }); this.refresh(true); return; }
+        if (a === 'mslSite') {
+          if (k[0] === 'p') { const p = Geo.provinces[+k.slice(1)]; UI.selectProvince(p.id); Render.flyTo(p.x, p.y); }
+          else { const u = Game.unit(+k.slice(1)); if (u) { UI.select([u.id]); Render.flyTo(u.x, u.y); } }
+          return;
+        }
         if (a === 'only') { UI.select(UI.selUnits().filter((u) => u.t === k).map((u) => u.id)); return; }
         if (a === 'stance') { Game.order(UI.selUnits(), { k: 'stance', v: k }); this.refresh(true); UI.renderCmdbar(); return; }
         if (a === 'newArmy') { UI.newGroup(); this.refresh(true); return; }

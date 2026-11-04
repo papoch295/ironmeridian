@@ -34,6 +34,7 @@ const ICON = {
   qland: svg('<path d="M3 14h18v3.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M6 14v-3h10l2 3M10 11V8h4M14 9.5h7"/>'),
   qair: svg('<path d="M21 12l-8-2-3-7H8l1 7-4 1-2-2H2l1 3-1 3h1l2-2 4 1-1 7h2l3-7 8-2z"/>'),
   qsea: svg('<path d="M3 15h18l-3 4H6zM7 15V9h7l2 6M10 9V5"/>'),
+  qmsl: svg('<path d="M12 2c2 2 3 5 3 9v6H9v-6c0-4 1-7 3-9zM9 14l-3 4h3M15 14l3 4h-3M10 20h4"/>'),
   qidle: svg('<path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/>'),
   globe: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>'),
 };

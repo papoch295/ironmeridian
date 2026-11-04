@@ -365,6 +365,14 @@ const Sim = {
       a.fuel = Math.min(T.fuel || 400, a.fuel + (T.fuel || 400) * dt / 25);
       u.hp = Math.min(T.hp, u.hp + 2 * dt);
       T.w.forEach((k, i) => { if (W[k].ammo) u.ammo[i] = Math.min(W[k].ammo, u.ammo[i] + W[k].ammo * dt / 25); });
+      // Standing mission: take off again once refuelled, rearmed and patched up. A mission that the (new) base
+      // can no longer reach is dropped.
+      if (u.cas) {
+        if (U.dist(b.x, b.y, u.cas.x, u.cas.y) > Game.airReach(u)) { delete u.cas; if (u.s === S.player) Game.emit('casLost', u); return; }
+        if (a.fuel >= (T.fuel || 400) * 0.95 && u.hp >= T.hp * 0.6 && T.w.every((k, i) => !W[k].ammo || u.ammo[i] >= W[k].ammo * 0.9)) {
+          a.st = 'fly'; u.ord = { k: 'amove', x: u.cas.x, y: u.cas.y }; u.path = [u.cas.x, u.cas.y]; u.pi = 0;
+        }
+      }
       return;
     }
     a.fuel -= dt;

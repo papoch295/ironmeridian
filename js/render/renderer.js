@@ -245,6 +245,7 @@ const Render = {
     this.drawSites(ctx, vb, S);
     if (this.fog) this.drawFog(ctx, S);
     this.drawFallout(ctx, S);
+    this.drawRanges(ctx, S);
     this.drawOrders(ctx, S);
     this.drawUnits(ctx, vb, S);
     this.drawThreats(ctx, S);
@@ -338,6 +339,50 @@ const Render = {
     ctx.drawImage(this.fogCv, 0, 0, this.w, this.h);
   },
 
+  // While aiming with missiles or aircraft: reach circles around every launcher / airfield. With a mouse, a line
+  // from the closest launcher to the cursor turns red when the target is out of reach.
+  rangeSources() {
+    const m = UI.mode, d = UI.modeData || {}, us = () => UI.selUnits();
+    if (m === 'missile') {
+      const M = MISSILES[d.key];
+      return (d.auto ? UI.missileSources(d.key) : [Geo.provinces[d.pid]]).map((s) => ({ x: s.x, y: s.y, r: M.r }));
+    }
+    if (m === 'slbm') return us().filter((u) => u.slbm > 0).map((u) => ({ x: u.x, y: u.y, r: MISSILES.slbm.r }));
+    if (m === 'strike') return us().filter((u) => UNIT_TYPES[u.t].strike).map((u) => ({ x: u.x, y: u.y, r: UNIT_TYPES[u.t].strike.r }));
+    if (['cas', 'nuke', 'move', 'amove', 'fast'].includes(m)) {
+      return us().filter((u) => u.air && (m !== 'nuke' || UNIT_TYPES[u.t].w.includes('bombs'))).map((u) => { const h = Game.airHome(u); return { x: h.x, y: h.y, r: Game.airReach(u) }; });
+    }
+    return [];
+  },
+
+  drawRanges(ctx, S) {
+    if (!UI.mode) return;
+    const seen = new Set(), src = this.rangeSources().filter((s) => { const k = s.x.toFixed(2) + s.y.toFixed(2) + s.r.toFixed(2); return !seen.has(k) && seen.add(k); });
+    if (!src.length) return;
+    const z = this.cam.z, nuke = UI.mode === 'nuke' || !!(UI.modeData && UI.modeData.nuke);
+    const col = nuke ? '255,216,74' : '150,215,255';
+    ctx.save();
+    ctx.lineWidth = 1.5; ctx.setLineDash([7, 6]);
+    for (const s of src) {
+      const [sx, sy] = this.toScreen(s.x, s.y);
+      ctx.beginPath(); ctx.arc(sx, sy, s.r * z, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${col},0.06)`; ctx.fill();
+      ctx.strokeStyle = `rgba(${col},0.6)`; ctx.stroke();
+      ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fillStyle = `rgba(${col},0.9)`; ctx.fill();
+    }
+    ctx.setLineDash([]);
+    if (this.mouse && !Input.touch) {
+      const [wx, wy] = this.toWorld(this.mouse[0], this.mouse[1]);
+      const best = src.reduce((a, b) => (U.dist(b.x, b.y, wx, wy) - b.r < U.dist(a.x, a.y, wx, wy) - a.r ? b : a));
+      const ok = U.dist(best.x, best.y, wx, wy) <= best.r;
+      const [ax, ay] = this.toScreen(best.x, best.y), [bx, by] = this.mouse;
+      ctx.strokeStyle = ok ? 'rgba(140,220,120,0.9)' : 'rgba(255,100,85,0.95)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      if (!ok) { ctx.beginPath(); ctx.moveTo(bx - 7, by - 7); ctx.lineTo(bx + 7, by + 7); ctx.moveTo(bx + 7, by - 7); ctx.lineTo(bx - 7, by + 7); ctx.lineWidth = 3; ctx.stroke(); }
+    }
+    ctx.restore();
+  },
+
   drawOrders(ctx, S) {
     if (!this.selection.size) return;
     ctx.save();
@@ -349,8 +394,10 @@ const Render = {
       let pts = null;
       if (u.path) pts = [u.x, u.y].concat(u.path.slice(u.pi));
       else if (u.ord && u.ord.x !== undefined && UNIT_TYPES[u.t].dom === 'air') pts = [u.x, u.y, u.ord.x, u.ord.y];
+      // Standing air mission while refuelling: line from the airfield to the mission area.
+      else if (u.cas) pts = [u.x, u.y, u.cas.x, u.cas.y];
       if (!pts) continue;
-      const k = u.ord ? u.ord.k : 'move';
+      const k = u.cas ? 'amove' : u.ord ? u.ord.k : 'move';
       ctx.strokeStyle = k === 'amove' || k === 'attack' ? 'rgba(255,140,110,0.75)' : k === 'fast' ? 'rgba(255,220,120,0.75)' : 'rgba(150,215,255,0.7)';
       ctx.beginPath();
       for (let i = 0; i < pts.length; i += 2) { const [sx, sy] = this.toScreen(pts[i], pts[i + 1]); i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }

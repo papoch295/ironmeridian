@@ -5,7 +5,7 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 
 const UI = {
-  mode: null,          // pending order mode: move | fast | amove | load | unloadAt | drop | strike | slbm | missile | nuke | box
+  mode: null,          // pending order mode: move | fast | amove | load | unloadAt | drop | strike | slbm | missile | nuke | cas | box
   modeData: null,
   settings: { lang: 'de', sound: true, volume: 0.6, fog: true, tutorial: true, models: true, keys: null },
   tutStep: -1,
@@ -24,7 +24,7 @@ const UI = {
     $('#btnPause').onclick = () => this.togglePause();
     $$('#speedSeg button').forEach((b) => (b.onclick = () => this.setSpeed(+b.dataset.speed)));
     $('#btnMenu').onclick = () => Screens.pauseMenu();
-    $$('#quick button').forEach((b) => { b.innerHTML = ICON['q' + b.dataset.q] + '<span>' + U.esc(t('q' + b.dataset.q[0].toUpperCase() + b.dataset.q.slice(1))) + '</span>'; b.onclick = () => { Sfx.play('click'); this.quickSelect(b.dataset.q); }; });
+    $$('#quick button').forEach((b) => { b.innerHTML = ICON['q' + b.dataset.q] + '<span>' + U.esc(t('q' + b.dataset.q[0].toUpperCase() + b.dataset.q.slice(1))) + '</span>'; b.onclick = () => { Sfx.play('click'); const q = b.dataset.q; if (q === 'air' || q === 'msl') Panels.toggleSpecial(q); else this.quickSelect(q); }; });
     $('#groups').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { Sfx.play('click'); b.dataset.g === 'new' ? this.newGroup() : this.selectGroup(b.dataset.g); } });
     $('#btnObj').onclick = () => { const o = $('#objBox'); o.hidden = !o.hidden; this.renderObjectives(); if (!o.hidden) this.tutDone('obj'); };
     for (const [id, k] of [['#resM', 'money'], ['#resI', 'industry'], ['#resO', 'oil']]) $(id).innerHTML = `${ICON[k]}<span class="num"><span class="v">0</span><span class="inc"></span></span>`;
@@ -82,8 +82,8 @@ const UI = {
   setMode(m, data) {
     this.mode = m; this.modeData = data || null;
     const hint = $('#hint');
-    const txt = { move: t('hintMove'), fast: t('hintMove'), amove: t('hintAttack'), tAttack: t('hintTaskAttack'), tAdvance: t('hintTaskAdvance'), load: t('hintLoad'), unloadAt: t('hintUnloadAt'), drop: t('hintDrop'), strike: t('hintStrike'), slbm: t('hintMissile', 'SLBM'),
-      missile: data && (data.nuke ? t('hintNuke') : t('hintMissile', L(MISSILES[data.key]))), nuke: t('hintNuke'), box: t('hintBox') }[m];
+    const txt = { move: t('hintMove'), fast: t('hintMove'), amove: t('hintAttack'), tAttack: t('hintTaskAttack'), tAdvance: t('hintTaskAdvance'), load: t('hintLoad'), unloadAt: t('hintUnloadAt'), drop: t('hintDrop'), cas: t('hintCas'), strike: t('hintStrike'), slbm: t('hintMissile', 'SLBM'),
+      missile: data && (data.nuke ? t('hintNuke') : t(data.auto ? 'hintMissileAuto' : 'hintMissile', L(MISSILES[data.key]))), nuke: t('hintNuke'), box: t('hintBox') }[m];
     if (txt) { hint.innerHTML = `<span>${U.esc(txt)}</span><button>${U.esc(t('close'))}</button>`; hint.hidden = false; hint.querySelector('button').onclick = () => this.setMode(null); }
     else hint.hidden = true;
     hint.classList.toggle('nuke', m === 'nuke' || !!(data && data.nuke));
@@ -208,12 +208,34 @@ const UI = {
       Render.ping(wx, wy, 'attack'); Sfx.play('alert');
       this.log(t('evNukeBomber'), 'warn', wx, wy);
     }
+    else if (m === 'cas') {
+      // Standing air mission: only planes whose airfield can reach the point take it.
+      const planes = this.selUnits().filter((u) => u.air && UNIT_TYPES[u.t].w.length);
+      const ok = planes.filter((u) => this.inAirReach(u, wx, wy));
+      if (!ok.length) { this.toast(t('outOfRange'), 'bad'); return; }
+      if (ok.length < planes.length) this.toast(t('casPartial', ok.length, planes.length), 'bad');
+      else this.toast(t('casSet', ok.length));
+      this.clearTasks(ok);
+      Game.order(ok, { k: 'cas', x: wx, y: wy });
+      Render.ping(wx, wy, 'attack'); Sfx.play('order');
+      Panels.refresh(true);
+    }
     else if (m === 'drop') { Game.order(this.selUnits().filter((u) => UNIT_TYPES[u.t].plane && u.cargo.length), { k: 'drop', x: wx, y: wy }); Sfx.play('order'); }
     else if (m === 'strike') {
       for (const u of this.selUnits().filter((u) => UNIT_TYPES[u.t].strike)) { const r = Game.carrierStrike(u, wx, wy); if (r) this.toast(t(r), 'bad'); else Sfx.play('order'); }
     } else if (m === 'slbm') {
       const u = this.selUnits().find((u) => u.slbm > 0);
       if (u) { const r = Game.launchMissile(Game.me(), 'slbm', u.x, u.y, wx, wy, { uid: u.id }); if (r) { this.toast(t(r), 'bad'); return; } }
+    } else if (m === 'missile' && d.auto) {
+      // From the missile overview: the closest base (or submarine) that reaches the target fires.
+      const M = MISSILES[d.key], src = this.missileSources(d.key).filter((s) => U.dist(s.x, s.y, wx, wy) <= M.r)
+        .sort((a, b) => U.dist2(a.x, a.y, wx, wy) - U.dist2(b.x, b.y, wx, wy))[0];
+      if (!src) { this.toast(t('mslNoSource', L(M)), 'bad'); return; }
+      const r = Game.launchMissile(Game.me(), d.key, src.x, src.y, wx, wy, src.from, d.nuke);
+      if (r) { this.toast(t(r), 'bad'); return; }
+      this.toast(t('mslLaunched', L(M), src.name));
+      Render.ping(wx, wy, 'attack');
+      Panels.refresh(true);
     } else if (m === 'missile') {
       const p = Geo.provinces[d.pid];
       const r = Game.launchMissile(Game.me(), d.key, p.x, p.y, wx, wy, { pid: d.pid }, d.nuke);
@@ -221,6 +243,27 @@ const UI = {
       Panels.show();
     }
     this.setMode(null);
+  },
+
+  // ---------- Air force and missiles ----------
+  inAirReach(u, x, y) { const h = Game.airHome(u); return U.dist(h.x, h.y, x, y) <= Game.airReach(u); },
+  // Everything of the player that can fire missile type key: { x, y, name, n, from } for Game.launchMissile.
+  missileSources(key) {
+    const S = Game.state, me = Game.me(), out = [];
+    if (key === 'slbm') {
+      for (const u of S.units) if (u.s === me && u.slbm > 0 && !u.inside) out.push({ x: u.x, y: u.y, name: unitName(u.t), n: u.slbm, from: { uid: u.id }, uid: u.id });
+    } else {
+      S.prov.forEach((pr, pid) => { if (pr.o === me && pr.msl && pr.msl[key] > 0) { const p = Geo.provinces[pid]; out.push({ x: p.x, y: p.y, name: provName(p), n: pr.msl[key], from: { pid }, pid }); } });
+    }
+    return out;
+  },
+  // Short status of an aircraft for the air force overview.
+  airStatus(u) {
+    if (!u.air) return t('airField');
+    if (u.air.st === 'ground') return u.cas ? t('airCasRefuel') : t('parked');
+    if (u.ord && u.ord.k === 'rtb') return t('airRtb');
+    if (u.ord && u.ord.k === 'nuke') return t('airNuke');
+    return u.cas ? t('airCas') : t('airMission');
   },
 
   // ---------- Army tasks (shared battle-group tactics, see Tactics) ----------
@@ -330,6 +373,7 @@ const UI = {
     const board = soft && !ls.carriers.length ? btn('load', 'load', t('cmdLoad'), 'load') : '';
     if (us.some((u) => u.cargo.length)) { c += btn('unloadAt', 'drop', t('cmdUnloadAt'), 'unloadAt'); c += btn('unload', 'unload', t('cmdUnload')); }
     if (us.some((u) => UNIT_TYPES[u.t].plane && u.cargo.length)) c += btn('drop', 'drop', t('cmdDrop'), 'drop');
+    if (us.some((u) => u.air && UNIT_TYPES[u.t].w.length)) c += btn('cas', 'target', t('cmdCas'), 'cas');
     if (anyPlane) c += btn('rtb', 'rtb', t('cmdRtb'));
     if (us.some((u) => UNIT_TYPES[u.t].strike)) c += btn('strike', 'strike', t('cmdStrike'), 'strike');
     if (us.some((u) => u.slbm > 0)) c += btn('slbm', 'missile', t('cmdSlbm'), 'slbm');
@@ -357,7 +401,7 @@ const UI = {
     const us = this.selUnits();
     switch (c) {
       case 'tHold': this.armyTask('hold'); break;
-      case 'tAttack': case 'tAdvance': case 'move': case 'fast': case 'amove': case 'load': case 'unloadAt': case 'drop': case 'strike': case 'slbm': case 'nuke': case 'box': this.setMode(this.mode === c ? null : c); break;
+      case 'tAttack': case 'tAdvance': case 'move': case 'fast': case 'amove': case 'load': case 'unloadAt': case 'drop': case 'cas': case 'strike': case 'slbm': case 'nuke': case 'box': this.setMode(this.mode === c ? null : c); break;
       case 'autoload': {
         const ls = this.loadSplit(us), n = Game.autoLoad(ls.cargo, ls.carriers);
         this.toast(n ? (n < ls.cargo.length ? t('loadPartial', n, ls.cargo.length) : t('loadOk', n)) : t('loadFull'), n ? '' : 'bad');
@@ -377,7 +421,7 @@ const UI = {
         if (!ok.some(Boolean)) this.toast(t('notOwned'), 'bad');
         this.pruneSelection(); break;
       }
-      case 'rtb': for (const u of us) if (u.air) u.ord = { k: 'rtb' }; break;
+      case 'rtb': for (const u of us) if (u.air) { delete u.cas; u.ord = { k: 'rtb' }; } Panels.refresh(true); break;
       case 'stance': {
         const next = { free: 'return', return: 'hold', hold: 'free' }[us[0].stance];
         Game.order(us, { k: 'stance', v: next }); this.renderCmdbar(); Panels.show(); break;
@@ -498,6 +542,7 @@ const UI = {
       Sfx.play('alert');
       if (Render.selProv !== null) Panels.show();
     });
+    Game.on('casLost', (u) => this.log(t('evCasLost', unitName(u.t)), 'warn', u.x, u.y));
     Game.on('produced', ({ pid, it, u }) => {
       const p = Geo.provinces[pid];
       if (u && it.g) this.joinArmy(it.g, u);

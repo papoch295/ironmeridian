@@ -417,6 +417,13 @@ const Game = {
   order(units, ord) {
     units = units.filter((u) => u && !u.inside && this.byId.has(u.id));
     if (!units.length) return;
+    // Standing air mission (cas): planes attack around the point, refuel at their base and return on their own
+    // (see Sim.plane) until any other order replaces it.
+    if (ord.k !== 'stance') for (const u of units) if (u.cas) delete u.cas;
+    if (ord.k === 'cas') {
+      for (const u of units) if (u.air) u.cas = { x: ord.x, y: ord.y };
+      ord = { k: 'amove', x: ord.x, y: ord.y };
+    }
     if (ord.k === 'stop') { for (const u of units) { u.ord = null; u.path = null; u.tgt = null; u.tgtP = null; } return; }
     if (ord.k === 'stance') { for (const u of units) u.stance = ord.v; return; }
     if (ord.k === 'unload') { for (const u of units) this.unload(u); return; }
@@ -605,6 +612,11 @@ const Game = {
     this.fx.push({ k: 'jet', x0: u.x, y0: u.y, x1: tx, y1: ty, t0: this.state.t, dur, side: u.s });
     return null;
   },
+
+  // Combat radius of a plane: how far from its airfield it can fly, fight a little and come back.
+  airReach(u) { const T = this.T(u); return Math.max(0, ((T.fuel || 400) - 12) / 2 * T.spd); },
+  // Origin of that radius: the plane's airfield, or the plane itself without one.
+  airHome(u) { return u.air && u.air.base !== null ? Geo.provinces[u.air.base] : u; },
 
   // Send a strategic bomber on a nuclear strike. It is armed at its airfield from the national stock.
   nukeBomber(u, tx, ty) {

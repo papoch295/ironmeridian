@@ -280,6 +280,8 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .gchip:hover { border-color: var(--line-hi); }
 .gchip img { width: 30px; height: 21px; flex: none; }
 .gchip b { font-size: 15px; color: var(--accent); }
+.gchip { min-width: 0; }
+.gchip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 4px 0 10px; }
 .mini-list .row { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
 .mini-list .row span { flex: 1; }
@@ -301,6 +303,24 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .nuke-ico { display: grid; place-items: center; height: 52px; font-size: 34px; color: #ffd84a; text-shadow: 0 0 12px rgba(255,210,60,.5); font-style: normal; }
 .nukecard { border-color: rgba(255,210,60,.35); }
 .btn.sm.nuke, .cmd.nuke { border-color: rgba(255,210,60,.55); color: #ffd84a; }
+/* Air force and missile overviews (quick bar). */
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.btn-row .btn { flex: 1 1 auto; }
+.alist { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.arow, .mrow { display: flex; align-items: center; gap: 10px; padding: 6px 9px; font-size: 12px; text-align: left; color: var(--text); background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--line-2); border-radius: var(--radius-s); }
+.arow { cursor: pointer; transition: border-color .15s; }
+.arow:hover { border-color: var(--line-hi); }
+.arow.ground { border-left-color: var(--good); }
+.arow.fly { border-left-color: var(--blue); }
+.arow.cas { border-left-color: var(--accent); }
+.arow img, .mrow img { width: 34px; height: 24px; flex: none; }
+.arow .nm, .mrow .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arow .nm small, .mrow .nm small { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; }
+.arow .bar { flex: 0 0 54px; margin: 0; }
+.mrow { margin-bottom: 5px; }
+.mrow .nm b { color: var(--accent); }
+.mrow .btn { flex: none; }
+.mrow.on { border-color: var(--accent); background: linear-gradient(90deg, rgba(232,181,74,.18), rgba(232,181,74,.05)); }
 .cmd.nuke .nuke-ico { height: 21px; font-size: 20px; }
 .ency .nuke-ico { height: 30px; font-size: 24px; }
 #hint.nuke { background: linear-gradient(180deg, rgba(255,220,80,.97), rgba(226,85,60,.97)); }

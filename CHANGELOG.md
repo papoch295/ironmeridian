@@ -1,5 +1,16 @@
 # Änderungsprotokoll – Iron Meridian
 
+## Unveröffentlicht – Bedienung Luftwaffe und Raketen (nach Spieler-Feedback)
+
+- **Luftwaffen-Fenster** (Schnellleiste „Luftwaffe“): alle eigenen Flugzeuge und Hubschrauber im ganzen Land, auch
+  gelandete, mit Flugplatz, Status und Treibstoff; „Bereite wählen“, „Alle wählen“ und Auswahl nach Typ.
+- **Dauereinsatz** für Flugzeuge: greifen im Einsatzgebiet an, tanken auf und fliegen von selbst wieder hin, bis ein
+  anderer Befehl kommt. Bleibt in Spielständen erhalten.
+- **Raketen-Fenster** (neuer Knopf „Raketen“): Vorrat aller Basen und U-Boote; „Starten“ und Ziel antippen, die nächste
+  Basis mit genug Reichweite feuert automatisch.
+- **Reichweite auf der Karte**: Kreise beim Zielen mit Raketen, Luftschlägen und Flugzeugen; mit der Maus zeigt eine
+  grüne bzw. rote Linie, ob das Ziel erreichbar ist.
+
 ## Beta 1.0 – 4. November 2026 (`v1.0-beta`)
 
 Erste Beta, Stand für die Uni-Abgabe. Gegenüber der Alpha 0.1:
