@@ -11,7 +11,7 @@
 - **Reichweite auf der Karte**: Kreise beim Zielen mit Raketen, Luftschlägen und Flugzeugen; mit der Maus zeigt eine
   grüne bzw. rote Linie, ob das Ziel erreichbar ist.
 - **Vier neue Einheiten** mit eigenen West- und Ost-Modellen:
-  - **Aufklärungsdrohne** (MQ-9B / Orion, Flugplatz): unbewaffnet, sehr große Sichtweite, kreist im Dauereinsatz über
+  - **Aufklärungsdrohne** (MQ-9B / Orion, Flugplatz): unbewaffnet, Sichtweite 12,5 Felder (weiter als jede Radarstation), kreist im Dauereinsatz über
     einem Gebiet und tankt von selbst nach.
   - **Kamikaze-Drohnentrupp** (Switchblade 600 / Lancet-3, Flugplatz): 3 Drohnen mit 2,4 Feldern Reichweite gegen
     gesichtete Fahrzeuge und Schiffe; hält sich in der Kampfgruppe wie Artillerie hinten.

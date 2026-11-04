@@ -59,6 +59,20 @@ const Sim = {
         if (U.dist2(o.x, o.y, e.x, e.y) <= r * r) e.vm |= ob;
       }
     }
+    // Reconnaissance drones see much further than the shared 2.6 search radius above: they get their own pass.
+    // Stealth still shortens the range; submarines stay hidden.
+    for (const o of S.units) {
+      const OT = UNIT_TYPES[o.t];
+      if (!OT.uav || o.inside || (o.air && o.air.st === 'ground')) continue;
+      const ob = Game.vbit(o.s);
+      h.query(o.x, o.y, OT.vis, near);
+      for (const e of near) {
+        const ET = UNIT_TYPES[e.t];
+        if (e.vm & ob || ET.cls === 'sub' || Game.allied(o.s, e.s)) continue;
+        const r = OT.vis * (1 - (e.rev > S.t ? ET.st * 0.3 : ET.st) * 0.6);
+        if (U.dist2(o.x, o.y, e.x, e.y) <= r * r) e.vm |= ob;
+      }
+    }
     // Owned provinces see their surroundings.
     const owned = new Set();
     S.prov.forEach((pr, pid) => {
