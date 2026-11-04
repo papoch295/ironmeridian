@@ -34,6 +34,10 @@ const W = {
   navSam:  { r: 3.2,  rof: 4,   acc: 0.75, dmg: { heli: 70, air: 70 }, ammo: 24, fx: 'missile', aa: 1 },
   asw:     { r: 1.2,  rof: 8,   acc: 0.6,  dmg: { sub: 60 }, ammo: 10, fx: 'torpedo' },
   torpedo: { r: 1.2,  rof: 8,   acc: 0.7,  dmg: { ship: 150, sub: 80 }, ammo: 12, fx: 'torpedo' },
+  // Loitering munition: one drone per shot against a spotted vehicle far behind the front (standoff = stays back
+  // like artillery in a battle group, noProv = never wasted on a province garrison).
+  loiter:  { r: 2.4,  rof: 9,   acc: 0.8,  dmg: { light: 55, armor: 70, ship: 30 }, ammo: 4, sup: 20, fx: 'missile', standoff: 1, noProv: 1 },
+  lrsam:   { r: 4.0,  rof: 5,   acc: 0.8,  dmg: { heli: 70, air: 85 }, ammo: 6, fx: 'missile', aa: 1 },
 };
 
 // cls: target class. dom: land/air/sea. bld/tier: required building and level. cost: m = money, i = industry, o = oil.
@@ -97,6 +101,15 @@ const UNIT_TYPES = {
     de: 'Zerstörer', en: 'Destroyer', mw: 'Arleigh-Burke-Klasse', me: 'Admiral-Gorschkow-Klasse', dd: 'Vielseitiges Kriegsschiff: Flugabwehr, Seeziele, Küstenbeschuss.', ed: 'Versatile warship: air defense, anti-ship, shore bombardment.' },
   cv:     { cls: 'ship', dom: 'sea', sym: 'cv', bld: 'shipyard', tier: 3, cost: { m: 6000, i: 3000, o: 400 }, time: 90, hp: 1200, spd: 0.13, vis: 2.2, st: 0.05, w: ['ciws'], strike: { r: 14, cd: 90 },
     de: 'Flugzeugträger', en: 'Aircraft Carrier', mw: 'Gerald-R.-Ford-Klasse', me: 'Fujian-Klasse', dd: 'Schwimmende Luftwaffenbasis: startet Luftschläge mit großer Reichweite.', ed: 'Floating air base: launches long-range air strikes.' },
+  // ---------- Added after Beta 1.0: drones, long-range air defense, landing ship ----------
+  uav:    { cls: 'air', dom: 'air', sym: 'uav', bld: 'airfield', tier: 1, cost: { m: 350, i: 150, o: 20 }, time: 22, hp: 50, spd: 0.4, vis: 2.5, st: 0.4, w: [], plane: 1, fuel: 260, uav: 1,
+    de: 'Aufklärungsdrohne', en: 'Reconnaissance Drone', mw: 'MQ-9B Reaper', me: 'Orion (Inochodez)', dd: 'Langsam und unbewaffnet, aber mit riesiger Sichtweite. Im Dauereinsatz kreist sie über einem Gebiet und tankt von selbst nach.', ed: 'Slow and unarmed, but with a huge field of view. On a standing mission it circles an area and refuels on its own.' },
+  loit:   { cls: 'soft', dom: 'land', sym: 'loit', bld: 'airfield', tier: 1, cost: { m: 300, i: 100, o: 0 }, time: 20, men: 4, hp: 40, spd: 0.05, vis: 0.9, st: 0.55, seat: 1, w: ['loiter'],
+    de: 'Kamikaze-Drohnentrupp', en: 'Loitering Munition Team', mw: 'Switchblade 600', me: 'Lancet-3', dd: 'Schickt Kamikaze-Drohnen auf gesichtete Fahrzeuge weit hinter der Front. 4 Drohnen, Nachschub in eigenen Provinzen und durch Versorgung.', ed: 'Sends loitering munitions at spotted vehicles far behind the front. 4 drones, resupplied in own provinces and by supply units.' },
+  sam2:   { cls: 'light', dom: 'land', sym: 'sam2', bld: 'factory', tier: 3, cost: { m: 1600, i: 700, o: 60 }, time: 40, hp: 110, spd: 0.07, vis: 2.4, st: 0.2, seat: 3, w: ['lrsam'], intercept: 1.3, icR: 5,
+    de: 'Weitreichende Flugabwehr', en: 'Long-Range Air Defense', mw: 'Patriot PAC-3 MSE', me: 'S-400 Triumf', dd: 'Schießt Flugzeuge auf große Entfernung ab und fängt Raketen in weitem Umkreis ab. Langsam und am Boden verwundbar.', ed: 'Downs aircraft at long range and intercepts missiles over a wide area. Slow and vulnerable on the ground.' },
+  lst:    { cls: 'ship', dom: 'sea', sym: 'lst', bld: 'shipyard', tier: 1, cost: { m: 1000, i: 450, o: 60 }, time: 36, hp: 420, spd: 0.16, vis: 1.3, st: 0.15, cap: 10, capVeh: 1, w: ['corvGun', 'ciws'],
+    de: 'Landungsschiff', en: 'Landing Ship', mw: 'San-Antonio-Klasse', me: 'Iwan-Gren-Klasse', dd: 'Bringt 10 Plätze Truppen und Fahrzeuge über See (Kampfpanzer = 3) und setzt sie an jeder Küste ab: „Transport nach“ und das Ufer antippen.', ed: 'Carries 10 slots of troops and vehicles across the sea (main battle tank = 3) and lands them on any coast: "Transport to" and tap the shore.' },
   ssbn:   { cls: 'sub', dom: 'sea', sym: 'ssbn', bld: 'shipyard', tier: 3, cost: { m: 5000, i: 2500, o: 300 }, time: 80, hp: 400, spd: 0.15, vis: 1.4, st: 0.8, w: ['torpedo'], slbm: 2,
     de: 'Atom-U-Boot (SSBN)', en: 'Ballistic Missile Sub (SSBN)', mw: 'Columbia-Klasse', me: 'Borei-A-Klasse', dd: 'Trägt ballistische Raketen. Lädt im eigenen Hafen nach.', ed: 'Carries ballistic missiles. Reloads in a friendly port.' },
 };
@@ -166,6 +179,7 @@ const WEAPON_NAMES = {
   aam: ['Luft-Luft-Rakete', 'Air-to-air missile'], agm: ['Präzisionsbombe', 'Precision bomb'], bombs: ['Bombenlast', 'Bomb load'],
   navGun: ['127-mm-Schiffsgeschütz', '127 mm naval gun'], corvGun: ['76-mm-Geschütz', '76 mm gun'], ashm: ['Seezielflugkörper', 'Anti-ship missile'],
   ashmS: ['Seezielflugkörper', 'Anti-ship missile'], navSam: ['Schiffsflugabwehr', 'Naval SAM'], asw: ['U-Jagd-Torpedo', 'ASW torpedo'], torpedo: ['Torpedo', 'Torpedo'],
+  loiter: ['Kamikaze-Drohne', 'Loitering munition'], lrsam: ['Weitreichende Flugabwehrrakete', 'Long-range SAM'],
 };
 const MAX_LEVEL = 5;
 const UPGRADE_COST = (lvl) => ({ m: 400 * lvl, i: 200 * lvl, t: 25 * lvl });

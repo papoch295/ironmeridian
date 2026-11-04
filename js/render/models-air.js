@@ -413,3 +413,47 @@ Object.assign(Models.animE, {
   // Coaxial: two counter-rotating rotor discs on one mast, no tail rotor.
   ahelo(ctx, C, now) { Models.airRotor(ctx, now, 0.045, -0.4, 0.99, 14, 3, 1); Models.airRotor(ctx, now, 0.045, -0.585, 0.99, 14, 3, -1); },
 });
+
+// ---------- Added after Beta 1.0: reconnaissance drones ----------
+Object.assign(Models.m, {
+  // MQ-9B (11.7 m long, 24 m span): slim fuselage with the satcom bulge behind the nose, sensor ball under the
+  // chin, very long straight wings, V-tail with ventral fin, pusher propeller at the tail (animated).
+  uav(ctx, C) {
+    const B = Col.adj(C.jet, 4), D = Col.adj(B, -14);
+    this.P(ctx, [[0.16, -0.04], [0.07, -0.36], [-0.04, -0.36], [-0.07, -0.04]], D);
+    this.P(ctx, [[-0.6, -0.03], [-0.76, -0.27], [-0.85, -0.27], [-0.8, -0.03]], D);
+    this.P(ctx, [[-0.64, 0.04], [-0.76, 0.2], [-0.83, 0.2], [-0.8, 0.04]], D);
+    this.S(ctx, [[0.88, 0.0], [0.82, -0.06], [0.62, -0.11], [0.3, -0.09], [-0.2, -0.06], [-0.76, -0.035], [-0.86, 0.0], [-0.76, 0.035], [-0.2, 0.06], [0.3, 0.075], [0.62, 0.07], [0.82, 0.05]], B);
+    this.E(ctx, 0.56, -0.08, 0.2, 0.05, B);
+    this.ln(ctx, 0.84, 0.0, -0.8, 0.0, 'rgba(255,255,255,0.14)');
+    this.O(ctx, 0.62, 0.1, 0.055, '#2a2e30'); this.O(ctx, 0.65, 0.1, 0.03, GLASS); this.glint(ctx, 0.66, 0.09, 0.01);
+    this.airWing(ctx, [[0.17, 0.02], [0.02, 0.38], [-0.1, 0.38], [-0.07, 0.02]], B);
+    this.R(ctx, -0.02, 0.16, 0.12, 0.03, '#4a5054', null, 0.01);
+    this.band(ctx, C, -0.83, -0.25, 0.09, 0.05);
+    this.roundel(ctx, C, -0.3, -0.01, 0.04);
+  },
+});
+Object.assign(Models.mE, {
+  // Orion / Inokhodets (8 m long, 16 m span): rounder fuselage, wing on top, sensor ball further forward, plain
+  // V-tail without ventral fin, pusher propeller. Russian air grey.
+  uav(ctx, C) {
+    const B = C.jet, D = Col.adj(B, -14);
+    this.P(ctx, [[0.14, -0.07], [0.06, -0.38], [-0.05, -0.38], [-0.08, -0.07]], D);
+    this.P(ctx, [[-0.56, -0.03], [-0.74, -0.3], [-0.84, -0.3], [-0.78, -0.03]], D);
+    this.S(ctx, [[0.84, 0.0], [0.78, -0.07], [0.5, -0.1], [0.1, -0.09], [-0.3, -0.06], [-0.76, -0.03], [-0.86, 0.0], [-0.76, 0.04], [-0.3, 0.07], [0.1, 0.09], [0.5, 0.085], [0.78, 0.055]], B);
+    this.ln(ctx, 0.8, 0.0, -0.8, 0.0, 'rgba(255,255,255,0.14)');
+    this.O(ctx, 0.7, 0.1, 0.05, '#2a2e30'); this.O(ctx, 0.73, 0.1, 0.028, GLASS); this.glint(ctx, 0.74, 0.09, 0.01);
+    this.airWing(ctx, [[0.15, -0.04], [0.02, 0.36], [-0.1, 0.36], [-0.08, -0.04]], B);
+    this.band(ctx, C, -0.82, -0.28, 0.09, 0.05);
+    this.roundel(ctx, C, -0.3, 0.0, 0.04);
+  },
+});
+// Pusher propeller: a blade seen edge-on that sweeps up and down, over a faint disc.
+Models.uavProp = function (ctx, now, x) {
+  ctx.beginPath(); ctx.ellipse(x, 0, 0.025, 0.15, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(215,225,232,0.22)'; ctx.fill();
+  const k = Math.sin(now * 40) * 0.15;
+  ctx.strokeStyle = 'rgba(25,28,30,0.85)'; ctx.lineWidth = 0.03; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x, -k); ctx.lineTo(x, k); ctx.stroke();
+};
+Object.assign(Models.anim, { uav(ctx, C, now) { Models.uavProp(ctx, now, -0.89); } });
+Object.assign(Models.animE, { uav(ctx, C, now) { Models.uavProp(ctx, now, -0.89); } });

@@ -10,8 +10,9 @@ const Tactics = {
 
   // Only ground units take part; aircraft and ships in an army keep their own orders.
   members(g) { return g.ids.map((id) => Game.unit(id)).filter((u) => u && !u.inside && UNIT_TYPES[u.t].dom === 'land'); },
-  isArty(u) { return UNIT_TYPES[u.t].w.some((k) => W[k].indirect); },
-  artyRange(u) { return Math.max(...UNIT_TYPES[u.t].w.filter((k) => W[k].indirect).map((k) => W[k].r)); },
+  // Artillery role: indirect fire and standoff weapons (loitering munitions) stay behind the front.
+  isArty(u) { return UNIT_TYPES[u.t].w.some((k) => W[k].indirect || W[k].standoff); },
+  artyRange(u) { return Math.max(...UNIT_TYPES[u.t].w.filter((k) => W[k].indirect || W[k].standoff).map((k) => W[k].r)); },
 
   // front: tanks, IFVs, infantry · rec: scouts · arty: indirect fire · other: air defense, medics, supply.
   roles(us) {

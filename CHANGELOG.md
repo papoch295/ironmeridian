@@ -10,6 +10,17 @@
   Basis mit genug Reichweite feuert automatisch.
 - **Reichweite auf der Karte**: Kreise beim Zielen mit Raketen, Luftschlägen und Flugzeugen; mit der Maus zeigt eine
   grüne bzw. rote Linie, ob das Ziel erreichbar ist.
+- **Vier neue Einheiten** mit eigenen West- und Ost-Modellen:
+  - **Aufklärungsdrohne** (MQ-9B / Orion, Flugplatz): unbewaffnet, sehr große Sichtweite, kreist im Dauereinsatz über
+    einem Gebiet und tankt von selbst nach.
+  - **Kamikaze-Drohnentrupp** (Switchblade 600 / Lancet-3, Flugplatz): 4 Drohnen mit 2,4 Feldern Reichweite gegen
+    gesichtete Fahrzeuge und Schiffe; hält sich in der Kampfgruppe wie Artillerie hinten.
+  - **Weitreichende Flugabwehr** (Patriot / S-400, Rüstungswerk Stufe 3): trifft Flugzeuge auf 4 Felder und fängt
+    Raketen im Umkreis von 5 Feldern ab (Kurzstreckenraketen etwa 65 %, Marschflugkörper bis 85 %).
+  - **Landungsschiff** (San-Antonio- / Iwan-Gren-Klasse, Werft): 10 Plätze für Truppen und Fahrzeuge, setzt sie am
+    nächsten Ufer ab („Transport nach“ und das Ufer antippen).
+  - Die KI baut Drohnen und Flugabwehr und schickt Aufklärungsdrohnen über die Front; große Länder starten mit einigen
+    der neuen Einheiten. Hilfe im Spiel ergänzt.
 - **Handy (nach dem ersten Test):** Im Querformat liegen die Befehlsknöpfe nicht mehr hinter der Schnellleiste oder dem
   Seitenfenster. Verschieben und Zoomen der Karte laufen deutlich flüssiger, der Nebel des Krieges wird schneller gezeichnet.
 

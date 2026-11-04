@@ -58,6 +58,10 @@ const Sym = {
       case 'spa': ell(); dot(0, 0, s * 0.1); break;
       case 'mlrs': dot(-w * 0.35, h * 0.2, s * 0.08); dot(w * 0.35, h * 0.2, s * 0.08); dot(0, -h * 0.35, s * 0.08); break;
       case 'tbm': ctx.beginPath(); ctx.moveTo(0, h * 0.8); ctx.lineTo(0, -h * 0.8); ctx.moveTo(-w * 0.25, -h * 0.35); ctx.lineTo(0, -h * 0.85); ctx.lineTo(w * 0.25, -h * 0.35); ctx.stroke(); break;
+      // Loitering munition team: infantry cross with a small drone wing above.
+      case 'loit': X(); ctx.beginPath(); ctx.moveTo(-w * 0.5, -h * 0.55); ctx.lineTo(0, -h * 0.85); ctx.lineTo(w * 0.5, -h * 0.55); ctx.stroke(); break;
+      // Long-range air defense: air-defense dome with a missile through it.
+      case 'sam2': ctx.beginPath(); ctx.ellipse(0, h * 0.75, w * 0.7, h * 1.1, 0, Math.PI, 0); ctx.moveTo(0, h * 0.8); ctx.lineTo(0, -h * 0.75); ctx.moveTo(-w * 0.18, -h * 0.4); ctx.lineTo(0, -h * 0.8); ctx.lineTo(w * 0.18, -h * 0.4); ctx.stroke(); break;
       default: txt('?');
     }
   },
@@ -69,7 +73,7 @@ const Sym = {
     ctx.translate(x, y);
     ctx.globalAlpha = alpha ?? 1;
     // Shadow for aircraft height impression.
-    const air = !['corv', 'sub', 'dd', 'cv', 'ssbn'].includes(sym);
+    const air = !['corv', 'sub', 'dd', 'cv', 'ssbn', 'lst'].includes(sym);
     if (air) { ctx.save(); ctx.translate(s * 0.35, s * 0.45); ctx.rotate(hd); ctx.fillStyle = 'rgba(0,0,0,0.35)'; this.shape(ctx, sym, s); ctx.fill(); ctx.restore(); }
     ctx.rotate(hd);
     ctx.fillStyle = c.fill; ctx.strokeStyle = c.dark; ctx.lineWidth = Math.max(1, s * 0.07); ctx.lineJoin = 'round';
@@ -91,6 +95,10 @@ const Sym = {
       case 'thelo': case 'ahelo': P([[0.42, 0], [0.3, 0.14], [-0.1, 0.16], [-0.25, 0.06], [-0.62, 0.04], [-0.66, 0.16], [-0.7, 0.16], [-0.68, 0], [-0.7, -0.16], [-0.66, -0.16], [-0.62, -0.04], [-0.25, -0.06], [-0.1, -0.16], [0.3, -0.14]]); break;
       case 'cv': P([[0.75, -0.05], [0.6, 0.2], [-0.7, 0.2], [-0.75, 0.05], [-0.75, -0.18], [0.3, -0.25], [0.7, -0.18]]); break;
       case 'dd': P([[0.75, 0], [0.4, 0.13], [-0.65, 0.12], [-0.7, 0], [-0.65, -0.12], [0.4, -0.13]]); break;
+      // MQ-9 / Orion seen from above: long straight wings, slim body, V-tail, pusher prop at the back.
+      case 'uav': P([[0.42, 0], [0.3, 0.05], [0.08, 0.06], [0.04, 0.72], [-0.06, 0.72], [-0.08, 0.06], [-0.42, 0.04], [-0.56, 0.2], [-0.6, 0.2], [-0.54, 0], [-0.6, -0.2], [-0.56, -0.2], [-0.42, -0.04], [-0.08, -0.06], [-0.06, -0.72], [0.04, -0.72], [0.08, -0.06], [0.3, -0.05]]); break;
+      // Landing ship: wide hull with a square stern (well deck).
+      case 'lst': P([[0.68, 0], [0.42, 0.16], [-0.66, 0.16], [-0.66, -0.16], [0.42, -0.16]]); break;
       case 'corv': P([[0.6, 0], [0.3, 0.11], [-0.5, 0.1], [-0.55, 0], [-0.5, -0.1], [0.3, -0.11]]); break;
       case 'sub': case 'ssbn': ctx.beginPath(); ctx.ellipse(0, 0, s * (sym === 'ssbn' ? 0.72 : 0.6), s * 0.1, 0, 0, Math.PI * 2); ctx.rect(-s * 0.05, -s * 0.06, s * 0.16, s * 0.12); break;
       default: ctx.beginPath(); ctx.arc(0, 0, s * 0.3, 0, Math.PI * 2);

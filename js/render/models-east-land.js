@@ -417,3 +417,42 @@ Object.assign(Models.animE, {
     }
   },
 });
+
+// ---------- Added after Beta 1.0 ----------
+Object.assign(Models.mE, {
+  // Lancet-3 team: operator with the ground station, loader, pneumatic launch rail on a folding frame and the
+  // X-wing drone (two crossed wing pairs) climbing away.
+  loit(ctx, C) {
+    this.soldier(ctx, C, -0.52, 0.82, { pose: 'kneel', weapon: 'bino' });
+    this.soldier(ctx, C, -0.16, 0.9, { pose: 'kneel', pack: C.gear });
+    this.L(ctx, 0.08, 0.3, 0.6, -0.04, '#3a3d34', 0.035);
+    this.L(ctx, 0.46, 0.05, 0.46, 0.3, GUN, 0.02); this.L(ctx, 0.3, 0.16, 0.3, 0.3, GUN, 0.02);
+    this.R(ctx, 0.04, 0.24, 0.14, 0.06, Col.adj(C.gear, 6), null, 0.01);
+    this.E(ctx, 0.48, -0.5, 0.15, 0.03, '#5d6a52');
+    for (const x of [0.54, 0.38]) { this.P(ctx, [[x + 0.04, -0.5], [x - 0.02, -0.62], [x - 0.06, -0.62], [x - 0.02, -0.5]], '#4a5442'); this.P(ctx, [[x + 0.04, -0.5], [x - 0.02, -0.38], [x - 0.06, -0.38], [x - 0.02, -0.5]], '#4a5442'); }
+    this.O(ctx, 0.62, -0.5, 0.022, GLASS);
+    this.pennant(ctx, C, 0.72, 0.3, 0.62);
+  },
+  // S-400 5P85TE2 launcher (MAZ-543M 8x8, approx. 13 m): low cab ahead of the front axle, long chassis, two
+  // 40N6/48N6 canisters raised to the vertical on their erector.
+  sam2(ctx, C) {
+    this.R(ctx, -0.92, -0.02, 1.84, 0.08, C.dark, null, 0.01);
+    this.wheels(ctx, [0.7, 0.42, -0.36, -0.64], 0.13);
+    this.P(ctx, [[0.56, 0.06], [0.56, -0.24], [0.62, -0.28], [0.88, -0.28], [0.94, -0.2], [0.95, 0.06]], C.body);
+    this.topFace(ctx, C, 0.62, 0.88, -0.28, 0.022);
+    this.R(ctx, 0.78, -0.24, 0.12, 0.09, GLASS, null, 0.01); this.glint(ctx, 0.8, -0.22);
+    this.light(ctx, 0.93, -0.03);
+    this.P(ctx, [[-0.9, -0.02], [-0.9, -0.14], [0.5, -0.14], [0.54, -0.02]], Col.adj(C.body, -4));
+    this.bolts(ctx, -0.84, 0.44, -0.08, 12);
+    // Erector frame and the two canisters.
+    this.L(ctx, -0.2, -0.14, -0.4, -0.7, GUN, 0.03);
+    for (const x of [-0.78, -0.58]) {
+      this.R(ctx, x, -0.92, 0.18, 0.8, Col.adj(C.body, 5), null, 0.05);
+      this.R(ctx, x, -0.95, 0.18, 0.06, C.dark, null, 0.02);
+      this.ln(ctx, x + 0.02, -0.5, x + 0.16, -0.5);
+    }
+    this.mark(ctx, -0.6, -0.3, '48N6', 0.05, 'rgba(240,240,230,0.7)');
+    this.antenna(ctx, 0.66, -0.28, 0.32);
+    this.pennant(ctx, C, 0.88, -0.28, 0.26);
+  },
+});

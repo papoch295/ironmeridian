@@ -5,8 +5,8 @@
 
 const AI_MIX = {
   barracks: { inf: 4, at: 2, recon: 0.8, mortar: 1, eng: 1, medic: 0.5, sniper: 0.5, seal: 0.5 },
-  factory: { ifv: 3, mbt: 3, apc: 1, lt: 1, aa: 1.5, arty: 1, spg: 1, mlrs: 1, td: 1, truck: 0.4, tbm: 0.4 },
-  airfield: { ahelo: 2, jet: 2, thelo: 0.3, bomber: 0.5 },
+  factory: { ifv: 3, mbt: 3, apc: 1, lt: 1, aa: 1.5, arty: 1, spg: 1, mlrs: 1, td: 1, truck: 0.4, tbm: 0.4, sam2: 0.4 },
+  airfield: { ahelo: 2, jet: 2, thelo: 0.3, bomber: 0.5, uav: 0.5, loit: 1 },
   shipyard: { corv: 1, sub: 1, dd: 1 },
 };
 const AI = {
@@ -284,6 +284,16 @@ const AI = {
   },
 
   air(S, D, me, mine, enemy, mu) {
+    // Reconnaissance drones: a standing mission over the nearest enemy province they can reach.
+    for (const d of mu) {
+      if (!UNIT_TYPES[d.t].uav || !d.air || d.air.st !== 'ground' || d.cas) continue;
+      const b = Geo.provinces[d.air.base];
+      if (!b) continue;
+      const reach = Game.airReach(d) * 0.7;
+      let best = null, bd = reach * reach;
+      for (const pid of enemy) { const p = Geo.provinces[pid], q = U.dist2(p.x, p.y, b.x, b.y); if (q < bd) { bd = q; best = p; } }
+      if (best) Game.order([d], { k: 'cas', x: best.x, y: best.y });
+    }
     const planes = mu.filter((u) => u.air && u.air.st === 'ground' && UNIT_TYPES[u.t].w.length && u.air.fuel >= (UNIT_TYPES[u.t].fuel || 400) * 0.95);
     if (!planes.length) return;
     let seen = this.seenFoes(S, me, (u) => !(u.air && u.air.st === 'ground'));

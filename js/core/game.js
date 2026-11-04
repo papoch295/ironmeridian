@@ -203,7 +203,8 @@ const Game = {
     const coastal = c.provinces.map((pid) => Geo.provinces[pid]).find((q) => q.seaPt);
     const land = { inf: Math.max(1, f(1 + p)), at: f(Math.ceil(p / 2)), recon: p >= 2 ? 1 : 0, mortar: p >= 2 ? f(1) : 0, eng: p >= 3 ? 1 : 0, medic: p >= 4 ? 1 : 0,
       ifv: f(Math.ceil(p / 2)), apc: p >= 2 ? f(1) : 0, mbt: f(Math.floor(p / 2)), lt: p >= 3 ? f(1) : 0, aa: f(Math.ceil(p / 3)), arty: p >= 3 ? f(1) : 0,
-      spg: p >= 5 ? f(1) : 0, mlrs: p >= 5 ? f(1) : 0, td: p >= 4 ? f(1) : 0, truck: p >= 3 ? 1 : 0, seal: p >= 6 ? 1 : 0, sniper: p >= 4 ? 1 : 0, tbm: p >= 8 ? 1 : 0 };
+      spg: p >= 5 ? f(1) : 0, mlrs: p >= 5 ? f(1) : 0, td: p >= 4 ? f(1) : 0, truck: p >= 3 ? 1 : 0, seal: p >= 6 ? 1 : 0, sniper: p >= 4 ? 1 : 0, tbm: p >= 8 ? 1 : 0,
+      loit: p >= 5 ? 1 : 0, sam2: p >= 8 ? 1 : 0 };
     // The player starts with ready-made armies: land units are dealt round-robin into mixed battle groups,
     // the first ones at the front, the last one at the capital.
     const total = Object.values(land).reduce((s, n) => s + n, 0);
@@ -222,10 +223,10 @@ const Game = {
       const G = (this.state.groups = this.state.groups || {});
       armies.forEach((ids, i) => { if (ids.length) G[String(i + 1)] = { ids, coh: true }; });
     }
-    const air = { ahelo: p >= 4 ? f(1) : 0, thelo: p >= 3 ? 1 : 0, jet: f(Math.floor(p / 3)), tplane: p >= 5 ? 1 : 0, bomber: p >= 9 ? 1 : 0 };
+    const air = { ahelo: p >= 4 ? f(1) : 0, thelo: p >= 3 ? 1 : 0, jet: f(Math.floor(p / 3)), tplane: p >= 5 ? 1 : 0, bomber: p >= 9 ? 1 : 0, uav: p >= 4 ? 1 : 0 };
     for (const t in air) for (let n = 0; n < air[t]; n++) this.spawnAt(t, side, cap.id);
     if (coastal) {
-      const sea = { corv: p >= 2 ? 1 : 0, dd: p >= 4 ? Math.max(1, f(Math.floor(p / 4))) : 0, sub: p >= 3 ? 1 : 0, cv: p >= 9 ? 1 : 0, ssbn: p >= 9 ? 1 : 0 };
+      const sea = { corv: p >= 2 ? 1 : 0, dd: p >= 4 ? Math.max(1, f(Math.floor(p / 4))) : 0, sub: p >= 3 ? 1 : 0, cv: p >= 9 ? 1 : 0, ssbn: p >= 9 ? 1 : 0, lst: p >= 6 && side === this.state.player ? 1 : 0 };
       for (const t in sea) for (let n = 0; n < sea[t]; n++) this.spawn(t, side, coastal.seaPt[0] + rnd.range(-0.2, 0.2), coastal.seaPt[1] + rnd.range(-0.2, 0.2));
     }
     if (p >= 4) this.state.prov[cap.id].msl.srbm = Math.max(1, Math.floor(p / 3));
@@ -481,7 +482,7 @@ const Game = {
     return shared || { mode, sx: u.x, sy: u.y, path: p };
   },
 
-  isSupport(T) { return T.dom === 'land' && !!(T.supply || T.heal || T.intercept || T.w.some((k) => W[k].indirect)); },
+  isSupport(T) { return T.dom === 'land' && !!(T.supply || T.heal || T.intercept || T.w.some((k) => W[k].indirect || W[k].standoff)); },
 
   seatsUsed(tr) { return tr.cargo.reduce((s, id) => s + (UNIT_TYPES[this.unit(id)?.t]?.seat || 0), 0); },
   // Could the unit ride in this transport at all (ignoring free seats)?
@@ -519,7 +520,9 @@ const Game = {
     for (const tr of trs) {
       const rs = riders.get(tr.id);
       if (!rs || this.T(tr).plane) continue;
-      const cx = rs.reduce((s, u) => s + u.x, 0) / rs.length, cy = rs.reduce((s, u) => s + u.y, 0) / rs.length;
+      let cx = rs.reduce((s, u) => s + u.x, 0) / rs.length, cy = rs.reduce((s, u) => s + u.y, 0) / rs.length;
+      // Landing ships come to the nearest water next to the passengers; inland passengers walk to the ship.
+      if (this.T(tr).dom === 'sea') { const w = Geo.nearestSea(cx, cy, 2); if (!w) continue; [cx, cy] = w; }
       if (U.dist(tr.x, tr.y, cx, cy) > 0.35) { tr.ord = { k: 'move', x: cx, y: cy }; tr.tgt = null; this.planPath(tr, cx, cy); }
     }
     return n;
@@ -544,19 +547,35 @@ const Game = {
   canUnloadHere(tr) {
     const T = this.T(tr);
     if (T.plane) return tr.air.st === 'ground';
+    if (T.dom === 'sea') return !!this.shore(tr.x, tr.y);
     if (tr.emb) return false;
     const c = Geo.countryAt(tr.x, tr.y);
     return c >= 0 && this.bell[c];
   },
 
+  // Nearest point on the land of a country at war (or the own side) within reach of a ship, or null.
+  shore(x, y) {
+    let best = null, bd = 1e9;
+    for (let r = 0.15; r <= 1.05; r += 0.15) {
+      for (let k = 0; k < 16; k++) {
+        const a = (k / 16) * Math.PI * 2, px = x + Math.cos(a) * r, py = y + Math.sin(a) * r, c = Geo.countryAt(px, py);
+        if (c >= 0 && this.bell[c]) { const d = r * r; if (d < bd) { bd = d; best = [px + Math.cos(a) * 0.1, py + Math.sin(a) * 0.1]; } }
+      }
+      if (best) return best;
+    }
+    return best;
+  },
+
   unload(tr, force) {
     if (!tr.cargo.length || (!force && !this.canUnloadHere(tr))) return false;
+    // Ships land their troops on the nearest shore, everyone else gets out next to the transport.
+    const at = this.T(tr).dom === 'sea' ? this.shore(tr.x, tr.y) || [tr.x, tr.y] : [tr.x, tr.y];
     tr.cargo.forEach((id, i) => {
       const u = this.unit(id);
       if (!u) return;
-      u.inside = null;
+      u.inside = null; u.emb = false;
       const a = (i / tr.cargo.length) * Math.PI * 2;
-      u.x = tr.x + Math.cos(a) * 0.08; u.y = tr.y + Math.sin(a) * 0.08;
+      u.x = at[0] + Math.cos(a) * 0.08; u.y = at[1] + Math.sin(a) * 0.08;
     });
     tr.cargo = [];
     return true;

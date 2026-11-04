@@ -13,7 +13,8 @@ Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
 - Weltkarte mit allen Ländern, Provinzen (Hauptstadt, Stadt, Industrie, Ölfeld, Hafen, Luftwaffenbasis), Provinzstufen 1–5.
 - Wirtschaft mit Geld, Industrie und Öl plus **Unterhalt** je Einheit; Institutionen: Kaserne, Rüstungswerk, Flugplatz, Werft,
   Raketenbasis, Radar, Flugabwehrstellung, Forschungszentrum (nur für Atomsprengköpfe).
-- 30 Einheitentypen zu Land, Luft und See mit West- und Ost-Modellen, Raketen (SRBM, Marschflugkörper, ICBM, SLBM), Atomwaffen
+- 34 Einheitentypen zu Land, Luft und See mit West- und Ost-Modellen (neu: Aufklärungs- und Kamikaze-Drohne,
+  Patriot / S-400, Landungsschiff), Raketen (SRBM, Marschflugkörper, ICBM, SLBM), Atomwaffen
   mit Fallout, Transport, Nachschub, Reparatur, Sanitäter.
 - **Beliebig viele Fraktionen:** jedes Land mit eigener Wirtschaft und KI, Bündnisse als Teams, freie Länderwahl, Modi
   „Bündniskrieg“ und „Weltkrieg“, Kriegserklärung an neutrale Länder mit Reaktion der Nachbarn.
@@ -180,8 +181,8 @@ Texte DE/EN und KI-Einbindung; bis zum Feature-Freeze (ca. 15. Nov.) sind realis
 | **Weitreichende Flugabwehr** | Patriot / S-400 | schützt ein großes Gebiet, fängt feindliche Raketen ab | Gegenstück zu den Raketen, die heute kaum abzuwehren sind | P1 |
 | **Landungsschiff** | San-Antonio-Klasse / Iwan-Rogow | trägt eine ganze Kampfgruppe, landet an jeder Küste | Landungen als echte Mechanik (Inseln: Taiwan, Großbritannien, Japan) | P1 |
 
-Offene Entscheidungen dazu: Drohnen aus einer eigenen **Drohnenfabrik** oder vom Flugplatz (weniger Aufwand)?
-Patriot / S-400 als **Einheit** oder als Ausbaustufe der bestehenden Flugabwehrstellung?
+**✔ Alle vier umgesetzt (4. Nov.).** Entschieden: Drohnen kommen vom **Flugplatz** (keine eigene Fabrik), Patriot / S-400
+ist eine **eigene Einheit** (Rüstungswerk Stufe 3). Offen für später: KI-Landungen mit dem Landungsschiff.
 
 **Weitere Kandidaten (Beta 2):**
 
@@ -411,7 +412,7 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 | 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | offen |
 | 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | Version und Tag erledigt, Freeze offen |
 | optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | offen |
-| optional | **neue Einheiten** vor dem Freeze: Top 4 aus Abschnitt 3.1 (Aufklärungsdrohne, Kamikaze-Drohne, Patriot/S-400, Landungsschiff) | Auswahl durch dich offen |
+| optional | **neue Einheiten** vor dem Freeze: Top 4 aus Abschnitt 3.1 (Aufklärungsdrohne, Kamikaze-Drohne, Patriot/S-400, Landungsschiff) | erledigt |
 
 **Nachtrag 4. Nov.:** Bedienung von Luftwaffe und Raketen verbessert (Luftwaffen- und Raketen-Fenster, Dauereinsatz,
 Reichweitenkreise). Erster Handy-Test: Es ruckelte, und im Querformat lagen Befehlsknöpfe hinter anderen Fenstern. Behoben:

@@ -452,3 +452,50 @@ Object.assign(Models.m, {
 // Keep the old Pantsir radar for the East model unless models-east-land.js brings its own.
 if (!Models.animE.aa) Models.animE.aa = Models.anim.aa;
 Object.assign(Models.anim, { aa() {} });
+
+// ---------- Added after Beta 1.0 ----------
+Object.assign(Models.m, {
+  // Switchblade 600 team: operator kneeling with the control tablet, loader, launch tube on a short bipod angled
+  // up ~35°, and a drone already in the air (tube body, two pairs of folding wings, small pusher prop).
+  loit(ctx, C) {
+    this.soldier(ctx, C, -0.5, 0.82, { pose: 'kneel', weapon: 'bino' });
+    this.soldier(ctx, C, -0.14, 0.9, { pose: 'kneel', pack: '#4f5539' });
+    this.L(ctx, 0.3, 0.2, 0.2, 0.3, GUN, 0.022); this.L(ctx, 0.3, 0.2, 0.42, 0.3, GUN, 0.022);
+    ctx.save(); ctx.translate(0.18, 0.26); ctx.rotate(-0.6);
+    this.R(ctx, 0, -0.05, 0.62, 0.1, Col.adj(C.gear, 4), null, 0.03);
+    this.R(ctx, 0.58, -0.055, 0.05, 0.11, C.dark, null, 0.01);
+    this.ln(ctx, 0.2, -0.05, 0.2, 0.05); this.ln(ctx, 0.42, -0.05, 0.42, 0.05);
+    ctx.restore();
+    // The drone in flight above the team.
+    this.E(ctx, 0.46, -0.5, 0.14, 0.03, '#6b7064');
+    this.P(ctx, [[0.52, -0.52], [0.44, -0.62], [0.4, -0.62], [0.44, -0.52]], '#55594f');
+    this.P(ctx, [[0.38, -0.49], [0.3, -0.4], [0.26, -0.4], [0.32, -0.49]], '#55594f');
+    this.O(ctx, 0.59, -0.5, 0.022, GLASS);
+    this.L(ctx, 0.31, -0.56, 0.31, -0.44, 'rgba(30,30,30,0.6)', 0.012, { noOut: true });
+    this.pennant(ctx, C, 0.7, 0.3, 0.62);
+  },
+  // Patriot M903 launcher on the M983 HEMTT tractor (approx. 15 m combination): four-canister block raised ~32°
+  // over the semitrailer, hydraulic strut, armoured tractor cab in front.
+  sam2(ctx, C) {
+    this.R(ctx, -0.92, 0.0, 1.84, 0.06, C.dark, null, 0.01);
+    this.wheels(ctx, [0.72, 0.46, -0.44, -0.7], 0.12);
+    this.P(ctx, [[0.5, 0.06], [0.5, -0.3], [0.56, -0.35], [0.86, -0.35], [0.93, -0.26], [0.95, -0.08], [0.95, 0.06]], C.body);
+    this.topFace(ctx, C, 0.56, 0.86, -0.35, 0.022);
+    this.R(ctx, 0.74, -0.3, 0.15, 0.1, GLASS, null, 0.01); this.R(ctx, 0.56, -0.3, 0.13, 0.09, GLASS, null, 0.01);
+    this.glint(ctx, 0.77, -0.28);
+    this.mirror(ctx, 0.96, -0.2); this.light(ctx, 0.93, -0.04);
+    this.P(ctx, [[-0.86, 0.0], [-0.86, -0.1], [0.36, -0.1], [0.42, 0.0]], Col.adj(C.body, -4));
+    this.bolts(ctx, -0.8, 0.3, -0.05, 10);
+    this.L(ctx, 0.08, -0.1, -0.12, -0.38, GUN, 0.035);
+    ctx.save(); ctx.translate(-0.78, -0.12); ctx.rotate(-0.55);
+    this.R(ctx, 0, -0.3, 1.08, 0.3, Col.adj(C.body, 6), null, 0.02);
+    this.topFace(ctx, C, 0.02, 1.06, -0.3, 0.02);
+    this.ln(ctx, 0.02, -0.15, 1.04, -0.15, 'rgba(0,0,0,0.45)', 1.3);
+    for (const x of [0.36, 0.72]) this.ln(ctx, x, -0.29, x, -0.01);
+    this.R(ctx, 1.03, -0.3, 0.05, 0.3, C.dark, null, 0.01);
+    this.mark(ctx, 0.5, -0.08, 'PAC-3', 0.05, 'rgba(240,230,120,0.75)');
+    ctx.restore();
+    this.antenna(ctx, 0.6, -0.35, 0.3);
+    this.pennant(ctx, C, 0.86, -0.35, 0.26);
+  },
+});

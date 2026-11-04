@@ -198,7 +198,7 @@ const Sim = {
 
   groundRange(u, T) {
     let r = 0;
-    T.w.forEach((k, i) => { const w = W[k]; if ((w.dmg.soft || w.dmg.light) && (!w.ammo || u.ammo[i] >= 1)) r = Math.max(r, w.r); });
+    T.w.forEach((k, i) => { const w = W[k]; if ((w.dmg.soft || w.dmg.light) && !w.noProv && (!w.ammo || u.ammo[i] >= 1)) r = Math.max(r, w.r); });
     return r;
   },
 
@@ -271,7 +271,7 @@ const Sim = {
         for (const e of near) if (Game.hostile(u.s, e.s) && this.sees(u.s, e) && this.canHit(w, this.cls(e), U.dist(u.x, u.y, e.x, e.y))) { target = e; break; }
       }
       if (target) { this.shoot(u, w, i, target.x, target.y, target); continue; }
-      if (u.tgtP !== null && u.tgtP !== undefined && (w.dmg.soft || w.dmg.light) && !w.aa) {
+      if (u.tgtP !== null && u.tgtP !== undefined && (w.dmg.soft || w.dmg.light) && !w.aa && !w.noProv) {
         const p = Geo.provinces[u.tgtP], pr = S.prov[u.tgtP];
         if (Game.hostile(u.s, pr.o) && pr.def > 0 && U.dist(u.x, u.y, p.x, p.y) <= w.r) this.shoot(u, w, i, p.x, p.y, null, u.tgtP);
       }
@@ -515,9 +515,10 @@ const Sim = {
       const M = MISSILES[m.key];
       // Air defense near the impact point (units and province air defense sites) may intercept the missile.
       let pass = 1;
-      for (const u of Game.hash.query(m.tx, m.ty, 3, [])) {
-        const ic = UNIT_TYPES[u.t].intercept;
-        if (ic && Game.hostile(u.s, m.side)) pass *= 1 - Math.min(0.9, ic * M.intercept * 0.5);
+      // Short-range air defense covers 3 map units around itself, long-range systems (icR) much more.
+      for (const u of Game.hash.query(m.tx, m.ty, 5, [])) {
+        const UT = UNIT_TYPES[u.t], ic = UT.intercept;
+        if (ic && Game.hostile(u.s, m.side) && U.dist(u.x, u.y, m.tx, m.ty) <= (UT.icR || 3)) pass *= 1 - Math.min(0.9, ic * M.intercept * 0.5);
       }
       for (const pid of this.provsNear(m.tx, m.ty, 2.5)) {
         const pr = S.prov[pid], A = AAD_LEVELS[pr.b.aad || 0], q = Geo.provinces[pid];
