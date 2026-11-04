@@ -26,7 +26,9 @@ const Render = {
   },
 
   resize() {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
+    // Phones: 1.5x is still sharp but fills ~44 % fewer pixels per frame than 2x.
+    const touch = matchMedia && matchMedia('(pointer: coarse)').matches;
+    const dpr = Math.min(devicePixelRatio || 1, touch ? 1.5 : 2);
     this.dpr = dpr;
     this.w = innerWidth; this.h = innerHeight;
     for (const c of [this.cv, this.layer]) { c.width = Math.round(this.w * dpr); c.height = Math.round(this.h * dpr); }
@@ -54,10 +56,10 @@ const Render = {
     this.cam.z *= f; this.clampCam();
     const [nx, ny] = this.toWorld(sx, sy);
     this.cam.x += wx - nx; this.cam.y += wy - ny;
-    this.clampCam(); this.dirty = true;
+    this.clampCam();
   },
-  pan(dx, dy) { this.cam.x -= dx / this.cam.z; this.cam.y -= dy / this.cam.z; this.clampCam(); this.dirty = true; },
-  flyTo(x, y, z) { this.cam.x = x; this.cam.y = y; if (z) this.cam.z = z; this.clampCam(); this.dirty = true; },
+  pan(dx, dy) { this.cam.x -= dx / this.cam.z; this.cam.y -= dy / this.cam.z; this.clampCam(); },
+  flyTo(x, y, z) { this.cam.x = x; this.cam.y = y; if (z) this.cam.z = z; this.clampCam(); },
 
   viewBox() { const [x0, y0] = this.toWorld(0, 0), [x1, y1] = this.toWorld(this.w, this.h); return [x0, y0, x1, y1]; },
   visible(b, vb) { return !(b[2] < vb[0] || b[0] > vb[2] || b[3] < vb[1] || b[1] > vb[3]); },
@@ -154,6 +156,7 @@ const Render = {
     // Screen vignette (part of the static layer, so it costs nothing per frame).
     ctx.drawImage(this.vignette(), 0, 0, this.w, this.h);
     this.layerKey = this.camKey();
+    this.layerCam = { x: c.x, y: c.y, z: c.z, w: this.w, h: this.h };
     this.dirty = false;
   },
 
@@ -236,9 +239,21 @@ const Render = {
     const ctx = this.ctx, dpr = this.dpr, S = Game.state;
     // A window of size 0 (hidden tab, split screen, rotation) has nothing to draw; canvases of size 0 cannot be drawn.
     if (!this.w || !this.h) return;
-    if (this.dirty || this.layerKey !== this.camKey()) this.drawLayer();
+    const key = this.camKey(), now = performance.now();
+    if (key !== this.lastKey) { this.lastKey = key; this.movedAt = now; }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(this.layer, 0, 0);
+    if (this.dirty || this.layerKey !== key) {
+      // While the camera moves, the cached map is only shifted and scaled (cheap); the full redraw (country paths,
+      // provinces, labels) follows once the camera rests or the cached picture no longer covers enough of the screen.
+      const L = this.layerCam, c = this.cam, k = L ? c.z / L.z : 1;
+      const dx = L ? (L.x - c.x) * c.z : 0, dy = L ? (L.y - c.y) * c.z : 0;
+      const quick = !this.dirty && L && L.w === this.w && L.h === this.h && now - this.movedAt < 140 &&
+        k > 0.7 && k < 1.45 && Math.abs(dx) < this.w * 0.35 && Math.abs(dy) < this.h * 0.35;
+      if (quick) {
+        ctx.fillStyle = '#0c1d2a'; ctx.fillRect(0, 0, this.cv.width, this.cv.height);
+        ctx.drawImage(this.layer, (this.w / 2 * (1 - k) + dx) * dpr, (this.h / 2 * (1 - k) + dy) * dpr, this.layer.width * k, this.layer.height * k);
+      } else { this.drawLayer(); ctx.drawImage(this.layer, 0, 0); }
+    } else ctx.drawImage(this.layer, 0, 0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (!S) { this.drawMini(); return; }
     const vb = this.viewBox();
@@ -324,19 +339,28 @@ const Render = {
     f.clearRect(0, 0, fw, fh);
     f.fillStyle = 'rgba(3,7,11,0.4)'; f.fillRect(0, 0, fw, fh);
     f.globalCompositeOperation = 'destination-out';
+    // One pre-rendered soft disc, stamped scaled for every vision source (much cheaper than a gradient per unit).
+    const spot = this.fogSpot();
     const hole = (x, y, r) => {
       const [sx, sy] = this.toScreen(x, y);
       const R = r * z, cx = sx / 2, cy = sy / 2;
       if (cx + R < 0 || cy + R < 0 || cx - R > fw || cy - R > fh || R < 1) return;
-      const g = f.createRadialGradient(cx, cy, R * 0.6, cx, cy, R);
-      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-      f.fillStyle = g; f.beginPath(); f.arc(cx, cy, R, 0, Math.PI * 2); f.fill();
+      f.drawImage(spot, cx - R, cy - R, R * 2, R * 2);
     };
     // Vision is shared with allies.
     const me = S.player;
     for (const u of S.units) if (Game.allied(u.s, me) && !u.inside && !(u.air && u.air.st === 'ground')) hole(u.x, u.y, UNIT_TYPES[u.t].vis);
     S.prov.forEach((pr, pid) => { if (Game.allied(pr.o, me)) hole(Geo.provinces[pid].x, Geo.provinces[pid].y, RADAR_RANGE[pr.b.radar || 0]); });
     ctx.drawImage(this.fogCv, 0, 0, this.w, this.h);
+  },
+
+  fogSpot() {
+    if (this._spot) return this._spot;
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d'), r = g.createRadialGradient(64, 64, 64 * 0.6, 64, 64, 64);
+    r.addColorStop(0, 'rgba(0,0,0,1)'); r.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+    return (this._spot = c);
   },
 
   // While aiming with missiles or aircraft: reach circles around every launcher / airfield. With a mouse, a line
