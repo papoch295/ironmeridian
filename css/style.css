@@ -344,8 +344,8 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 #hint button { background: rgba(0,0,0,.18); border: 0; border-radius: 3px; padding: 5px 10px; cursor: pointer; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: .08em; }
 #hint button:hover { background: rgba(0,0,0,.3); }
 
-/* Command bar */
-#cmdbar { position: absolute; bottom: calc(10px + var(--safe-b)); left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); max-width: calc(100vw - 290px); overflow-x: auto; scrollbar-width: none; box-shadow: var(--shadow), var(--inset); animation: barIn .18s ease-out; }
+/* Command bar: centred in the free strip right of the minimap (10px margin + ~262px box), so the minimap never covers it. */
+#cmdbar { position: absolute; bottom: calc(10px + var(--safe-b)); left: calc(50% + 136px + (var(--safe-l) - var(--safe-r)) / 2); transform: translateX(-50%); display: flex; gap: 4px; padding: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); max-width: calc(100vw - 292px - var(--safe-l) - var(--safe-r)); overflow-x: auto; scrollbar-width: none; box-shadow: var(--shadow), var(--inset); animation: barIn .18s ease-out; }
 #cmdbar::-webkit-scrollbar { display: none; }
 @keyframes barIn { from { opacity: 0; transform: translate(-50%, 8px); } }
 .cmd { position: relative; min-width: 64px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-s); cursor: pointer; font-size: 10px; letter-spacing: .05em; text-transform: uppercase; flex: none; padding: 2px 8px; white-space: nowrap; transition: border-color .15s, background .15s, color .15s, transform .06s; color: #cbd7de; box-shadow: var(--inset); }
