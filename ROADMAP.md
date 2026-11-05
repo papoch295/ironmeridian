@@ -43,7 +43,7 @@ Bitte bestätigen oder ändern (Frage F1):
 3. Mindestens 2 Spielmodi (Bündnis gegen Bündnis, Jeder gegen jeden) und freie Länderwahl.
 4. Die Mitte und das Ende einer Partie bleiben spannend (siehe Abschnitt 4).
 5. Ein interaktives Tutorial, nach dem ein Neuling allein spielen kann.
-6. Läuft flüssig (30+ FPS) auf einem Mittelklasse-Handy, als Web-Version online und als installierbare APK.
+6. Läuft flüssig (30+ FPS) auf einem Mittelklasse-Handy, als Web-Version online (für Beta 1 ausreichend, Entscheidung 5. Nov.) und später als installierbare APK (Beta 2).
 7. Alle Texte in Deutsch und Englisch, keine Platzhalter, keine Konsolenfehler.
 
 ---
@@ -411,7 +411,7 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 | 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | erledigt (Nachtest ohne Fehler) |
 | 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | erledigt (TESTPROTOKOLL.md, Abschnitte 6–7) |
 | 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | erledigt: Beta 1.1 mit Tag `v1.1-beta` (5. Nov.) als Abgabestand, danach nur Fehlerbehebung |
-| optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | #73 erledigt (5. Nov.), APK offen |
+| optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | #73 erledigt (5. Nov.); APK für die Abgabe **nicht nötig** (Entscheidung 5. Nov.: Web-App reicht), kommt in Beta 2 |
 | optional | **neue Einheiten** vor dem Freeze: Top 4 aus Abschnitt 3.1 (Aufklärungsdrohne, Kamikaze-Drohne, Patriot/S-400, Landungsschiff) | erledigt |
 
 **Nachtrag 4. Nov.:** Bedienung von Luftwaffe und Raketen verbessert (Luftwaffen- und Raketen-Fenster, Dauereinsatz,

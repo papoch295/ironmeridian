@@ -7,7 +7,7 @@ Dieses Projekt ist ausschließlich das Spiel **IRON MERIDIAN – Globaler Konfli
 - Eigenes Echtzeit-Strategiespiel mit Pause, Einzelspieler gegen KI. Inspiriert von World Conqueror 4 (Weltkarte, Economy,
   Rekrutierung in Institutionen, Spielfiguren-Optik) und WARNO (Micromanagement, taktische Optik). Keine Inhalte oder
   Grafiken dieser Spiele übernehmen, alles bleibt eigen.
-- Zielplattform Handy; zuerst als Web-App, später Android über Capacitor (siehe README.md).
+- Zielplattform Handy; zuerst als Web-App, später Android über Capacitor (siehe README.md). Für die erste Abgabe reicht die Web-App.
 
 ## Arbeitsweise mit dem Nutzer
 - Sprache: Deutsch.
@@ -41,4 +41,6 @@ Dieses Projekt ist ausschließlich das Spiel **IRON MERIDIAN – Globaler Konfli
   Simulation, KI oder Spielständen immer laufen lassen. Im Browser: `index.html?selftest=3&min=20`.
 - Spielstände liegen in IndexedDB (`js/save.js`, Liste im `localStorage`). Formatänderungen in `Saves.migrate()` nachziehen
   und `Saves.VERSION` sowie `v` in `Game.newGame` erhöhen; Provinz-Fingerabdrücke halten Stände bei Kartenänderungen ladbar.
-- Roadmap und Beta-Plan: `ROADMAP.md`. Git-Repository ist lokal angelegt (Branch `main`), GitHub-Konto fehlt noch.
+- Roadmap und Beta-Plan: `ROADMAP.md`. Git-Repository: github.com/papoch295/ironmeridian (Branch `main`), Web-Version
+  über GitHub Pages: https://papoch295.github.io/ironmeridian/ (aktualisiert sich bei jedem Push).
+- Abgabe Beta 1 (Stand `v1.1-beta`, nur noch Fehlerbehebung): nur als Web-App, keine APK (Entscheidung 5. Nov.). APK über Capacitor erst in Beta 2.
