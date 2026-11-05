@@ -7,7 +7,7 @@ const $$ = (s) => Array.from(document.querySelectorAll(s));
 const UI = {
   mode: null,          // pending order mode: move | fast | amove | load | unloadAt | drop | strike | slbm | missile | nuke | cas | box
   modeData: null,
-  settings: { lang: 'de', sound: true, volume: 0.6, fog: true, tutorial: true, models: true, keys: null },
+  settings: { lang: 'de', sound: true, volume: 0.6, fog: true, tutorial: true, models: true, perf: false, keys: null },
   tutStep: -1,
   tutFlags: {},
   tick4: 0,

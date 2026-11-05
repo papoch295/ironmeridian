@@ -15,6 +15,7 @@
     Input.init($('#map'));
     Render.flyTo(15, Geo.projY(30), Render.zMin * 1.6);
     Crash.init();
+    Perf.init();
     Saves.init().then(() => {
       Screens.menu();
       requestAnimationFrame(loop);
@@ -55,6 +56,7 @@
       Render.frame();
       UI.tick(dt);
     } catch (e) { acc = 0; Crash.report(e); }
+    Perf.frame(now, performance.now() - now);
     requestAnimationFrame(loop);
   }
 })();

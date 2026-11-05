@@ -256,6 +256,7 @@ const Screens = {
       <div class="setting"><span>${U.esc(t('fogOfWar'))}</span>${seg('fog', [[true, t('on')], [false, t('off')]])}</div>
       <div class="setting"><span>${U.esc(t('unitStyle'))}</span>${seg('models', [[true, t('styleModels')], [false, t('styleNato')]])}</div>
       <div class="setting"><span>${U.esc(t('showTutorial'))}</span>${seg('tutorial', [[true, t('on')], [false, t('off')]])}</div>
+      <div class="setting"><span>${U.esc(t('perfSetting'))}</span>${seg('perf', [[true, t('on')], [false, t('off')]])}</div>
       <div class="row end"><button class="btn primary" data-a="back">${U.esc(t('close'))}</button></div>`);
     $('#volRange').oninput = (e) => { s.volume = +e.target.value; Sfx.setVolume(s.volume); UI.saveSettings(); };
     this.bindModal({
@@ -267,6 +268,8 @@ const Screens = {
         if (b.dataset.k === 'lang') { I18N.set(v); UI.applyLang(); if (Game.state) { UI.renderCmdbar(); Panels.show(); const c = Geo.byKey[Game.state.player]; $('#tbNation').innerHTML = `<span class="dot"></span>${U.esc(countryName(c))}`; } else if (!$('#setup').hidden) { this.renderNations(); this.renderSetup(); } }
         if (b.dataset.k === 'sound') Sfx.enabled = v;
         if (b.dataset.k === 'fog') Render.fog = v;
+        if (b.dataset.k === 'perf') Perf.set(v);
+        Perf.paintButtons();
         if (b.dataset.k === 'models') { Render.models = v; if (Game.state) { Panels.show(); } }
         UI.saveSettings();
         this.settings();

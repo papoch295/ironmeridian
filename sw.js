@@ -3,7 +3,7 @@
 // Offline the cached copy is used. Bump CACHE when files are added, renamed or removed.
 'use strict';
 
-const CACHE = 'ironmeridian-v6';
+const CACHE = 'ironmeridian-v7';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'css/style.css',
   'js/data/world.js', 'js/data/scenario.js', 'js/data/units.js',
@@ -12,7 +12,7 @@ const FILES = [
   'js/render/symbols.js', 'js/render/models.js', 'js/render/models-land.js', 'js/render/models-east-land.js',
   'js/render/models-air.js', 'js/render/models-sea.js', 'js/render/renderer.js',
   'js/audio.js', 'js/save.js', 'js/ui/icons.js', 'js/ui/ui.js', 'js/ui/panels.js', 'js/ui/screens.js',
-  'js/ui/input.js', 'js/crash.js', 'js/main.js',
+  'js/ui/input.js', 'js/ui/perf.js', 'js/crash.js', 'js/main.js',
 ];
 
 self.addEventListener('install', (e) => {

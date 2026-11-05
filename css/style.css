@@ -424,6 +424,12 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .save-new .input { flex: 1; min-width: 0; margin-bottom: 0; padding-left: 12px; background-image: none; }
 .crash-msg { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--muted); background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 3px; padding: 8px; max-height: 120px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
 #selftest { position: fixed; left: 10px; bottom: 10px; z-index: 100; width: min(420px, calc(100vw - 20px)); max-height: 60vh; overflow: auto; padding: 12px; font: 12px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+#perf { position: fixed; top: calc(var(--top-h) + 6px); left: calc(8px + var(--safe-l)); z-index: 45; max-width: min(380px, calc(100vw - 16px)); padding: 6px 9px; font: 11px/1.4 ui-monospace, Consolas, monospace; color: var(--text, #e6edf3); }
+#perf[hidden] { display: none; }
+#perfRes { white-space: pre-wrap; user-select: text; -webkit-user-select: text; }
+#perfRes:not(:empty) { margin-top: 5px; }
+#perf .perf-btns { display: flex; gap: 6px; margin-top: 5px; }
+#perf .btn { padding: 3px 9px; font-size: 11px; min-height: 0; }
 .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 input[type=range] { accent-color: var(--accent); width: 170px; }
 .keys-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 4px 24px; }

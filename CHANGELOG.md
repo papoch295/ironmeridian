@@ -1,5 +1,11 @@
 # Änderungsprotokoll – Iron Meridian
 
+## Nach Beta 1.1 (unveröffentlicht)
+
+- **Leistungsanzeige** für den Handy-Test: FPS, Rechenzeit und Einheitenzahl oben links, 60-Sekunden-Messung mit
+  kopierbarem Bericht. Einstellungen → „Leistungsanzeige (FPS)“ oder Adresse mit `?fps`. Ablauf in `TESTPROTOKOLL.md`
+  Abschnitt 10.
+
 ## Beta 1.1 – 5. November 2026 (`v1.1-beta`)
 
 Stand für die Uni-Abgabe. Ab hier nur noch Fehlerbehebungen (Feature-Freeze), Testergebnisse in `TESTPROTOKOLL.md`

@@ -156,3 +156,29 @@ Keine Ausnahmen, Werteprüfung (`SelfTest.check`) nach jeder Partie ohne Befund.
 T-90M, BMP-3, Ka-52M, Orion und Spetsnaz in der Modell-Galerie geprüft (rechts und links gespiegelt, 32 / 60 / 90 /
 220 px), Spielstart ohne Konsolenfehler. Vergleichsbild West / Ost: `referenzbilder/vergleich/ost-nachher.png`
 (nicht Teil der Abgabe).
+
+## 10. Bildrate auf dem Handy (Kriterium „30+ FPS“) – vorbereitet, Messung offen
+
+Werkzeug (neu, 5. Nov.): **Leistungsanzeige** oben links mit FPS, Rechenzeit pro Bild und Einheitenzahl.
+Einschalten unter *Einstellungen → Leistungsanzeige (FPS)* oder mit
+`https://papoch295.github.io/ironmeridian/?fps`. „Messen (60 s)“ zeichnet eine Minute auf und zeigt einen Bericht
+(Ø FPS, „1 % low“ = Durchschnitt der langsamsten 1 % der Bilder, längstes Bild, Rechenzeit, Gerät, Auflösung);
+„Kopieren“ legt ihn in die Zwischenablage. Zeiten, in denen die App im Hintergrund war, zählen nicht.
+
+Ablauf auf dem Android-Handy (Chrome, Querformat, Ton an, Nebel an, Modelle an):
+1. Bündniskrieg Deutschland gegen Eurasische Union, Normal, Tempo 1×: 60 s messen, dabei Karte verschieben und zoomen.
+2. Dieselbe Partie nach ca. 20 Spielminuten (mehr Einheiten, Kämpfe im Bild), Tempo 2×.
+3. Weltkrieg (z. B. Frankreich, Normal) nach ca. 20 Spielminuten, ganze Welt herausgezoomt (viele hundert Einheiten).
+4. Wie 3, aber auf eine Front hineingezoomt.
+
+Bestanden, wenn Ø FPS ≥ 30 in allen Läufen; „1 % low“ unter 15 als spürbares Ruckeln notieren.
+
+| Lauf | Gerät | Lage | Einheiten | Ø FPS | 1 % low | längstes Bild | Rechenzeit | Ergebnis |
+|---|---|---|---|---|---|---|---|---|
+| 1 | | Bündniskrieg DE, Start, 1× | | | | | | |
+| 2 | | Bündniskrieg DE, 20 min, 2× | | | | | | |
+| 3 | | Weltkrieg FR, 20 min, ganze Welt | | | | | | |
+| 4 | | Weltkrieg FR, 20 min, Front nah | | | | | | |
+
+Gegenprobe am PC (Vorschau-Browser, Rechenlogik mit künstlichen Bildzeiten): Ø und „1 % low“ werden richtig berechnet;
+Selbsttest `node tools/selftest.js 3 20` danach mit Exit-Code 0.
