@@ -1,6 +1,6 @@
 # Iron Meridian – Roadmap: von der Alpha zur Beta
 
-Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
+Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1), Abschnitt 9 am 5. November 2026 (Beta 1.1). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
 Prioritäten: **P0** = höchste Priorität, kommt vor allem anderen (taktisches Gameplay, siehe 2.9 und 2.10) ·
 **P1** = nötig, um die Alpha zu verlassen · **P2** = macht das Spiel deutlich besser · **P3** = später.
 Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
@@ -410,7 +410,7 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 | 9. Dokumentation | README und Roadmap auf Beta 1, kurze Spielanleitung, Screenshots, Quellen/Lizenzen (Natural Earth), `CHANGELOG.md` | erledigt (`SPIELANLEITUNG.md`, `QUELLEN.md`, `docs/screenshots/`) |
 | 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | erledigt (Nachtest ohne Fehler) |
 | 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | erledigt (TESTPROTOKOLL.md, Abschnitte 6–7) |
-| 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | Version und Tag erledigt, Freeze offen |
+| 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | erledigt: Beta 1.1 mit Tag `v1.1-beta` (5. Nov.) als Abgabestand, danach nur Fehlerbehebung |
 | optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | #73 erledigt (5. Nov.), APK offen |
 | optional | **neue Einheiten** vor dem Freeze: Top 4 aus Abschnitt 3.1 (Aufklärungsdrohne, Kamikaze-Drohne, Patriot/S-400, Landungsschiff) | erledigt |
 

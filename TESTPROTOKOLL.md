@@ -118,3 +118,41 @@ Weitere Beobachtungen: Patriot / S-400 erscheint selten (Rüstungswerk Stufe 3) 
 fing es rund 62 % der Kurzstreckenraketen ab. Das Landungsschiff wird von der KI nicht gebaut (nur Startausstattung
 des Spielers) und hat im Test Truppen sicher an die polnische Küste gebracht. Aufklärungsdrohnen gehen oft verloren
 (Flugabwehr), sind aber billig.
+
+# Nachtest 5. November 2026 – KI-Landungen, gebündelte Meldungen, Ost-Modelle
+
+Stand: Commit `6e16cc8` (KI-Landungen `bd517ed`, gebündelte Meldungen `20448db`, Ost-Modelle im Referenzstil).
+
+## 8. KI-Landungen (untätiger Spieler)
+
+Verfahren: Partie im Vorschau-Browser mit `Sim.step` im Zeitraffer, Spieler untätig. Mitgezählt wurden die Phasen der
+Landungsoperationen aller KI-Fraktionen: geplant (Truppen gehen an Bord), ausgelaufen, gelandet (Angriff beginnt),
+Ziel am Ende gehalten. Dazu die Meldungen an den Spieler („Kurs auf …“ / „landet Truppen bei …“).
+
+| Land | Modus | Gegner | Stufe | Spielzeit | geplant | ausgelaufen | gelandet | Ziel gehalten | davon gegen Spieler-Bündnis | Meldungen Kurs / Landung |
+|---|---|---|---|---|---|---|---|---|---|---|
+| JP | Bündniskrieg | Ostasiatischer Pakt | Normal | 90 min | 7 | 6 | 5 | 2 | 3 | 4 / 3 |
+| JP | Bündniskrieg | Ostasiatischer Pakt | Leicht | 74 min (Sieg) | 0 | 0 | 0 | 0 | 0 | 0 / 0 |
+| GB | Bündniskrieg | Eurasische Union | Normal | 90 min | 7 | 6 | 2 | 0 | 1 | 1 / 0 |
+| ID | Bündniskrieg | Pazifische Allianz | Normal | 90 min | 11 | 9 | 9 | 1 | 3 | 3 / 3 |
+| US | Bündniskrieg | Ostasiatischer Pakt | Schwer | 90 min | 0 | 0 | 0 | 0 | 0 | 0 / 0 |
+| FR | Weltkrieg | alle | Normal | 60 min | 41 | 30 | 28 | 12 | 0 | 0 / 0 |
+
+Keine Ausnahmen, Werteprüfung (`SelfTest.check`) nach jeder Partie ohne Befund. Automatischer Selbsttest
+(`node tools/selftest.js 3 20`) auf demselben Stand: **alles in Ordnung**.
+
+**Befunde:**
+- Die KI landet regelmäßig, vor allem auf Inseln und über schmale Meerengen (China → Taiwan / Philippinen,
+  USA → Kuba, Italien / Spanien → Tunesien). Die Vorwarnung erscheint, sobald der Spieler das Schiff sieht.
+- Ein Teil der ausgelaufenen Schiffe kommt nicht an (z. B. Großbritannien: 6 ausgelaufen, 2 gelandet): Sie werden
+  versenkt oder finden keinen Landeplatz und fahren mit den Truppen heim. Das ist gewollt (Küstenschutz lohnt sich).
+- Über den Pazifik (USA gegen Ostasien) plant die KI keine Landungen, weil sie nur Küsten in der Nähe der eigenen
+  Küste angreift.
+- Auf „Leicht“ landete China in dieser Partie gar nicht (dort nur Inseln ohne Landweg). Der untätige Spieler gewann
+  nach 74 min durch seine KI-Verbündeten. Leicht bleibt damit wie gewünscht nachsichtig.
+
+## 9. Ost-Modelle im Referenzstil
+
+T-90M, BMP-3, Ka-52M, Orion und Spetsnaz in der Modell-Galerie geprüft (rechts und links gespiegelt, 32 / 60 / 90 /
+220 px), Spielstart ohne Konsolenfehler. Vergleichsbild West / Ost: `referenzbilder/vergleich/ost-nachher.png`
+(nicht Teil der Abgabe).

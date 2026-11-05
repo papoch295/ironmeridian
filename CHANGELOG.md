@@ -1,6 +1,9 @@
 # Änderungsprotokoll – Iron Meridian
 
-## Unveröffentlicht – Bedienung Luftwaffe und Raketen (nach Spieler-Feedback)
+## Beta 1.1 – 5. November 2026 (`v1.1-beta`)
+
+Stand für die Uni-Abgabe. Ab hier nur noch Fehlerbehebungen (Feature-Freeze), Testergebnisse in `TESTPROTOKOLL.md`
+Abschnitte 5–9.
 
 - **Luftwaffen-Fenster** (Schnellleiste „Luftwaffe“): alle eigenen Flugzeuge und Hubschrauber im ganzen Land, auch
   gelandete, mit Flugplatz, Status und Treibstoff; „Bereite wählen“, „Alle wählen“ und Auswahl nach Typ.
