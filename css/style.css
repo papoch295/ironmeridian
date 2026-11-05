@@ -572,3 +572,15 @@ input[type=range] { accent-color: var(--accent); width: 170px; }
   #menu { background: linear-gradient(180deg, rgba(5,9,13,.55), rgba(5,9,13,.94) 60%); align-items: flex-end; padding-bottom: calc(40px + var(--safe-b)); }
   .end-title { font-size: 34px; }
 }
+
+/* Transport load: "used / capacity" tag and cargo icons (air overview, airfield, unit lists). */
+.ctag { flex: none; display: inline-block; min-width: 30px; padding: 1px 6px; border-radius: 9px; font-size: 10px; font-weight: 700; text-align: center; line-height: 15px; border: 1px solid transparent; }
+.ctag.empty { background: rgba(255,255,255,.06); color: var(--muted); border-color: var(--line-2); }
+.ctag.part { background: rgba(214,156,42,.22); color: #f3cf7a; border-color: rgba(214,156,42,.5); }
+.ctag.full { background: rgba(110,190,90,.2); color: #a8e08c; border-color: rgba(110,190,90,.5); }
+.ctag.wait { box-shadow: 0 0 0 1px #ffd65a; }
+.gchip .ctag { margin-left: auto; }
+.uchip .ctag { position: absolute; top: 2px; right: 2px; min-width: 0; padding: 0 4px; font-size: 9px; line-height: 13px; }
+.cic { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; font-size: 10px; color: var(--text); }
+.cic > span { display: inline-flex; align-items: center; gap: 1px; }
+.arow .cic img { width: 22px; height: 15px; }

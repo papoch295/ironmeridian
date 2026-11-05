@@ -577,10 +577,25 @@ const Render = {
         ctx.strokeStyle = COL[rk].fill; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, tx, ty + 0.5);
       } else {
-        if (u.cargo.length) { ctx.fillStyle = '#fff'; ctx.font = '700 9px Bahnschrift, "Segoe UI", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('+' + u.cargo.length, sx + s * 0.8, sy - s * 0.45); }
+        if (u.cargo.length && c.side !== S.player) { ctx.fillStyle = '#fff'; ctx.font = '700 9px Bahnschrift, "Segoe UI", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('+' + u.cargo.length, sx + s * 0.8, sy - s * 0.45); }
         if (T.cls === 'soft' && T.men && this.cam.z > 12) {
           ctx.fillStyle = '#e8eef2'; ctx.font = '600 9px Bahnschrift, "Segoe UI", sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
           ctx.fillText(Math.max(1, Math.ceil(u.hp / T.hp * T.men)), sx - s * 0.8, sy - s * 0.45);
+        }
+      }
+      // Own transports: load pill (used / capacity), grey = empty, amber = partly loaded or waiting, green = full.
+      if (c.side === S.player) {
+        const trs = c.units.filter((x) => UNIT_TYPES[x.t].cap);
+        // Ground transports in an army only show it when loaded or selected, so mech. armies stay uncluttered.
+        if (trs.length && (sel || trs.some((x) => x.cargo.length || x.lift || UNIT_TYPES[x.t].dom !== 'land'))) {
+          const used = trs.reduce((a, x) => a + Game.seatsUsed(x), 0), cap = trs.reduce((a, x) => a + UNIT_TYPES[x.t].cap, 0);
+          const txt = used + '/' + cap, px = sx + s * 0.8, py = n > 1 ? sy - s * 0.58 + 16 : sy - s * 0.5;
+          ctx.font = '700 9px Bahnschrift, "Segoe UI", sans-serif';
+          const w = ctx.measureText(txt).width + 8;
+          rr(px - w / 2, py - 6.5, w, 13, 6.5);
+          ctx.fillStyle = used === 0 ? 'rgba(40,46,52,0.9)' : used >= cap ? 'rgba(60,120,48,0.95)' : 'rgba(150,108,28,0.95)'; ctx.fill();
+          ctx.strokeStyle = trs.some((x) => x.lift) ? '#ffd65a' : 'rgba(255,255,255,0.45)'; ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = used === 0 ? '#aab4bc' : '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, px, py + 0.5);
         }
       }
       // Army number badge.

@@ -82,7 +82,7 @@ const UI = {
   setMode(m, data) {
     this.mode = m; this.modeData = data || null;
     const hint = $('#hint');
-    const txt = { move: t('hintMove'), fast: t('hintMove'), amove: t('hintAttack'), tAttack: t('hintTaskAttack'), tAdvance: t('hintTaskAdvance'), load: t('hintLoad'), unloadAt: t('hintUnloadAt'), drop: t('hintDrop'), cas: t('hintCas'), strike: t('hintStrike'), slbm: t('hintMissile', 'SLBM'),
+    const txt = { move: t('hintMove'), fast: t('hintMove'), amove: t('hintAttack'), tAttack: t('hintTaskAttack'), tAdvance: t('hintTaskAdvance'), load: t('hintLoad'), unloadAt: t('hintUnloadAt'), airlift: t('hintAirlift'), drop: t('hintDrop'), cas: t('hintCas'), strike: t('hintStrike'), slbm: t('hintMissile', 'SLBM'),
       missile: data && (data.nuke ? t('hintNuke') : t(data.auto ? 'hintMissileAuto' : 'hintMissile', L(MISSILES[data.key]))), nuke: t('hintNuke'), box: t('hintBox') }[m];
     if (txt) { hint.innerHTML = `<span>${U.esc(txt)}</span><button>${U.esc(t('close'))}</button>`; hint.hidden = false; hint.querySelector('button').onclick = () => this.setMode(null); }
     else hint.hidden = true;
@@ -200,6 +200,8 @@ const UI = {
       if (!trs.length || !this.loadInto(trs)) { this.toast(t('hintLoad'), 'bad'); return; }
     } else if (m === 'unloadAt') {
       this.issueTransport(wx, wy);
+    } else if (m === 'airlift') {
+      this.issueAirlift(wx, wy);
     } else if (m === 'nuke') {
       const bombers = this.selUnits().filter((u) => UNIT_TYPES[u.t].w.includes('bombs')).sort((a, b) => (b.nuke || 0) - (a.nuke || 0));
       let err = 'noNukes';
@@ -326,6 +328,21 @@ const UI = {
     return { carriers, cargo, room };
   },
 
+  // One tap: free helicopters / parked transport planes (the selected ones, otherwise nearby) fetch the selected
+  // troops and fly them to the point.
+  airliftSplit(us) {
+    const given = us.filter((u) => UNIT_TYPES[u.t].cap && UNIT_TYPES[u.t].dom === 'air');
+    const cargo = us.filter((u) => UNIT_TYPES[u.t].dom === 'land' && !u.cargo.length);
+    return { given, cargo };
+  },
+  issueAirlift(wx, wy) {
+    const { given, cargo } = this.airliftSplit(this.selUnits());
+    const n = Game.airlift(cargo, wx, wy, given);
+    if (!n) { this.toast(t('liftNone'), 'bad'); return; }
+    this.toast(n < cargo.length ? t('liftPartial', n, cargo.length) : t('liftOk', n));
+    Render.ping(wx, wy, 'load'); Sfx.play('order');
+  },
+
   // Loaded transports drive / fly to the point and unload there (transport aircraft land at a nearby airfield or drop paratroopers).
   issueTransport(wx, wy) {
     const trs = this.selUnits().filter((u) => u.cargo.length);
@@ -370,6 +387,8 @@ const UI = {
     if (ls.carriers.length && ls.cargo.length && ls.room > 0) c += btn('autoload', 'load', t('cmdAutoLoad'));
     else if (ls.carriers.length && ls.room > 0) c += btn('pickup', 'load', t('cmdPickup'));
     // Boarding a transport is rare, so it waits behind "More" with the other secondary orders.
+    const al = this.airliftSplit(us);
+    if (al.cargo.length && Game.liftCarriers(al.cargo, undefined, undefined, al.given).length) c += btn('airlift', 'drop', t('cmdAirlift'), 'airlift');
     const board = soft && !ls.carriers.length ? btn('load', 'load', t('cmdLoad'), 'load') : '';
     if (us.some((u) => u.cargo.length)) { c += btn('unloadAt', 'drop', t('cmdUnloadAt'), 'unloadAt'); c += btn('unload', 'unload', t('cmdUnload')); }
     if (us.some((u) => UNIT_TYPES[u.t].plane && u.cargo.length)) c += btn('drop', 'drop', t('cmdDrop'), 'drop');
@@ -401,7 +420,7 @@ const UI = {
     const us = this.selUnits();
     switch (c) {
       case 'tHold': this.armyTask('hold'); break;
-      case 'tAttack': case 'tAdvance': case 'move': case 'fast': case 'amove': case 'load': case 'unloadAt': case 'drop': case 'cas': case 'strike': case 'slbm': case 'nuke': case 'box': this.setMode(this.mode === c ? null : c); break;
+      case 'tAttack': case 'tAdvance': case 'move': case 'fast': case 'amove': case 'load': case 'unloadAt': case 'airlift': case 'drop': case 'cas': case 'strike': case 'slbm': case 'nuke': case 'box': this.setMode(this.mode === c ? null : c); break;
       case 'autoload': {
         const ls = this.loadSplit(us), n = Game.autoLoad(ls.cargo, ls.carriers);
         this.toast(n ? (n < ls.cargo.length ? t('loadPartial', n, ls.cargo.length) : t('loadOk', n)) : t('loadFull'), n ? '' : 'bad');
@@ -666,6 +685,7 @@ const UI = {
       Render.ping(x, y, 'attack');
     });
     Game.on('aiRetreat', ({ k, x, y }) =>this.log(t('evRetreat', countryName(Geo.byKey[k])), 'good', x, y));
+    Game.on('liftGo', (u) => this.log(t('evLiftGo', unitName(u.t), u.cargo.length), 'info', u.x, u.y));
     Game.on('unloaded', (u) => this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));
     Game.on('noPath', () => this.toast(t('evNoPath'), 'bad'));
     Game.on('crash', (u) => this.log(t('evCrash', unitName(u.t)), 'warn', u.x, u.y));

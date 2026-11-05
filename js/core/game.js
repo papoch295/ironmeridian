@@ -422,7 +422,7 @@ const Game = {
     if (!units.length) return;
     // Standing air mission (cas): planes attack around the point, refuel at their base and return on their own
     // (see Sim.plane) until any other order replaces it.
-    if (ord.k !== 'stance') for (const u of units) if (u.cas) delete u.cas;
+    if (ord.k !== 'stance') for (const u of units) { if (u.cas) delete u.cas; if (u.lift) delete u.lift; }
     if (ord.k === 'cas') {
       for (const u of units) if (u.air) u.cas = { x: ord.x, y: ord.y };
       ord = { k: 'amove', x: ord.x, y: ord.y };
@@ -539,6 +539,48 @@ const Game = {
     }
     const idle = near.filter((u) => !u.ord);
     return this.autoLoad(idle.length ? idle : near, transports);
+  },
+
+  // Air transports that can take part in an airlift of these troops to (x, y): the given ones if any, otherwise
+  // idle helicopters within reach and parked transport planes at an airfield close to the troops.
+  liftCarriers(cargo, x, y, given) {
+    const S = this.state, side = cargo[0] && cargo[0].s;
+    if (!cargo.length) return [];
+    const cx = cargo.reduce((s, u) => s + u.x, 0) / cargo.length, cy = cargo.reduce((s, u) => s + u.y, 0) / cargo.length;
+    const room = (tr) => this.T(tr).cap - this.seatsUsed(tr) > 0;
+    const ok = (tr) => {
+      const T = this.T(tr);
+      if (tr.s !== side || T.dom !== 'air' || !T.cap || tr.inside || !room(tr)) return false;
+      if (T.plane) {
+        if (tr.air.st !== 'ground' || tr.cas || U.dist(tr.x, tr.y, cx, cy) > 3) return false;
+        return x === undefined || U.dist(tr.x, tr.y, x, y) <= this.airReach(tr);
+      }
+      return U.dist(tr.x, tr.y, cx, cy) < 6;
+    };
+    if (given && given.length) return given.filter(ok);
+    return S.units.filter((tr) => ok(tr) && !tr.lift && !tr.ord);
+  },
+
+  // One-tap airlift: the carriers pick up the troops, fly them to the point and unload there. Planes land at an own
+  // airfield near the point; without one only paratroopers fly and jump. Returns how many units board.
+  airlift(cargo, x, y, given) {
+    cargo = cargo.filter((u) => !u.inside && this.T(u).dom === 'land' && !u.cargo.length);
+    const trs = this.liftCarriers(cargo, x, y, given);
+    if (!trs.length) return 0;
+    const side = cargo[0].s;
+    const field = this.nearestOwnProvince(x, y, side, true, (pr) => pr.b.airfield > 0);
+    const canLand = field && U.dist(field.x, field.y, x, y) < 1.0;
+    const planes = trs.filter((tr) => this.T(tr).plane), helis = trs.filter((tr) => !this.T(tr).plane);
+    let n = 0;
+    if (canLand) n = this.autoLoad(cargo, trs);
+    else {
+      n = this.autoLoad(cargo.filter((u) => this.T(u).airdrop), planes);
+      n += this.autoLoad(cargo.filter((u) => !(u.ord && u.ord.k === 'load')), helis);
+    }
+    for (const tr of trs) {
+      if (this.state.units.some((u) => u.ord && u.ord.k === 'load' && u.ord.id === tr.id)) tr.lift = { x, y, t: this.state.t };
+    }
+    return n;
   },
 
   board(u, tr) {

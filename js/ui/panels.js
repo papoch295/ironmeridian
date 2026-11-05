@@ -44,21 +44,21 @@ const Panels = {
       render = () => this.enemyHtml(u);
     } else if (this.special === 'air') {
       const us = this.airUnits();
-      sig = 'A' + us.map((u) => u.id + (u.air ? u.air.st + Math.round(u.air.fuel / (UNIT_TYPES[u.t].fuel || 400) * 10) + (u.air.base ?? '') : '') + (u.ord ? u.ord.k : '') + (u.cas ? 'C' : '')).join('|');
+      sig = 'A' + us.map((u) => u.id + (u.air ? u.air.st + Math.round(u.air.fuel / (UNIT_TYPES[u.t].fuel || 400) * 10) + (u.air.base ?? '') : '') + (u.ord ? u.ord.k : '') + (u.cas ? 'C' : '') + u.cargo.join(',') + (u.lift ? 'L' : '')).join('|');
       render = () => this.airHtml(us);
     } else if (this.special === 'msl') {
       sig = 'M' + ['srbm', 'cruise', 'icbm', 'slbm'].map((k) => UI.missileSources(k).map((s) => s.name + s.n).join()).join('|') + (S.side[S.player].nukes || 0) + (UI.mode === 'missile' && UI.modeData ? UI.modeData.key : '');
       render = () => this.mslHtml();
     } else if (UI.sel.size) {
       const us = UI.selUnits();
-      sig = 'u' + us.map((u) => u.id + ':' + Math.round(u.hp) + ':' + u.ammo.join(',') + ':' + u.cargo.length + u.stance + Math.round(u.sup / 10) + (u.nuke ? 'N' : '') + (u.air ? u.air.st + Math.round(u.air.fuel / 5) : '')).join('|') +
+      sig = 'u' + us.map((u) => u.id + ':' + Math.round(u.hp) + ':' + u.ammo.join(',') + ':' + u.cargo.join(',') + (u.lift ? 'L' : '') + u.stance + Math.round(u.sup / 10) + (u.nuke ? 'N' : '') + (u.air ? u.air.st + Math.round(u.air.fuel / 5) : '')).join('|') +
         JSON.stringify(UI.groups()) + Game.state.side[Game.me()].nukes;
       render = () => this.unitsHtml(us);
     } else if (Render.selProv !== null) {
       const pid = Render.selProv, pr = S.prov[pid];
       sig = 'p' + pid + pr.o + pr.lvl + JSON.stringify(pr.b) + pr.q.map((q) => q.key + 'x' + (q.n || 1)).join() + JSON.stringify(pr.msl) + this.tab + this.view + this.batch + this.army + Math.round(pr.def) + (pr.cap ? Math.round(pr.cap.p * 20) : '') +
         ['m', 'i', 'o'].map((k) => Math.floor(Game.state.side[Game.me()][k] / 50)).join() + Game.state.side[Game.me()].nukes + Object.keys(UI.groups()).join() + Sim.inFallout(Geo.provinces[pid]) +
-        S.units.filter((u) => u.air && u.air.base === pid && u.air.st === 'ground' && u.s === Game.me()).length;
+        S.units.filter((u) => u.air && u.air.base === pid && u.air.st === 'ground' && u.s === Game.me()).map((u) => u.cargo.length).join();
       render = () => this.provHtml(pid);
     } else { this.close(); return; }
     // Progress bars update in place every tick.
@@ -195,9 +195,26 @@ const Panels = {
     // Aircraft parked here.
     const parked = S.units.filter((u) => u.air && u.air.base === pid && u.air.st === 'ground' && u.s === Game.me());
     if (parked.length) {
-      h += `<h3>${U.esc(t('aircraftHere'))}</h3><div class="groups">` + parked.map((u) => `<button class="gchip" data-act="selu" data-id="${u.id}"><img src="${UnitIcon.get(u.t)}" alt=""><span>${U.esc(unitName(u.t))}${u.cargo.length ? ' +' + u.cargo.length : ''}${u.nuke ? ' ☢' : ''}</span></button>`).join('') + '</div>';
+      h += `<h3>${U.esc(t('aircraftHere'))}</h3><div class="groups">` + parked.map((u) => `<button class="gchip" data-act="selu" data-id="${u.id}"><img src="${UnitIcon.get(u.t)}" alt=""><span>${U.esc(unitName(u.t))}${u.nuke ? ' ☢' : ''}</span>${this.cargoTag(u)}</button>`).join('') + '</div>';
     }
     return h + '</div>';
+  },
+
+  // ---------- Transport load ----------
+  // Load state of a transport: tag "used / capacity" coloured empty / partly / full, and the cargo grouped by type.
+  cargoTag(u) {
+    const T = UNIT_TYPES[u.t];
+    if (!T.cap) return '';
+    const used = Game.seatsUsed(u), st = used === 0 ? 'empty' : used >= T.cap ? 'full' : 'part';
+    const tip = used === 0 ? t('cargoEmpty') : used >= T.cap ? t('cargoFull') : '';
+    return `<span class="ctag ${st}${u.lift ? ' wait' : ''}" title="${U.esc(u.lift ? t('cargoWait') : tip)}">${used}/${T.cap}</span>`;
+  },
+  cargoIcons(u) {
+    const by = {};
+    for (const id of u.cargo) { const c = Game.unit(id); if (c) by[c.t] = (by[c.t] || 0) + 1; }
+    const ks = Object.keys(by);
+    if (!ks.length) return `<span class="cic muted">${U.esc(u.lift ? t('cargoWait') : t('cargoEmpty'))}</span>`;
+    return '<span class="cic">' + ks.map((k) => `<span title="${U.esc(unitName(k))}"><img src="${UnitIcon.get(k)}" alt="">${by[k] > 1 ? '×' + by[k] : ''}</span>`).join('') + '</span>';
   },
 
   // ---------- Air force overview ----------
@@ -229,7 +246,7 @@ const Panels = {
       const T = UNIT_TYPES[u.t], fuel = u.air ? u.air.fuel / (T.fuel || 400) : 1;
       const base = u.air && u.air.base !== null ? provName(Geo.provinces[u.air.base]) : '—';
       const cls = u.cas ? 'cas' : u.air && u.air.st === 'ground' ? 'ground' : 'fly';
-      h += `<button class="arow ${cls}" data-act="selu" data-id="${u.id}"><img src="${UnitIcon.get(u.t)}" alt=""><span class="nm">${U.esc(unitName(u.t))}${u.nuke ? ' ☢' : ''}<small>${U.esc(base)} · ${U.esc(UI.airStatus(u))}</small></span>${u.air ? `<div class="bar blue" title="${U.esc(t('fuel'))}"><i style="width:${Math.round(fuel * 100)}%"></i></div>` : ''}</button>`;
+      h += `<button class="arow ${cls}" data-act="selu" data-id="${u.id}"><img src="${UnitIcon.get(u.t)}" alt=""><span class="nm">${U.esc(unitName(u.t))}${u.nuke ? ' ☢' : ''}<small>${U.esc(base)} · ${U.esc(UI.airStatus(u))}</small>${T.cap ? this.cargoIcons(u) : ''}</span>${this.cargoTag(u)}${u.air ? `<div class="bar blue" title="${U.esc(t('fuel'))}"><i style="width:${Math.round(fuel * 100)}%"></i></div>` : ''}</button>`;
     }
     return h + '</div></div>';
   },
@@ -314,7 +331,7 @@ const Panels = {
     // Every unit individually, so a single squad can be pulled out of a stack.
     h += `<h3>${U.esc(t('units'))}</h3><div class="ulist">` + us.slice(0, 60).map((u) => {
       const f = u.hp / UNIT_TYPES[u.t].hp;
-      return `<button class="uchip" data-act="selu" data-id="${u.id}" title="${U.esc(unitName(u.t))}"><img src="${UnitIcon.get(u.t)}" alt="">${u.cargo.length ? `<em>${u.cargo.length}</em>` : ''}<div class="bar ${f < 0.35 ? 'bad' : f < 0.7 ? 'warn' : ''}"><i style="width:${f * 100}%"></i></div></button>`;
+      return `<button class="uchip" data-act="selu" data-id="${u.id}" title="${U.esc(unitName(u.t))}"><img src="${UnitIcon.get(u.t)}" alt="">${UNIT_TYPES[u.t].cap ? this.cargoTag(u) : ''}<div class="bar ${f < 0.35 ? 'bad' : f < 0.7 ? 'warn' : ''}"><i style="width:${f * 100}%"></i></div></button>`;
     }).join('') + '</div>';
     return h + '</div>';
   },
@@ -328,7 +345,7 @@ const Panels = {
     h += `<div class="kv"><span>${U.esc(T.men ? t('men') : t('hp'))}</span><div>${T.men ? Math.max(1, Math.ceil(f * T.men)) + ' / ' + T.men : Math.round(f * 100) + '%'}<div class="bar ${f < 0.35 ? 'bad' : f < 0.7 ? 'warn' : ''}"><i style="width:${f * 100}%"></i></div></div>`;
     if (T.cls === 'soft') h += `<span>${U.esc(t('sup'))}</span><div><div class="bar warn"><i style="width:${u.sup}%"></i></div></div>`;
     if (u.air) h += `<span>${U.esc(t('fuel'))}</span><div>${u.air.st === 'ground' ? U.esc(t('parked')) : ''}<div class="bar blue"><i style="width:${u.air.fuel / (T.fuel || 400) * 100}%"></i></div></div>`;
-    if (T.cap) h += `<span>${U.esc(t('cargo'))}</span><b>${Game.seatsUsed(u)} / ${T.cap}${T.capVeh ? ` <span class="muted small">(${U.esc(t('vehOk'))})</span>` : ''}</b>`;
+    if (T.cap) h += `<span>${U.esc(t('cargo'))}</span><b>${this.cargoTag(u)}${T.capVeh ? ` <span class="muted small">(${U.esc(t('vehOk'))})</span>` : ''}</b>`;
     h += `<span>${U.esc(t('kills'))}</span><b>${u.kills}</b></div>`;
     if (u.nuke) h += `<p class="small warn-line">☢ ${U.esc(t('nukeAboard'))}</p>`;
     if (T.w.length) {
@@ -339,7 +356,11 @@ const Panels = {
         h += `<div class="wpn"><span>${U.esc(wn)} · ${(w.r * 111).toFixed(0)} km</span><b>${w.ammo ? Math.floor(u.ammo[i]) + ' / ' + w.ammo : '<span style="font-family:Segoe UI,sans-serif">∞</span>'}</b></div>`;
       });
     }
-    if (u.cargo.length) h += `<h3>${U.esc(t('cargo'))}</h3><div class="groups">` + u.cargo.map((id) => Game.unit(id)).filter(Boolean).map((c) => `<div class="gchip"><img src="${UnitIcon.get(c.t)}" alt=""><span>${U.esc(unitName(c.t))}</span></div>`).join('') + '</div>';
+    if (T.cap && (u.cargo.length || u.s === Game.me())) {
+      const by = {};
+      for (const id of u.cargo) { const c = Game.unit(id); if (c) by[c.t] = (by[c.t] || 0) + 1; }
+      h += `<h3>${U.esc(t('cargo'))}</h3>` + (u.cargo.length ? '<div class="groups">' + Object.keys(by).map((k) => `<div class="gchip"><img src="${UnitIcon.get(k)}" alt="">${by[k] > 1 ? `<b>${by[k]}</b>` : ''}<span>${U.esc(unitName(k))}</span></div>`).join('') + '</div>' : `<p class="small muted">${U.esc(u.lift ? t('cargoWait') : t('cargoEmpty'))}</p>`);
+    }
     if (u.slbm !== undefined) h += `<div class="wpn"><span>SLBM</span><b>${u.slbm} / ${T.slbm}</b></div>`;
     if (T.strike) h += `<div class="wpn"><span>${U.esc(t('cmdStrike'))}</span><b>${u.strikeCd > 0 ? Math.ceil(u.strikeCd) + 's' : t('ok')}</b></div>`;
     h += `<h3>${U.esc(t('stance'))}</h3><div class="seg">${['free', 'return', 'hold'].map((s) => `<button data-act="stance" data-k="${s}" class="${u.stance === s ? 'on' : ''}">${U.esc(t('st' + s[0].toUpperCase() + s.slice(1)))}</button>`).join('')}</div>`;

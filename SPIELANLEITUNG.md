@@ -120,6 +120,12 @@ Bodentruppen schiffen sich an der Küste automatisch ein, sind auf See aber sehr
 **Landungsschiff** (Werft): Truppen und Fahrzeuge zusammen mit dem Schiff wählen, **Verladen**, dann **Transport nach**
 und das Ufer antippen. Transporthubschrauber und Transportflugzeuge funktionieren genauso.
 
+**Lufttransport mit einem Tippen:** nur die Truppen wählen, **Lufttransport** und das Ziel antippen. Freie
+Transporthubschrauber und geparkte Transportflugzeuge in der Nähe holen sie ab, starten, sobald alle an Bord sind, und
+laden am Ziel aus. Flugzeuge brauchen dort einen eigenen Flugplatz, sonst springen nur Fallschirmjäger ab. Die Anzeige
+**belegt/Plätze** am Transporter: grau = leer, gelb = teilweise beladen, grün = voll. Plätze: Transportpanzer 3,
+Schützenpanzer 2, Transporthubschrauber 4, Transportflugzeug 8, Landungsschiff 16 (Kampfpanzer belegt 3).
+
 Auch die KI landet mit Landungsschiffen, am liebsten auf Inseln, die sie über Land nicht erreicht. Sehen deine
 Einheiten, Schiffe oder dein Radar ein beladenes Landungsschiff, meldet die Aufklärung das Ziel. Küsten mit eigenen
 Schiffen und Truppen zu sichern, lohnt sich deshalb, und ein versenktes Landungsschiff nimmt alle Truppen an Bord mit.

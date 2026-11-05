@@ -110,6 +110,7 @@ const Sim = {
       u.rout = 8; Game.retreat(u);
       if (u.s === S.player) Game.emit('rout', u);
     }
+    if (u.lift) this.liftStep(u);
     if (u.air) { this.plane(u, dt, T); return; }
     u.rt -= dt;
     if (u.rt <= 0) { u.rt = 0.5 + Math.random() * 0.1; this.acquire(u, T); }
@@ -176,6 +177,16 @@ const Sim = {
       if (u.ord) u.ord = o;
     }
     return true;
+  },
+
+  // Airlift (Game.airlift): wait until every assigned passenger is aboard (at most 2 minutes), then fly off and unload.
+  liftStep(u) {
+    const L = u.lift, S = Game.state;
+    if (S.t - L.t < 120 && S.units.some((c) => c.ord && c.ord.k === 'load' && c.ord.id === u.id)) return;
+    delete u.lift;
+    if (!u.cargo.length) return;
+    Game.order([u], { k: 'move', x: L.x, y: L.y, unload: 1 });
+    if (u.s === S.player) Game.emit('liftGo', u);
   },
 
   loadStep(u, o) {
