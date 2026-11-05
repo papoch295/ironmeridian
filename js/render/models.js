@@ -640,7 +640,9 @@ const Models = {
         if (lng) { this.R(ctx, 0.2, -0.025, 0.14, 0.026, G, null, 0.01); this.R(ctx, -0.07, -0.072, 0.15, 0.03, G, null, 0.012); this.glint(ctx, 0.07, -0.06, 0.008); this.R(ctx, -0.02, 0.008, 0.035, 0.04, G2, null, 0.006); }
         else {
           this.L(ctx, 0.17, -0.012, car ? 0.21 : 0.25, -0.012, G, 0.016);
-          if (car) this.R(ctx, 0.18, -0.025, 0.09, 0.026, G, null, 0.01); else this.R(ctx, 0.23, -0.022, 0.035, 0.02, G, null, 0.005);
+          if (car) this.R(ctx, 0.18, -0.025, opt.nvg ? 0.13 : 0.09, 0.026, G, null, 0.01); else this.R(ctx, 0.23, -0.022, 0.035, 0.02, G, null, 0.005);
+          // Special forces AK-12: red-dot sight on the top rail, IR laser module on the handguard.
+          if (opt.nvg) { this.R(ctx, -0.04, -0.058, 0.055, 0.03, G, null, 0.008); this.glint(ctx, 0.0, -0.046, 0.007); this.R(ctx, 0.07, -0.045, 0.045, 0.018, G2, null, 0.005); this.R(ctx, 0.11, -0.042, 0.012, 0.012, '#e8e2b8', null, 0.003, { noLine: true }); }
           this.P(ctx, [[-0.032, 0.008], [0.004, 0.008], [0.03, 0.055], [0.024, 0.088], [-0.004, 0.082], [-0.004, 0.052]], '#3a2b26');
           this.R(ctx, -0.045, -0.05, 0.045, 0.022, G, null, 0.008);
         }
@@ -668,8 +670,8 @@ const Models = {
     };
     const head0 = (hx, hy) => {
       if (!opt.mask && !east && opt.hat !== 'ghillie') this.O(ctx, hx - 0.012, hy + 0.012, 0.03, '#2a2c26', null, { noLine: true });
-      this.O(ctx, hx, hy, 0.06, opt.mask ? '#2b2f30' : SKIN, null, { noLine: true });
-      this.P(ctx, [[hx + 0.05, hy - 0.018], [hx + 0.074, hy + 0.01], [hx + 0.05, hy + 0.016]], opt.mask ? '#2b2f30' : SKIN, null, { noLine: true });
+      this.O(ctx, hx, hy, 0.06, opt.mask ? '#4b5046' : SKIN, null, { noLine: true });
+      this.P(ctx, [[hx + 0.05, hy - 0.018], [hx + 0.074, hy + 0.01], [hx + 0.05, hy + 0.016]], opt.mask ? '#4b5046' : SKIN, null, { noLine: true });
       if (opt.mask && fill) { ctx.fillStyle = SKIN; ctx.fillRect(hx + 0.012, hy - 0.024, 0.05, 0.024); }
       if (opt.hat === 'boonie') {
         this.S(ctx, [[hx - 0.06, hy - 0.025], [hx - 0.05, hy - 0.08], [hx + 0.04, hy - 0.085], [hx + 0.06, hy - 0.025]], helm, cam);
@@ -698,7 +700,12 @@ const Models = {
         this.O(ctx, hx + 0.052, hy + 0.045, 0.009, '#1b1d1a', null, { noLine: true });
         this.R(ctx, hx + 0.05, hy - 0.105, 0.04, 0.032, G, null, 0.008);
         this.R(ctx, hx + 0.056, hy - 0.072, 0.03, 0.03, G2, null, 0.006);
-        for (const [dx, dy2] of [[0.0, -0.062], [0.006, -0.03]]) {
+        if (east) {
+          // Eastern teams: single 1PN138-type monocular on a swing arm in front of the near eye, helmet side rail.
+          this.R(ctx, hx - 0.07, hy - 0.06, 0.1, 0.016, G2, null, 0.004);
+          this.R(ctx, hx + 0.058, hy - 0.048, 0.07, 0.034, G, null, 0.01);
+          this.R(ctx, hx + 0.122, hy - 0.044, 0.014, 0.026, '#7fe08c', null, 0.004, { noLine: true, hi: true });
+        } else for (const [dx, dy2] of [[0.0, -0.062], [0.006, -0.03]]) {
           this.R(ctx, hx + 0.058 + dx, hy + dy2, 0.06, 0.026, G, null, 0.008);
           this.R(ctx, hx + 0.112 + dx, hy + dy2 + 0.003, 0.012, 0.02, '#6fc3ff', null, 0.004, { noLine: true, hi: true });
         }
@@ -941,7 +948,7 @@ const Models = {
   // Eastern infantry models (missing types fall back to Models.m; soldier() already draws Ratnik kit for side E).
   mE: {
     // Spetsnaz: dark kit, balaclavas, suppressed AK-12 carbines, faction colour as armband.
-    seal(ctx, C) { this.squad(ctx, C, { dark: true, mask: true, weapon: 'carbine' }); this.pennant(ctx, C, 0.62, 0.3, 0.78); },
+    seal(ctx, C) { this.squad(ctx, C, { dark: true, mask: true, nvg: true, weapon: 'carbine' }); this.pennant(ctx, C, 0.62, 0.3, 0.78); },
     // VDV: D-10 canopy (rounder, deeper dome, olive) over the landing trooper, telnyashka stripes at the collar.
     para(ctx, C) {
       const pts = [[-0.5, -0.48], [-0.52, -0.74], [-0.26, -0.93], [0.26, -0.93], [0.52, -0.74], [0.5, -0.48], [0.22, -0.53], [0, -0.51], [-0.22, -0.53]];

@@ -37,6 +37,11 @@
   „Leicht“ landet die KI nur dort. Sieht der Spieler das beladene Schiff, kommt die Meldung „Landungsschiff … Kurs auf …“,
   beim Absetzen „… landet Truppen bei …“. Scheitert das Absetzen, fährt das Schiff mit den Truppen heim. Die KI baut ein
   Landungsschiff, wenn sie keines hat, und größere Länder starten wie der Spieler mit einem.
+- **Modelle im neuen Referenzstil:** West M2A3 Bradley, M1 Abrams (TUSK), AH-64E Apache, MQ-9B Reaper und
+  Spezialkräfte. Dazu jetzt ihre Ost-Gegenstücke: T-90M (Relikt-Reaktivpanzerung an Wanne, Seitenschürze und Turm,
+  Gitterschutz, PK-PAN-Panoramavisier, fernbedientes MG), BMP-3 (Staukästen, Schwimmschild, 100-mm- und 30-mm-Waffe,
+  Sozh-Visier), Ka-52M (GOES-451-Sichtkugel, Staubfilter, B-8-Raketenbehälter, Vitebsk-Behälter, 2A42-Kanone),
+  Orion (Satcom-Kuppel, Lufteinlass, Sensorkugel) und Spetsnaz (Nachtsicht-Monokular, Headset, AK-12 mit Visier).
 
 ## Beta 1.0 – 4. November 2026 (`v1.0-beta`)
 

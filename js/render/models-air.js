@@ -300,7 +300,6 @@ Object.assign(Models.mE, {
   // and rocket pods, twin endplate fins on the tailplane plus central fin, gun on the right side.
   ahelo(ctx, C) {
     const B = Col.adj(C.jet, -24), D = Col.adj(B, -8);
-    this.L(ctx, -0.05, 0.14, 0.62, 0.15, GUN, 0.026);
     this.P(ctx, [[-0.66, -0.08], [-0.8, -0.38], [-0.9, -0.39], [-0.91, -0.31], [-0.86, -0.06]], B);
     this.P(ctx, [[-0.79, 0.05], [-0.8, -0.18], [-0.88, -0.2], [-0.93, 0.06]], D);
     this.S(ctx, [[0.95, 0.06], [0.985, -0.02], [0.93, -0.085], [0.78, -0.125], [0.6, -0.225], [0.4, -0.275], [0.15, -0.275], [-0.1, -0.245], [-0.3, -0.145], [-0.6, -0.095], [-0.88, -0.075], [-0.88, 0.0], [-0.6, 0.02], [-0.3, 0.08], [-0.05, 0.155], [0.3, 0.165], [0.7, 0.145], [0.88, 0.11]], B);
@@ -308,22 +307,51 @@ Object.assign(Models.mE, {
     this.P(ctx, [[0.77, -0.115], [0.61, -0.225], [0.42, -0.265], [0.27, -0.255], [0.27, -0.115], [0.6, -0.1]], GLASS);
     this.ln(ctx, 0.5, -0.25, 0.5, -0.105, 'rgba(0,0,0,0.6)', 1.3); this.ln(ctx, 0.36, -0.26, 0.36, -0.11, 'rgba(0,0,0,0.6)', 1.3);
     this.glint(ctx, 0.6, -0.18); this.glint(ctx, 0.4, -0.22);
-    this.O(ctx, 0.72, 0.18, 0.05, C.dark); this.O(ctx, 0.755, 0.175, 0.02, GLASS, null, { noLine: true });
-    // Engines with exhaust boxes, coaxial mast.
+    // Canopy frame: door frames, armoured side panels with rivets, panel lines along the fuselage and tail boom.
+    this.ln(ctx, 0.27, -0.115, 0.77, -0.115, 'rgba(0,0,0,0.5)', 1.3);
+    this.R(ctx, 0.28, -0.1, 0.22, 0.12, Col.adj(B, 3), null, 0.012); this.airEdge(ctx, [[0.28, -0.1], [0.5, -0.1], [0.5, 0.02], [0.28, 0.02]]);
+    this.bolts(ctx, 0.3, 0.48, -0.085, 6); this.bolts(ctx, 0.3, 0.48, 0.005, 6);
+    this.ln(ctx, 0.2, -0.24, 0.2, 0.15); this.ln(ctx, -0.3, -0.14, -0.86, -0.07); this.ln(ctx, 0.25, 0.12, -0.2, 0.12, 'rgba(255,255,255,0.15)');
+    // GOES-451 sight turret under the nose: armoured ball with day and thermal windows.
+    this.L(ctx, 0.72, 0.1, 0.72, 0.13, C.dark, 0.03);
+    this.O(ctx, 0.72, 0.18, 0.062, '#2f3437');
+    this.R(ctx, 0.755, 0.145, 0.03, 0.032, GLASS, null, 0.006, { noLine: true }); this.R(ctx, 0.755, 0.19, 0.03, 0.03, GLASS, null, 0.006, { noLine: true });
+    this.glint(ctx, 0.768, 0.157, 0.008);
+    // Engines with dust-filter intakes and downward-turned exhaust boxes, coaxial mast with two hubs and pitch rods.
     this.S(ctx, [[0.17, -0.245], [0.11, -0.305], [-0.12, -0.315], [-0.32, -0.255], [-0.34, -0.19], [-0.1, -0.17], [0.14, -0.18]], Col.adj(B, 7));
-    this.O(ctx, 0.12, -0.25, 0.035, '#141716');
-    this.P(ctx, [[-0.27, -0.26], [-0.43, -0.25], [-0.45, -0.18], [-0.3, -0.185]], D);
-    this.R(ctx, 0.022, -0.585, 0.046, 0.3, C.dark, null, 0.01);
+    this.O(ctx, 0.12, -0.25, 0.045, '#3b4044');
+    if (this.pass === 'fill' && !this.small) { ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = this.lw; ctx.beginPath(); for (let k = -2; k <= 2; k++) { ctx.moveTo(0.12 + k * 0.016, -0.29); ctx.lineTo(0.12 + k * 0.016, -0.21); } ctx.stroke(); }
+    this.ln(ctx, -0.02, -0.31, -0.02, -0.175); this.bolts(ctx, -0.25, -0.05, -0.2, 5);
+    this.P(ctx, [[-0.27, -0.26], [-0.43, -0.25], [-0.47, -0.16], [-0.4, -0.15], [-0.3, -0.185]], D);
+    this.P(ctx, [[-0.47, -0.16], [-0.5, -0.12], [-0.43, -0.11], [-0.4, -0.15]], '#2a2d2c');
+    this.R(ctx, 0.022, -0.6, 0.046, 0.31, C.dark, null, 0.01);
+    for (const y of [-0.415, -0.6]) this.R(ctx, -0.035, y - 0.012, 0.16, 0.03, Col.adj(C.dark, 6), null, 0.012);
     this.R(ctx, -0.01, -0.5, 0.11, 0.035, Col.adj(C.dark, 8), null, 0.01);
-    // Stub wing, wingtip pod, Ataka tubes, rocket pod.
-    this.P(ctx, [[0.15, -0.02], [-0.22, -0.02], [-0.24, 0.015], [0.13, 0.015]], D);
-    this.R(ctx, -0.17, -0.065, 0.27, 0.05, Col.adj(B, 4), null, 0.025);
-    this.R(ctx, -0.14, 0.03, 0.3, 0.032, '#5c6345', null, 0.016);
-    this.R(ctx, -0.1, 0.07, 0.24, 0.06, '#4a4f3c', null, 0.03);
-    this.O(ctx, 0.14, 0.1, 0.024, '#2a2e26');
-    // Tailplane with near endplate fin.
+    for (const x of [0.0, 0.09]) this.L(ctx, x, -0.47, x, -0.4, '#1d2021', 0.01, { noOut: true });
+    // 2A42 30 mm cannon on its side mount: cradle, barrel and muzzle brake.
+    const cradle = [[-0.12, 0.11], [0.1, 0.11], [0.1, 0.16], [-0.12, 0.16]];
+    this.P(ctx, cradle, D); this.airEdge(ctx, cradle);
+    this.L(ctx, 0.1, 0.14, 0.62, 0.15, GUN, 0.02);
+    this.R(ctx, 0.58, 0.137, 0.06, 0.026, GUN, null, 0.006);
+    // Stub wing, Vitebsk wingtip pod with sensor windows, twin Vikhr tubes, B-8V20 rocket pod (tube mouths at the front).
+    const wing = [[0.15, -0.02], [-0.22, -0.02], [-0.24, 0.015], [0.13, 0.015]], vit = [[-0.15, -0.065], [0.08, -0.065], [0.1, -0.04], [0.08, -0.015], [-0.15, -0.015], [-0.17, -0.04]];
+    this.P(ctx, wing, Col.adj(B, -14)); this.airEdge(ctx, wing);
+    this.L(ctx, -0.03, -0.015, -0.03, -0.0, C.dark, 0.02);
+    this.P(ctx, vit, Col.adj(B, 6)); this.airEdge(ctx, vit);
+    this.O(ctx, 0.08, -0.04, 0.012, GLASS, null, { noLine: true }); this.O(ctx, -0.15, -0.04, 0.012, GLASS, null, { noLine: true });
+    this.L(ctx, -0.02, 0.012, -0.02, 0.06, C.dark, 0.018);
+    for (const y of [0.034, 0.062]) { this.R(ctx, -0.14, y - 0.013, 0.3, 0.026, '#5c6345', null, 0.013); this.R(ctx, 0.15, y - 0.013, 0.02, 0.026, '#2b2f26', null, 0.004); }
+    this.L(ctx, -0.04, 0.012, -0.04, 0.09, C.dark, 0.02);
+    const pod = [[-0.14, 0.13], [-0.13, 0.165], [0.13, 0.165], [0.15, 0.13], [0.13, 0.085], [-0.13, 0.085]];
+    this.P(ctx, pod, '#4a4f3c'); this.airEdge(ctx, pod);
+    this.ln(ctx, -0.08, 0.088, -0.08, 0.162); this.ln(ctx, 0.06, 0.088, 0.06, 0.162);
+    this.E(ctx, 0.142, 0.125, 0.013, 0.036, '#2a2e26');
+    if (this.pass === 'fill' && !this.small) { ctx.fillStyle = '#0e100f'; for (const y of [0.103, 0.125, 0.147]) { ctx.beginPath(); ctx.arc(0.144, y, 0.006, 0, Math.PI * 2); ctx.fill(); } }
+    // Blade antennas under the boom, tailplane with near endplate fin.
+    this.P(ctx, [[-0.42, 0.03], [-0.45, 0.08], [-0.47, 0.08], [-0.46, 0.02]], D);
     this.P(ctx, [[-0.66, -0.05], [-0.9, -0.06], [-0.92, -0.02], [-0.68, -0.01]], Col.adj(B, 4));
     this.P(ctx, [[-0.82, 0.07], [-0.83, -0.16], [-0.9, -0.175], [-0.95, 0.08]], Col.adj(B, 6));
+    this.ln(ctx, -0.86, -0.15, -0.9, 0.06);
     this.band(ctx, C, -0.885, -0.33, 0.08, 0.055);
     this.roundel(ctx, C, -0.48, -0.05, 0.042);
   },
@@ -455,9 +483,25 @@ Object.assign(Models.mE, {
     this.P(ctx, [[0.14, -0.07], [0.06, -0.38], [-0.05, -0.38], [-0.08, -0.07]], D);
     this.P(ctx, [[-0.56, -0.03], [-0.74, -0.3], [-0.84, -0.3], [-0.78, -0.03]], D);
     this.S(ctx, [[0.84, 0.0], [0.78, -0.07], [0.5, -0.1], [0.1, -0.09], [-0.3, -0.06], [-0.76, -0.03], [-0.86, 0.0], [-0.76, 0.04], [-0.3, 0.07], [0.1, 0.09], [0.5, 0.085], [0.78, 0.055]], B);
+    // Nose cap seam, small dorsal satcom dome, blade antennas, NACA engine intake and exhaust ahead of the propeller.
+    this.ln(ctx, 0.72, -0.075, 0.72, 0.07, 'rgba(0,0,0,0.45)');
+    this.S(ctx, [[0.62, -0.085], [0.56, -0.135], [0.44, -0.145], [0.36, -0.12], [0.34, -0.09]], Col.adj(B, 5));
+    this.ln(ctx, 0.58, -0.11, 0.38, -0.115, 'rgba(255,255,255,0.2)');
+    this.P(ctx, [[0.26, -0.09], [0.22, -0.16], [0.2, -0.16], [0.21, -0.088]], D);
+    this.P(ctx, [[0.3, 0.085], [0.27, 0.13], [0.25, 0.13], [0.25, 0.088]], D);
+    this.P(ctx, [[-0.3, -0.06], [-0.36, -0.1], [-0.5, -0.095], [-0.55, -0.05]], Col.adj(B, -4));
+    this.P(ctx, [[-0.31, -0.064], [-0.35, -0.09], [-0.37, -0.09], [-0.35, -0.06]], '#1d2124');
+    this.R(ctx, -0.82, -0.03, 0.06, 0.06, '#3a3c3a', null, 0.012);
     this.ln(ctx, 0.8, 0.0, -0.8, 0.0, 'rgba(255,255,255,0.14)');
-    this.O(ctx, 0.7, 0.1, 0.05, '#2a2e30'); this.O(ctx, 0.73, 0.1, 0.028, GLASS); this.glint(ctx, 0.74, 0.09, 0.01);
+    this.ln(ctx, -0.6, -0.03, -0.6, 0.04); this.ln(ctx, 0.1, -0.085, 0.1, 0.085);
+    // Sensor turret on a short mount under the nose: ball with two windows.
+    this.L(ctx, 0.7, 0.06, 0.7, 0.08, C.dark, 0.03);
+    this.O(ctx, 0.7, 0.11, 0.056, '#2a2e30');
+    this.R(ctx, 0.725, 0.08, 0.03, 0.03, GLASS, null, 0.006, { noLine: true }); this.R(ctx, 0.725, 0.118, 0.03, 0.026, GLASS, null, 0.006, { noLine: true });
+    this.glint(ctx, 0.738, 0.09, 0.009);
     this.airWing(ctx, [[0.15, -0.04], [0.02, 0.36], [-0.1, 0.36], [-0.08, -0.04]], B);
+    // Aileron and flap hinge lines, an empty hardpoint pylon.
+    this.ln(ctx, -0.06, 0.08, -0.1, 0.34); this.R(ctx, -0.02, 0.17, 0.1, 0.028, '#4a5054', null, 0.01);
     this.band(ctx, C, -0.82, -0.28, 0.09, 0.05);
     this.roundel(ctx, C, -0.3, 0.0, 0.04);
   },

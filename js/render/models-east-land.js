@@ -272,24 +272,72 @@ Object.assign(Models.mE, {
   },
 
   // ---------- Tracked vehicles ----------
-  // BMP-3 (7.14 m, 2.3 m): flat low hull, long glacis with trim vane, turret mid-hull with short 100 mm 2A70 and coaxial 30 mm 2A72.
+  // BMP-3 (7.14 m, 2.3 m), drawn like the Western reference models: long flat hull with a shallow glacis carrying the
+  // folded trim vane, fender stowage bins, deep side skirt with panel seams over 6 road wheels (front idler, rear
+  // sprocket), tall rear doors with steps, bow machine guns in the nose corners, two-man turret mid-hull with the
+  // short 100 mm 2A70 above the coaxial 30 mm 2A72, Sozh gunner's sight, commander's sight, IR lamp, smoke dischargers.
   ifv(ctx, C) {
-    this.e_bmp3(ctx, C);
-    this.ao(ctx, -0.32, 0.3, -0.13, 0.035);
-    this.P(ctx, [[-0.32, -0.13], [-0.34, -0.2], [-0.28, -0.27], [0.08, -0.29], [0.22, -0.25], [0.3, -0.18], [0.28, -0.13]], C.body);
-    this.P(ctx, [[-0.28, -0.27], [-0.24, -0.295], [0.08, -0.312], [0.24, -0.27], [0.22, -0.25], [0.08, -0.29]], Col.adj(C.body, 9));
-    this.R(ctx, 0.25, -0.24, 0.08, 0.09, C.dark, null, 0.01);
-    this.barrel(ctx, 0.3, -0.215, 1.0, -0.22, 0.036);
-    this.R(ctx, 0.96, -0.24, 0.06, 0.04, GUN, null, 0.006);
-    this.barrel(ctx, 0.3, -0.165, 1.04, -0.17, 0.015, { brake: 1 });
-    this.R(ctx, -0.16, -0.35, 0.08, 0.06, C.dark, null, 0.01); this.R(ctx, -0.11, -0.34, 0.02, 0.035, GLASS, null, 0.004);
-    this.R(ctx, 0.06, -0.33, 0.09, 0.045, C.dark, null, 0.008); this.R(ctx, 0.12, -0.325, 0.02, 0.025, GLASS, null, 0.003);
-    for (let i = 0; i < 3; i++) this.O(ctx, -0.24 + i * 0.05, -0.24, 0.015, C.dark, null, { noLine: true });
-    this.bolts(ctx, -0.26, 0.2, -0.155, 7);
-    this.stow(ctx, -0.84, -0.18, 0.2, 0.045, 1);
-    this.mark(ctx, -0.42, 0.035, '214', 0.05);
-    this.antenna(ctx, -0.3, -0.27, 0.42);
-    this.pennant(ctx, C, -0.78, -0.13, 0.3);
+    const b = C.body, top = Col.adj(b, 9), dk = Col.adj(b, -10);
+    this.tracks(ctx, [[-0.88, 0.16], [-0.85, 0.09], [-0.76, 0.06], [0.7, 0.06], [0.81, 0.08], [0.86, 0.12], [0.8, 0.22], [0.64, 0.3], [-0.64, 0.3], [-0.82, 0.25]],
+      [-0.58, -0.35, -0.12, 0.11, 0.34, 0.57], 0.21, 0.085, [-0.8, 0.16, 0.07], [0.79, 0.13, 0.066]);
+    // Hull: tall rear with doors, long flat roof, shallow glacis to a pointed bow.
+    this.P(ctx, [[-0.9, 0.06], [-0.92, -0.17], [-0.88, -0.2], [0.3, -0.2], [0.88, -0.07], [0.94, -0.02], [0.9, 0.05], [0.8, 0.07]], b);
+    this.topFace(ctx, C, -0.88, 0.32, -0.2, 0.024);
+    this.P(ctx, [[0.3, -0.2], [0.33, -0.224], [0.92, -0.085], [0.88, -0.07]], top);
+    // Folded trim vane on the glacis (ribbed board), driver's periscopes.
+    this.P(ctx, [[0.42, -0.19], [0.86, -0.085], [0.89, -0.055], [0.45, -0.162]], Col.adj(b, -6));
+    for (let k = 1; k < 5; k++) { const x = 0.42 + k * 0.088; this.ln(ctx, x, -0.19 + (x - 0.42) * 0.239, x + 0.008, -0.162 + (x - 0.45) * 0.24); }
+    for (let i = 0; i < 3; i++) this.R(ctx, 0.3 + i * 0.045, -0.236 + i * 0.008, 0.035, 0.02, C.dark, null, 0.004);
+    this.R(ctx, 0.32, -0.232, 0.018, 0.01, GLASS, null, 0.002, { noLine: true });
+    // Rear doors with vision blocks and steps, exhaust on the hull side.
+    this.ln(ctx, -0.88, -0.19, -0.88, 0.04, 'rgba(0,0,0,0.5)');
+    this.R(ctx, -0.94, -0.06, 0.06, 0.02, dk, null, 0.004);
+    this.R(ctx, -0.94, 0.0, 0.06, 0.02, dk, null, 0.004);
+    this.exhaust(ctx, -0.7, -0.17, 0.12, 0.045);
+    // Fender stowage bins along the upper hull side.
+    for (const [x, w] of [[-0.54, 0.22], [-0.3, 0.22], [-0.06, 0.2], [0.16, 0.16]]) {
+      this.R(ctx, x, -0.185, w, 0.085, Col.adj(b, -3), null, 0.01);
+      this.ln(ctx, x + 0.01, -0.17, x + w - 0.01, -0.17, 'rgba(255,255,255,0.18)');
+      this.R(ctx, x + w * 0.4, -0.155, w * 0.2, 0.014, dk, null, 0.004);
+    }
+    // Side skirt: steel panels with seams, handles and bolts; rubber flap below.
+    this.P(ctx, [[-0.88, -0.09], [0.72, -0.09], [0.84, -0.06], [0.88, 0.0], [0.84, 0.1], [-0.88, 0.1]], Col.adj(b, -6));
+    this.ln(ctx, -0.88, -0.072, 0.84, -0.072, 'rgba(255,255,255,0.18)');
+    for (const x of [-0.58, -0.28, 0.02, 0.32, 0.6]) this.ln(ctx, x, -0.09, x, 0.1);
+    for (const x of [-0.46, -0.16, 0.14, 0.44]) this.R(ctx, x, -0.04, 0.06, 0.016, dk, null, 0.005);
+    this.bolts(ctx, -0.85, 0.8, 0.07, 18);
+    this.R(ctx, -0.88, 0.09, 1.7, 0.026, '#262a22', null, 0.006);
+    // Bow machine gun in the near nose corner, headlight, tow cable.
+    this.O(ctx, 0.84, -0.04, 0.024, C.dark); this.L(ctx, 0.85, -0.04, 0.97, -0.045, GUN, 0.014);
+    this.light(ctx, 0.74, -0.11);
+    this.tow(ctx, -0.84, -0.095, -0.3, -0.095);
+    this.stow(ctx, -0.86, -0.25, 0.22, 0.045, 1);
+    // Turret ring shadow, turret body and roof.
+    this.ao(ctx, -0.34, 0.32, -0.2, 0.035);
+    this.P(ctx, [[-0.32, -0.2], [-0.37, -0.26], [-0.31, -0.33], [0.1, -0.35], [0.24, -0.32], [0.33, -0.26], [0.31, -0.2]], b);
+    this.P(ctx, [[-0.31, -0.33], [-0.27, -0.356], [0.1, -0.374], [0.26, -0.34], [0.24, -0.32], [0.1, -0.35]], top);
+    this.P(ctx, [[0.1, -0.35], [0.24, -0.32], [0.33, -0.26], [0.31, -0.2], [0.2, -0.22], [0.14, -0.3]], Col.adj(b, -4));
+    this.ln(ctx, -0.36, -0.255, 0.18, -0.255);
+    this.bolts(ctx, -0.3, 0.1, -0.225, 8);
+    // Turret side stowage box and IR searchlight.
+    this.R(ctx, -0.3, -0.31, 0.16, 0.05, Col.adj(b, -6), null, 0.01);
+    this.O(ctx, -0.04, -0.29, 0.032, C.dark); this.O(ctx, -0.03, -0.29, 0.02, '#5a2a26', null, { noLine: true });
+    this.smoke(ctx, C, 0.05, -0.32, 3, -0.5, 0.03);
+    // 100 mm 2A70 (short, thick, muzzle collar) above the coaxial 30 mm 2A72 (long, slim, muzzle brake), mantlet.
+    this.R(ctx, 0.29, -0.31, 0.08, 0.11, dk, null, 0.012);
+    this.barrel(ctx, 0.35, -0.28, 0.92, -0.285, 0.042);
+    this.R(ctx, 0.88, -0.307, 0.07, 0.044, GUN, null, 0.008);
+    this.R(ctx, 0.6, -0.3, 0.02, 0.03, Col.adj(GUN, 12), null, 0.004);
+    this.barrel(ctx, 0.35, -0.225, 1.06, -0.23, 0.017, { brake: 1 });
+    // Gunner's Sozh sight box, commander's cupola with sight, antenna.
+    this.R(ctx, 0.04, -0.43, 0.11, 0.07, top, null, 0.012);
+    this.R(ctx, 0.1, -0.42, 0.04, 0.035, GLASS, null, 0.004); this.glint(ctx, 0.11, -0.41, 0.007);
+    this.E(ctx, -0.17, -0.365, 0.08, 0.018, top);
+    this.R(ctx, -0.22, -0.43, 0.1, 0.065, top, null, 0.014);
+    this.R(ctx, -0.16, -0.418, 0.028, 0.035, GLASS, null, 0.004); this.glint(ctx, -0.15, -0.408, 0.006);
+    this.mark(ctx, -0.5, 0.0, '214', 0.06);
+    this.antenna(ctx, -0.28, -0.35, 0.42);
+    this.pennant(ctx, C, -0.8, -0.26, 0.3);
   },
   // 2S25 Sprut-SD (7.08 m hull, 9.77 m with gun): very low BMD-3 boat hull, 7 small road wheels with exposed return rollers,
   // big flat turret with long 125 mm 2A75 smoothbore.
@@ -319,49 +367,101 @@ Object.assign(Models.mE, {
     this.antenna(ctx, -0.42, -0.33, 0.42);
     this.pennant(ctx, C, -0.52, -0.33, 0.28);
   },
-  // T-90M Proryv (6.86 m hull, 9.53 m with gun, 2.23 m): low hull, flat dome turret with Relikt ERA wedges, rear bustle with slat
-  // cage, 125 mm 2A46M-4 with thermal sleeve, 6 large road wheels (rear sprocket), short rubber skirt with ERA panels at the front.
+  // T-90M Proryv (6.86 m hull, 9.53 m with gun, 2.23 m), drawn like the Western reference models: low hull with a
+  // long upper glacis tiled with Relikt ERA, side skirt with two rows of ERA modules forward and slat armour over the
+  // engine bay, 6 large road wheels (rear sprocket), welded turret with a wedge of ERA boxes at the front, ERA modules
+  // along the side, slat cage round the bustle, Sosna-U sight, PK-PAN panoramic sight and remote Kord MG on the roof,
+  // 125 mm 2A46M-5 with thermal sleeve and bore evacuator, unditching log across the rear deck.
   mbt(ctx, C) {
-    this.tracks(ctx, [[-0.88, 0.16], [-0.85, 0.09], [-0.76, 0.06], [0.72, 0.06], [0.82, 0.08], [0.87, 0.13], [0.8, 0.22], [0.66, 0.3], [-0.64, 0.3], [-0.82, 0.25]],
-      [-0.56, -0.33, -0.1, 0.14, 0.37, 0.6], 0.2, 0.095, [-0.8, 0.16, 0.07], [0.8, 0.14, 0.062]);
-    this.P(ctx, [[-0.88, 0.06], [-0.9, -0.05], [-0.86, -0.08], [0.36, -0.08], [0.86, 0.0], [0.92, 0.04], [0.88, 0.08]], C.body);
-    this.topFace(ctx, C, -0.86, 0.38, -0.08, 0.022);
-    this.P(ctx, [[0.36, -0.08], [0.39, -0.1], [0.88, -0.018], [0.86, 0.0]], Col.adj(C.body, 9));
-    for (let x = 0.46; x < 0.84; x += 0.09) this.ln(ctx, x, -0.06 + (x - 0.36) * 0.16, x + 0.03, 0.0 + (x - 0.36) * 0.16 - 0.01);
-    // Skirt: rubber rear, ERA blocks at the front.
-    this.R(ctx, -0.86, -0.01, 1.08, 0.06, '#2f342a', null, 0.005);
-    this.P(ctx, [[0.22, -0.02], [0.82, -0.02], [0.88, 0.04], [0.86, 0.09], [0.22, 0.09]], C.body);
-    for (const x of [0.37, 0.52, 0.67]) this.ln(ctx, x, -0.01, x, 0.09);
-    // Bolted ERA bricks, rubber skirt fixings, tow cable, glacis headlight, unditching log and fuel drum at the rear.
-    for (const x of [0.29, 0.44, 0.59, 0.74]) this.bolts(ctx, x - 0.03, x + 0.03, 0.01, 2);
-    this.bolts(ctx, -0.84, 0.18, 0.005, 10);
-    this.tow(ctx, -0.8, -0.045, 0.3, -0.045);
-    this.light(ctx, 0.8, -0.03);
-    this.R(ctx, -0.9, -0.13, 0.34, 0.045, '#6b5332', null, 0.02, { camo: false });
-    if (this.pass === 'fill' && !this.small) for (const x of [-0.84, -0.64]) this.ln(ctx, x, -0.13, x, -0.085, 'rgba(20,20,20,0.8)', 1.6);
-    this.ao(ctx, -0.56, 0.4, -0.08, 0.035);
-    // Slat cage behind the bustle.
-    this.L(ctx, -0.84, -0.09, -0.84, -0.23, C.dark, 0.014); this.L(ctx, -0.84, -0.23, -0.6, -0.23, C.dark, 0.014);
-    for (const x of [-0.78, -0.72, -0.66]) this.L(ctx, x, -0.09, x, -0.23, C.dark, 0.009);
-    // Turret: low dome, ERA wedge forward.
-    this.P(ctx, [[-0.52, -0.08], [-0.62, -0.12], [-0.64, -0.19], [-0.58, -0.24], [-0.32, -0.27], [0.0, -0.275], [0.14, -0.26], [0.46, -0.15], [0.44, -0.11], [0.3, -0.09]], C.body);
-    // Turret dome and Relikt wedges seen slightly from above.
-    this.P(ctx, [[-0.58, -0.24], [-0.53, -0.272], [-0.3, -0.298], [0.02, -0.302], [0.18, -0.28], [0.48, -0.168], [0.46, -0.15], [0.14, -0.26], [0.0, -0.275], [-0.32, -0.27]], Col.adj(C.body, 9));
-    this.ln(ctx, 0.06, -0.27, 0.44, -0.12); this.ln(ctx, 0.22, -0.215, 0.24, -0.1); this.ln(ctx, 0.34, -0.175, 0.36, -0.1);
-    for (let i = 0; i < 4; i++) this.L(ctx, -0.04 + i * 0.035, -0.235, -0.01 + i * 0.035, -0.255, C.dark, 0.015);
-    this.R(ctx, 0.26, -0.2, 0.08, 0.07, C.dark, null, 0.01);
-    this.barrel(ctx, 0.3, -0.165, 1.32, -0.165, 0.03, { evac: 0.42 });
-    for (const x of [0.62, 0.9, 1.12]) this.ln(ctx, x, -0.18, x, -0.15, 'rgba(255,255,255,0.25)');
-    this.R(ctx, -0.16, -0.33, 0.08, 0.06, C.dark, null, 0.01); this.R(ctx, -0.1, -0.325, 0.02, 0.04, GLASS, null, 0.004);
-    this.glint(ctx, -0.09, -0.315, 0.008);
-    this.R(ctx, 0.04, -0.31, 0.08, 0.04, C.dark, null, 0.006); this.R(ctx, 0.09, -0.305, 0.02, 0.025, GLASS, null, 0.003);
-    this.R(ctx, -0.34, -0.315, 0.08, 0.045, C.dark, null, 0.008); this.L(ctx, -0.26, -0.3, -0.12, -0.3, GUN, 0.01);
-    this.bolts(ctx, -0.58, -0.08, -0.12, 7);
-    this.stow(ctx, -0.62, -0.285, 0.18, 0.045);
-    this.mark(ctx, -0.5, -0.125, '137');
-    this.exhaust(ctx, -0.5, -0.08, 0.12, 0.03);
-    this.antenna(ctx, -0.28, -0.27, 0.44);
-    this.pennant(ctx, C, -0.5, -0.25, 0.3);
+    const b = C.body, top = Col.adj(b, 9), dk = Col.adj(b, -10), era = Col.adj(b, 4);
+    this.tracks(ctx, [[-0.88, 0.15], [-0.85, 0.08], [-0.76, 0.05], [0.74, 0.05], [0.84, 0.08], [0.88, 0.13], [0.81, 0.22], [0.67, 0.3], [-0.65, 0.3], [-0.82, 0.24]],
+      [-0.57, -0.34, -0.11, 0.12, 0.35, 0.58], 0.2, 0.094, [-0.8, 0.15, 0.072], [0.8, 0.13, 0.064]);
+    // Hull: vertical rear plate, low engine deck, long upper glacis to a blunt nose (upper surfaces seen from above).
+    this.P(ctx, [[-0.9, 0.04], [-0.92, -0.12], [-0.88, -0.16], [0.32, -0.16], [0.88, -0.05], [0.93, -0.01], [0.9, 0.04]], b);
+    this.topFace(ctx, C, -0.88, 0.34, -0.16, 0.024);
+    this.P(ctx, [[0.32, -0.16], [0.35, -0.186], [0.92, -0.068], [0.88, -0.05]], top);
+    // Relikt bricks on the glacis: seams across the plate, a bolt on each brick.
+    for (let k = 1; k < 6; k++) {
+      const x = 0.35 + k * 0.095;
+      this.ln(ctx, x, -0.186 + (x - 0.35) * 0.207, x - 0.03, -0.16 + (x - 0.35) * 0.196);
+      this.bolts(ctx, x - 0.05, x - 0.05, -0.178 + (x - 0.4) * 0.205, 1);
+    }
+    this.ln(ctx, -0.88, -0.11, -0.88, 0.03);
+    // Unditching log strapped across the rear, exhaust louvre on the hull side, fender stowage boxes.
+    this.R(ctx, -0.93, -0.215, 0.36, 0.05, '#6b5332', null, 0.025, { camo: false });
+    if (this.pass === 'fill' && !this.small) {
+      for (const x of [-0.86, -0.65]) this.ln(ctx, x, -0.215, x, -0.165, 'rgba(20,20,20,0.85)', 1.6);
+      this.ln(ctx, -0.92, -0.19, -0.58, -0.19, 'rgba(255,230,180,0.18)');
+    }
+    this.R(ctx, -0.25, -0.15, 0.2, 0.08, Col.adj(b, -4), null, 0.008);
+    this.R(ctx, 0.0, -0.15, 0.17, 0.08, Col.adj(b, -4), null, 0.008);
+    this.ln(ctx, -0.15, -0.15, -0.15, -0.07); this.ln(ctx, 0.085, -0.15, 0.085, -0.07);
+    this.exhaust(ctx, -0.62, -0.14, 0.12, 0.05);
+    // Side skirt: slat armour over the engine bay, two rows of ERA modules forward, rubber flap below.
+    this.R(ctx, -0.88, -0.065, 0.6, 0.17, '#2f342a', null, 0.006);
+    this.slats(ctx, C, -0.88, -0.29, -0.06, 0.1, 8);
+    this.P(ctx, [[-0.28, -0.065], [0.72, -0.065], [0.85, -0.045], [0.9, 0.02], [0.86, 0.12], [-0.28, 0.12]], b);
+    for (let r = 0; r < 2; r++) for (let i = 0; i < 9; i++) {
+      const x = -0.27 + i * 0.112, y = -0.058 + r * 0.088;
+      if (x + 0.104 > (r ? 0.86 : 0.8)) continue;
+      this.R(ctx, x, y, 0.104, 0.082, Col.adj(era, r ? -3 : 2), null, 0.008);
+      this.bolts(ctx, x + 0.02, x + 0.084, y + 0.016, 2);
+    }
+    this.ln(ctx, -0.28, 0.12, 0.86, 0.12, 'rgba(0,0,0,0.5)');
+    this.P(ctx, [[0.8, -0.058], [0.85, -0.045], [0.89, 0.02], [0.8, 0.02]], era);
+    this.R(ctx, -0.88, 0.1, 0.6, 0.03, '#262a22', null, 0.006);
+    this.tow(ctx, -0.27, -0.09, 0.3, -0.09);
+    this.light(ctx, 0.84, -0.085);
+    // Turret ring shadow, bustle with slat cage round it.
+    this.ao(ctx, -0.6, 0.46, -0.16, 0.035);
+    this.P(ctx, [[-0.56, -0.165], [-0.76, -0.17], [-0.78, -0.265], [-0.56, -0.285]], dk);
+    this.slats(ctx, C, -0.84, -0.56, -0.3, -0.15, 6);
+    this.L(ctx, -0.84, -0.3, -0.84, -0.15, C.dark, 0.014);
+    // Turret: welded body, roof seen from above.
+    this.P(ctx, [[-0.5, -0.16], [-0.6, -0.17], [-0.62, -0.25], [-0.56, -0.3], [0.12, -0.315], [0.3, -0.285], [0.5, -0.2], [0.48, -0.16]], b);
+    this.P(ctx, [[-0.56, -0.3], [-0.52, -0.326], [0.1, -0.34], [0.3, -0.306], [0.3, -0.285], [0.12, -0.315]], top);
+    // Frontal ERA wedge (boxes with seams and bolts) and a row of ERA modules along the turret side.
+    this.P(ctx, [[0.13, -0.31], [0.3, -0.284], [0.52, -0.2], [0.5, -0.158], [0.28, -0.16], [0.13, -0.2]], era);
+    this.P(ctx, [[0.13, -0.31], [0.3, -0.284], [0.33, -0.305], [0.15, -0.333]], Col.adj(era, 7));
+    for (const [x0, y0] of [[0.22, -0.298], [0.33, -0.262], [0.43, -0.228]]) this.ln(ctx, x0, y0, x0 + 0.01, -0.16);
+    this.ln(ctx, 0.13, -0.235, 0.5, -0.18);
+    this.bolts(ctx, 0.17, 0.46, -0.205, 4);
+    for (let i = 0; i < 4; i++) {
+      const x = -0.3 + i * 0.105;
+      this.R(ctx, x, -0.275, 0.098, 0.075, Col.adj(era, -2), null, 0.008);
+      this.bolts(ctx, x + 0.02, x + 0.078, -0.26, 2);
+    }
+    this.ln(ctx, -0.6, -0.19, 0.13, -0.19);
+    // Snorkel tube stowed along the turret rear, Tucha smoke dischargers above the ERA.
+    this.L(ctx, -0.6, -0.215, -0.33, -0.215, Col.adj(b, -6), 0.034);
+    for (const x of [-0.55, -0.4]) this.ln(ctx, x, -0.232, x, -0.198, 'rgba(20,20,20,0.85)', 1.6);
+    this.smoke(ctx, C, -0.12, -0.3, 4, -0.5, 0.03);
+    // 125 mm 2A46M-5: mantlet, thick base sleeve, bore evacuator, thermal sleeve with clamps, muzzle reference unit.
+    const gy = -0.215;
+    this.R(ctx, 0.46, gy - 0.04, 0.08, 0.08, Col.adj(b, -8), null, 0.01);
+    this.L(ctx, 0.52, gy, 1.3, gy, Col.adj(b, -4), 0.03);
+    this.L(ctx, 0.53, gy, 0.66, gy, Col.adj(b, -4), 0.046);
+    this.P(ctx, [[0.74, gy - 0.022], [0.77, gy - 0.036], [0.88, gy - 0.036], [0.91, gy - 0.022], [0.91, gy + 0.022], [0.88, gy + 0.036], [0.77, gy + 0.036], [0.74, gy + 0.022]], Col.adj(b, -4));
+    for (const x of [0.68, 1.0, 1.15]) this.R(ctx, x, gy - 0.02, 0.016, 0.04, dk, null, 0.004);
+    this.R(ctx, 1.27, gy - 0.02, 0.04, 0.04, Col.adj(b, -8), null, 0.006);
+    this.R(ctx, 1.22, gy - 0.042, 0.03, 0.02, dk, null, 0.004);
+    // Gunner's Sosna-U sight with armoured doors on the roof front.
+    this.R(ctx, 0.04, -0.395, 0.11, 0.07, top, null, 0.01);
+    this.R(ctx, 0.1, -0.385, 0.04, 0.035, GLASS, null, 0.004); this.glint(ctx, 0.11, -0.375, 0.007);
+    // Commander's cupola with the PK-PAN panoramic sight on a post and the remote Kord MG.
+    this.E(ctx, -0.2, -0.33, 0.09, 0.02, top);
+    this.R(ctx, -0.26, -0.375, 0.12, 0.05, top, null, 0.014);
+    for (let i = 0; i < 3; i++) this.R(ctx, -0.25 + i * 0.036, -0.363, 0.024, 0.018, GLASS, null, 0.003);
+    this.L(ctx, -0.08, -0.34, -0.08, -0.4, C.dark, 0.026);
+    this.R(ctx, -0.135, -0.475, 0.11, 0.08, top, null, 0.014);
+    this.R(ctx, -0.06, -0.46, 0.03, 0.05, GLASS, null, 0.005); this.glint(ctx, -0.05, -0.445, 0.007);
+    this.R(ctx, -0.42, -0.43, 0.08, 0.055, '#3a4048', null, 0.008);
+    this.L(ctx, -0.35, -0.41, -0.16, -0.41, '#2a3038', 0.013);
+    this.R(ctx, -0.4, -0.455, 0.035, 0.03, '#3a4048', null, 0.005);
+    this.L(ctx, -0.38, -0.375, -0.38, -0.33, C.dark, 0.02);
+    this.mark(ctx, -0.55, -0.235, '137');
+    this.antenna(ctx, -0.5, -0.31, 0.44);
+    this.pennant(ctx, C, -0.6, -0.3, 0.3);
   },
   // 2S19M2 Msta-S (7.15 m hull, 11.9 m with gun, 3 m): T-80/T-72 running gear (6 wheels, 5 return rollers), huge box turret,
   // long 152 mm 2A64 with bore evacuator and multi-baffle brake, remote 12.7 mm on the cupola.
