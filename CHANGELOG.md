@@ -1,6 +1,8 @@
 # Änderungsprotokoll – Iron Meridian
 
-## Nach Beta 1.1 (unveröffentlicht)
+## Beta 1.2 – 5. November 2026 (`v1.2-beta`)
+
+Neuer Abgabestand für die Uni (ersetzt `v1.1-beta`): KI-Feinschliff und Leistungsanzeige für den Handy-Test.
 
 - **Weniger KI-Ansturm am Start:** Die KI rekrutiert in gleichmäßigem Takt statt in allen Provinzen auf einmal, mit
   Mobilmachung in den ersten Minuten; Einheiten in Produktion zählen bei Limit und Unterhalt mit.

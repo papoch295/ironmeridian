@@ -1,7 +1,7 @@
 {
   "name": "Iron Meridian",
   "short_name": "Iron Meridian",
-  "description": "Globales Echtzeit-Strategiespiel mit Pause (Beta 1.1).",
+  "description": "Globales Echtzeit-Strategiespiel mit Pause (Beta 1.2).",
   "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "landscape",
