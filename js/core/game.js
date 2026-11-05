@@ -226,7 +226,7 @@ const Game = {
     const air = { ahelo: p >= 4 ? f(1) : 0, thelo: p >= 3 ? 1 : 0, jet: f(Math.floor(p / 3)), tplane: p >= 5 ? 1 : 0, bomber: p >= 9 ? 1 : 0, uav: p >= 4 ? 1 : 0 };
     for (const t in air) for (let n = 0; n < air[t]; n++) this.spawnAt(t, side, cap.id);
     if (coastal) {
-      const sea = { corv: p >= 2 ? 1 : 0, dd: p >= 4 ? Math.max(1, f(Math.floor(p / 4))) : 0, sub: p >= 3 ? 1 : 0, cv: p >= 9 ? 1 : 0, ssbn: p >= 9 ? 1 : 0, lst: p >= 6 && side === this.state.player ? 1 : 0 };
+      const sea = { corv: p >= 2 ? 1 : 0, dd: p >= 4 ? Math.max(1, f(Math.floor(p / 4))) : 0, sub: p >= 3 ? 1 : 0, cv: p >= 9 ? 1 : 0, ssbn: p >= 9 ? 1 : 0, lst: p >= 6 ? 1 : 0 };
       for (const t in sea) for (let n = 0; n < sea[t]; n++) this.spawn(t, side, coastal.seaPt[0] + rnd.range(-0.2, 0.2), coastal.seaPt[1] + rnd.range(-0.2, 0.2));
     }
     if (p >= 4) this.state.prov[cap.id].msl.srbm = Math.max(1, Math.floor(p / 3));

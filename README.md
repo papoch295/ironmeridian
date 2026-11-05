@@ -114,6 +114,6 @@ der Bewegung nur verschoben und erst im Stillstand neu gezeichnet; Touch-Geräte
 - Balancing ist auf „Leicht“ und „Normal“ abgestimmt; „Schwer“ wird in späteren Versionen verfeinert.
 - Noch nicht enthalten (geplant ab Beta 2): Diplomatie, Technologiebaum, Eskalation, Szenarien mit Briefing, Musik, Android-App.
 - **Weitere Einheiten in Planung** (`ROADMAP.md` Abschnitt 3.1): u. a. Erdkampfflugzeug, Fregatte, EloKa-Fahrzeug,
-  Gefechtsstand und Marineinfanterie. Die KI nutzt das Landungsschiff noch nicht für eigene Landungen.
+  Gefechtsstand und Marineinfanterie.
 
 Weitere Planung: [`ROADMAP.md`](ROADMAP.md).

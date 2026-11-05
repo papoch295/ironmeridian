@@ -660,6 +660,11 @@ const UI = {
       }
       this.groupSig = '';
     });
+    Game.on('aiLanding', ({ k, ev, x, y, pid }) => {
+      const msg = t(ev === 'sail' ? 'evLandingSail' : 'evLanding', countryName(Geo.byKey[k]), pName(pid));
+      this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
+      Render.ping(x, y, 'attack');
+    });
     Game.on('aiRetreat', ({ k, x, y }) =>this.log(t('evRetreat', countryName(Geo.byKey[k])), 'good', x, y));
     Game.on('unloaded', (u) => this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));
     Game.on('noPath', () => this.toast(t('evNoPath'), 'bad'));

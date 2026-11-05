@@ -31,6 +31,12 @@
   Rückzug und Rückzug beendet, Verluste nach Typ, ungeordneter Rückzug, Abschüsse und Verstärkung aus einer
   Kampfgruppen-Vorlage (statt einer Zeile je Einheit). Antippen springt zur Armee. Auf Handys im Querformat stehen die
   Meldungen jetzt neben der Schnellleiste statt verdeckt darunter.
+- **KI-Landungen:** Die KI setzt Landungsschiffe für eigene Landungsoperationen ein, getrennt von den normalen
+  Offensiven. Ein Trupp aus bis zu 10 Plätzen schifft sich an der nächsten eigenen Küste ein, setzt an einer feindlichen
+  Küste ab und greift von dort in Phasen an, mit Rückzug bei hohen Verlusten. Inseln ohne Landweg haben Vorrang, auf
+  „Leicht“ landet die KI nur dort. Sieht der Spieler das beladene Schiff, kommt die Meldung „Landungsschiff … Kurs auf …“,
+  beim Absetzen „… landet Truppen bei …“. Scheitert das Absetzen, fährt das Schiff mit den Truppen heim. Die KI baut ein
+  Landungsschiff, wenn sie keines hat, und größere Länder starten wie der Spieler mit einem.
 
 ## Beta 1.0 – 4. November 2026 (`v1.0-beta`)
 

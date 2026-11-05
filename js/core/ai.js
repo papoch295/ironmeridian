@@ -43,6 +43,7 @@ const AI = {
       for (const o in prov) if (Game.hostile(k, o)) for (const pid of prov[o]) enemy.push(pid);
       if (!enemy.length && !S.units.some((u) => Game.hostile(k, u.s))) continue;
       this.economy(S, Dk, k, mine, mu);
+      this.landing(S, Dk, k, mine, enemy, mu, A);
       this.army(S, Dk, k, mine, enemy, mu, A);
       this.air(S, Dk, k, mine, enemy, mu);
       this.navy(S, Dk, k, enemy, mu);
@@ -125,8 +126,9 @@ const AI = {
       if (p != null) Object.assign(g, { pid: p, tx: Geo.provinces[p].x, ty: Geo.provinces[p].y, ret: Tactics.RETREAT, k: 'attack' });
       else if (O.ph === 'attack') g.ph = 'hold';
     }
-    // Units of a running offensive belong to their battle group and are not pulled into home defense.
+    // Units of a running offensive or landing belong to their battle group and are not pulled into home defense.
     const used = new Set(O.ph === 'wait' ? [] : O.groups.flatMap((g) => g.ids));
+    if (A.land && A.land.ids) A.land.ids.forEach((id) => used.add(id));
     const free = land.filter((u) => !u.ord || u.ord.ai === 'wave-done');
     for (const th of threatened.slice(0, 4)) {
       const p = Geo.provinces[th.pid];
@@ -283,6 +285,116 @@ const AI = {
     return scored.length ? scored[0].pid : null;
   },
 
+  // Amphibious landings with a landing ship, run apart from the regular offensives:
+  // plan (target coast, own embarkation coast, troops) → board → sail → land → attack in phases like a battle group.
+  // Islands that cannot be reached over land are preferred; on Easy only those are attacked from the sea.
+  // A loaded ship heading for the player's side raises a warning as soon as the player can see it.
+  LAND_COOLDOWN: 1.5, // × D.offEvery between two landings of one faction
+  landing(S, D, me, mine, enemy, mu, A) {
+    let L = A.land;
+    if (!L || L.ph === 'wait') {
+      if (S.t < D.grace || (L && S.t < L.t) || !enemy.length) return;
+      A.land = L = { ph: 'wait', t: S.t + 45 }; // next planning attempt, unless an operation starts now
+      const ships = mu.filter((u) => UNIT_TYPES[u.t].cap && UNIT_TYPES[u.t].dom === 'sea');
+      if (!ships.length) { this.buildLandingShip(S, me, mine); return; }
+      // An idle ship that still carries troops (failed landing) lets them off first.
+      for (const s of ships) if (!s.ord && s.cargo.length) Game.unload(s);
+      const ship = ships.find((u) => !u.cargo.length && !u.ord) || null;
+      if (!ship) return;
+      this.planLanding(S, D, me, mine, enemy, mu, A, ship);
+      return;
+    }
+    const ship = Game.unit(L.ship);
+    const end = (cool) => { A.land = { ph: 'wait', t: S.t + (cool ? D.offEvery * this.LAND_COOLDOWN : 60) }; };
+    if (L.ph === 'board') {
+      // Troops walk to the ship at the coast; it sails once everyone is aboard (or after a while with whoever is).
+      if (!ship) { end(false); return; }
+      const waiting = L.ids.map((id) => Game.unit(id)).filter((u) => u && !u.inside && u.ord && u.ord.k === 'load');
+      if (waiting.length && S.t < L.t) return;
+      if (ship.cargo.length < 2) { Game.unload(ship, true); end(false); return; }
+      L.ids = ship.cargo.slice();
+      L.ph = 'sail'; L.t = S.t + 300;
+      Game.order([ship], { k: 'move', x: L.sx, y: L.sy, unload: 1 });
+      return;
+    }
+    if (L.ph === 'sail') {
+      if (!ship) { end(true); return; } // sunk with everyone aboard
+      if (!L.warned && Game.hostile(me, S.player) && Game.allied(S.prov[L.pid].o, S.player) && Sim.sees(S.player, ship)) {
+        L.warned = true;
+        Game.emit('aiLanding', { k: me, ev: 'sail', x: ship.x, y: ship.y, pid: L.pid });
+      }
+      if (ship.cargo.length) {
+        // Still at sea. Arrived without a shore in reach, or took too long: land here if possible, otherwise
+        // sail home with the troops (they get off there, see the waiting phase).
+        if ((!ship.ord || S.t > L.t) && !Game.unload(ship)) { Game.order([ship], { k: 'move', x: L.hx, y: L.hy, unload: 1 }); end(true); }
+        if (ship.cargo.length) return;
+      }
+      // Landed: the troops attack the target in phases; the beachhead is their fallback point.
+      const g = { ids: L.ids.filter((id) => Game.unit(id)), side: me, ret: Tactics.RETREAT };
+      if (!g.ids.length) { end(true); return; }
+      const p = Geo.provinces[L.pid];
+      Tactics.task(g, 'attack', p.x, p.y, L.pid);
+      Object.assign(L, { ph: 'fight', g, t: S.t + 600 });
+      if (Game.hostile(me, S.player) && Game.allied(S.prov[L.pid].o, S.player))
+        Game.emit('aiLanding', { k: me, ev: 'land', x: ship.x, y: ship.y, pid: L.pid });
+      Game.order([ship], { k: 'move', x: L.hx, y: L.hy }); // the empty ship heads home
+      return;
+    }
+    if (L.ph === 'fight') {
+      const g = L.g;
+      g.ids = g.ids.filter((id) => Game.unit(id)); L.ids = g.ids;
+      Tactics.step(g);
+      if (!g.ids.length || g.ph === 'hold' || g.ph === 'done' || S.t > L.t) end(true);
+      return;
+    }
+    end(false); // unknown phase (older save): plan anew
+  },
+
+  // A faction with a shipyard and no landing ship orders one.
+  buildLandingShip(S, me, mine) {
+    const side = S.side[me];
+    if (side.m < 2500) return;
+    if (mine.some((pid) => S.prov[pid].q.some((q) => q.kind === 'unit' && UNIT_TYPES[q.key] && UNIT_TYPES[q.key].cap && UNIT_TYPES[q.key].dom === 'sea'))) return;
+    const pid = mine.find((p) => S.prov[p].b.shipyard && !S.prov[p].q.length && !Game.canQueue(p, 'unit', 'lst'));
+    if (pid !== undefined) Game.queue(pid, 'unit', 'lst');
+  },
+
+  planLanding(S, D, me, mine, enemy, mu, A, ship) {
+    const coastal = mine.filter((pid) => Geo.provinces[pid].seaPt);
+    const targets = enemy.filter((pid) => Geo.provinces[pid].seaPt);
+    if (!coastal.length || !targets.length) return;
+    const used = new Set(A.off && A.off.ph !== 'wait' ? A.off.groups.flatMap((g) => g.ids) : []);
+    const free = mu.filter((u) => !u.inside && !u.ord && !u.rout && !used.has(u.id) && UNIT_TYPES[u.t].dom === 'land' && Game.fits(ship, u));
+    if (free.length < 3) return;
+    // Candidate targets: the closest hostile coasts to our own coast; islands (no land route) come first.
+    const near = (p) => { let d = 1e18, best = null; for (const c of coastal) { const q = Geo.provinces[c], e = U.dist2(p.x, p.y, q.x, q.y); if (e < d) { d = e; best = c; } } return [best, Math.sqrt(d)]; };
+    const cand = targets.map((pid) => { const p = Geo.provinces[pid], [home, d] = near(p); return { pid, home, d }; })
+      .filter((c) => c.d < 40).sort((a, b) => a.d - b.d).slice(0, 4);
+    let pick = null;
+    for (const c of cand) {
+      const p = Geo.provinces[c.pid], h = Geo.provinces[c.home];
+      const island = !Path.find(h.x, h.y, p.x, p.y, 'land', Game.bell, 60000);
+      if (!island && (S.diff === 'easy' || Math.random() > 0.35)) continue;
+      if (!Path.find(ship.x, ship.y, p.seaPt[0], p.seaPt[1], 'sea', Game.bell)) continue;
+      pick = c; break;
+    }
+    if (!pick) return;
+    const h = Geo.provinces[pick.home], p = Geo.provinces[pick.pid];
+    // Landing party: front units and scouts nearest to the embarkation coast, one artillery piece at most.
+    const pool = free.filter((u) => U.dist(u.x, u.y, h.x, h.y) < 6).sort((a, b) => U.dist2(a.x, a.y, h.x, h.y) - U.dist2(b.x, b.y, h.x, h.y));
+    const R = Tactics.roles(pool), cap = UNIT_TYPES[ship.t].cap, party = [];
+    let seats = 0;
+    for (const u of R.front.concat(R.rec, R.arty.slice(0, 1))) {
+      const s = UNIT_TYPES[u.t].seat || 1;
+      if (seats + s > cap) continue;
+      party.push(u); seats += s;
+    }
+    if (party.length < 3) return;
+    if (!Game.autoLoad(party, [ship])) return;
+    A.land = { ph: 'board', ship: ship.id, ids: party.map((u) => u.id), pid: pick.pid, sx: p.seaPt[0], sy: p.seaPt[1],
+      hx: h.seaPt[0], hy: h.seaPt[1], t: S.t + 90 + U.dist(ship.x, ship.y, h.x, h.y) / 0.1, warned: false };
+  },
+
   air(S, D, me, mine, enemy, mu) {
     // Reconnaissance drones: a standing mission over the nearest enemy province they can reach.
     for (const d of mu) {
@@ -326,6 +438,7 @@ const AI = {
     const early = S.t < D.grace;
     for (const sh of ships) {
       const T = UNIT_TYPES[sh.t];
+      if (T.cap) continue; // landing ships are run by the landing operation (see landing)
       if (T.strike && sh.strikeCd <= 0 && !early && Math.random() < D.air) {
         const t = seen.find((u) => U.dist(u.x, u.y, sh.x, sh.y) < T.strike.r);
         if (t) Game.carrierStrike(sh, t.x, t.y);

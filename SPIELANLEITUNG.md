@@ -120,6 +120,10 @@ Bodentruppen schiffen sich an der Küste automatisch ein, sind auf See aber sehr
 **Landungsschiff** (Werft): Truppen und Fahrzeuge zusammen mit dem Schiff wählen, **Verladen**, dann **Transport nach**
 und das Ufer antippen. Transporthubschrauber und Transportflugzeuge funktionieren genauso.
 
+Auch die KI landet mit Landungsschiffen, am liebsten auf Inseln, die sie über Land nicht erreicht. Sehen deine
+Einheiten, Schiffe oder dein Radar ein beladenes Landungsschiff, meldet die Aufklärung das Ziel. Küsten mit eigenen
+Schiffen und Truppen zu sichern, lohnt sich deshalb, und ein versenktes Landungsschiff nimmt alle Truppen an Bord mit.
+
 ## 9. Auf dem Handy
 
 ![Handy im Querformat](docs/screenshots/06-handy-querformat.png)

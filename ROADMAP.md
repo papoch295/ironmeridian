@@ -182,7 +182,7 @@ Texte DE/EN und KI-Einbindung; bis zum Feature-Freeze (ca. 15. Nov.) sind realis
 | **Landungsschiff** | San-Antonio-Klasse / Iwan-Rogow | trägt eine ganze Kampfgruppe, landet an jeder Küste | Landungen als echte Mechanik (Inseln: Taiwan, Großbritannien, Japan) | P1 |
 
 **✔ Alle vier umgesetzt (4. Nov.).** Entschieden: Drohnen kommen vom **Flugplatz** (keine eigene Fabrik), Patriot / S-400
-ist eine **eigene Einheit** (Rüstungswerk Stufe 3). Offen für später: KI-Landungen mit dem Landungsschiff.
+ist eine **eigene Einheit** (Rüstungswerk Stufe 3). KI-Landungen mit dem Landungsschiff ✔ 5. Nov. (eigene Operation neben den Offensiven, Inseln zuerst, Vorwarnung).
 
 **Weitere Kandidaten (Beta 2):**
 
