@@ -43,4 +43,7 @@ Dieses Projekt ist ausschließlich das Spiel **IRON MERIDIAN – Globaler Konfli
   und `Saves.VERSION` sowie `v` in `Game.newGame` erhöhen; Provinz-Fingerabdrücke halten Stände bei Kartenänderungen ladbar.
 - Roadmap und Beta-Plan: `ROADMAP.md`. Git-Repository: github.com/papoch295/ironmeridian (Branch `main`), Web-Version
   über GitHub Pages: https://papoch295.github.io/ironmeridian/ (aktualisiert sich bei jedem Push).
+  Beta-2-Vorschau: https://papoch295.github.io/ironmeridian/beta2/ – Ordner `beta2/` auf `main`, erzeugt mit
+  `node tools/publish-beta2.js` aus dem Branch `beta2-transport` (nie von Hand ändern; eigene Spielstände/Cache über
+  `CHANNEL` in `js/save.js` und `CH` in `sw.js`).
 - Abgabe Beta 1 (Stand `v1.2-beta`, nur noch Fehlerbehebung): nur als Web-App, keine APK (Entscheidung 5. Nov.). APK über Capacitor erst in Beta 2.

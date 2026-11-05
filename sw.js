@@ -24,7 +24,8 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys()
-    .then((keys) => Promise.all(keys.filter((k) => k.startsWith('ironmeridian-') && k !== CACHE).map((k) => caches.delete(k))))
+    // Only our own cache family: the Beta 2 preview under beta2/ keeps its caches (ironmeridian-beta2-…).
+    .then((keys) => Promise.all(keys.filter((k) => /^ironmeridian-v\d+$/.test(k) && k !== CACHE).map((k) => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 

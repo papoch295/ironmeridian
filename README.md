@@ -6,7 +6,9 @@ Geführt wird nicht Einheit für Einheit, sondern mit **Armeen aus Kampfgruppen*
 Phasen ausführen.
 
 ## ▶ Jetzt spielen (Handy & Browser)
-**https://papoch295.github.io/ironmeridian/**
+**https://papoch295.github.io/ironmeridian/** (Beta 1.2, Abgabestand)
+
+Vorschau auf Beta 2 (in Arbeit, eigene Spielstände): **https://papoch295.github.io/ironmeridian/beta2/**
 
 Einfach auf dem Handy öffnen, am besten im Querformat. Über „Zum Startbildschirm hinzufügen“ (Android: Chrome-Menü,
 iPhone: Safari → Teilen) lässt es sich wie eine App starten. Nach dem ersten Öffnen läuft es auch offline.
