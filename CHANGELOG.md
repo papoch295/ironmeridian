@@ -2,6 +2,13 @@
 
 ## Nach Beta 1.1 (unveröffentlicht)
 
+- **Weniger KI-Ansturm am Start:** Die KI rekrutiert in gleichmäßigem Takt statt in allen Provinzen auf einmal, mit
+  Mobilmachung in den ersten Minuten; Einheiten in Produktion zählen bei Limit und Unterhalt mit.
+- **Weniger, stärkere Offensiven:** seltener, erst ab 8 Einheiten, höchstens 2 Länder eines Bündnisses gleichzeitig;
+  dazwischen kleine Aufklärungsvorstöße an der Front. Messwerte in `TESTPROTOKOLL.md` Abschnitt 11.
+- **Armee-Limit der KI −25 %** (Leicht 38, Normal 60, Schwer 128): Die KI bleibt etwa bei ihrer Startarmee und baut
+  vor allem Verluste nach (Bündniskrieg Normal höchstens ca. 80 statt 107 Feindeinheiten).
+
 - **Leistungsanzeige** für den Handy-Test: FPS, Rechenzeit und Einheitenzahl oben links, 60-Sekunden-Messung mit
   kopierbarem Bericht. Einstellungen → „Leistungsanzeige (FPS)“ oder Adresse mit `?fps`. Ablauf in `TESTPROTOKOLL.md`
   Abschnitt 10.

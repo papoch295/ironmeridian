@@ -42,7 +42,7 @@ const AI = {
       const enemy = [];
       for (const o in prov) if (Game.hostile(k, o)) for (const pid of prov[o]) enemy.push(pid);
       if (!enemy.length && !S.units.some((u) => Game.hostile(k, u.s))) continue;
-      this.economy(S, Dk, k, mine, mu);
+      this.economy(S, Dk, k, mine, mu, A);
       this.landing(S, Dk, k, mine, enemy, mu, A);
       this.army(S, Dk, k, mine, enemy, mu, A);
       this.air(S, Dk, k, mine, enemy, mu);
@@ -62,7 +62,7 @@ const AI = {
     return opts.length ? opts[0][0] : null;
   },
 
-  economy(S, D, me, mine, mu) {
+  economy(S, D, me, mine, mu, A) {
     const side = S.side[me];
     const cap = mine.find((pid) => Geo.provinces[pid].type === 'capital') ?? mine[0];
     if (cap === undefined) return;
@@ -82,7 +82,15 @@ const AI = {
     // Army size limit grows with the country's weight (D.cap was tuned for a whole bloc of about 12 power).
     // In a world war over a hundred countries recruit at once, so every army is kept at half that size.
     const ffa = S.mode === 'ffa' ? 0.5 : 1;
-    if (mu.length >= Math.max(4, Math.round(D.cap * Geo.byKey[me].power / 12 * ffa))) return;
+    // Units already in production count towards the limit and the upkeep, otherwise every province with a barracks
+    // would recruit from the starting money at the same moment (the "wave" at the start of a game).
+    let queued = 0, qm = 0, qo = 0;
+    for (const pid of mine) for (const q of S.prov[pid].q) if (q.kind === 'unit' && UNIT_TYPES[q.key]) { queued++; qm += UNIT_TYPES[q.key].cost.m; qo += UNIT_TYPES[q.key].cost.o; }
+    if (mu.length + queued >= Math.max(4, Math.round(D.cap * Geo.byKey[me].power / 12 * ffa))) return;
+    // Steady pace instead of bursts: one recruitment every few seconds, bigger countries faster, half pace while the
+    // country is still mobilising (first D.mob seconds of its war). Missiles below are not affected.
+    const pw = Geo.byKey[me].power, mob = S.t < (A.war0 ?? (A.war0 = S.t)) + D.mob ? 2 : 1;
+    let canRec = S.t >= (A.recT || 0);
     for (const pid of mine) {
       const pr = S.prov[pid];
       if (pr.q.length || pr.cap) continue;
@@ -92,7 +100,11 @@ const AI = {
       const key = this.pickWeighted(AI_MIX[b], (k) => !Game.canQueue(pid, 'unit', k));
       // Only recruit what the economy can keep paying for (net income stays positive with the new unit).
       const c = key && UNIT_TYPES[key].cost;
-      if (key && side.m - c.m > 500 && (!side.inc || (side.inc.m - c.m * UPKEEP.m > 0 && side.inc.o - c.o * UPKEEP.o > -2))) Game.queue(pid, 'unit', key);
+      if (canRec && key && side.m - c.m > 500 && (!side.inc || (side.inc.m - (c.m + qm) * UPKEEP.m > 0 && side.inc.o - (c.o + qo) * UPKEEP.o > -2))) {
+        Game.queue(pid, 'unit', key);
+        canRec = false;
+        A.recT = S.t + D.recGap * mob * (S.mode === 'ffa' ? 1.5 : 1) / (0.6 + 0.25 * pw);
+      }
       if (pr.b.silo && pr.msl.srbm < 3 && !Game.canQueue(pid, 'msl', 'srbm') && side.m > 3000) Game.queue(pid, 'msl', 'srbm');
       if (pr.b.silo >= 3 && pr.msl.icbm < 1 && S.diff === 'hard' && !Game.canQueue(pid, 'msl', 'icbm')) Game.queue(pid, 'msl', 'icbm');
       if (pr.b.lab && S.diff === 'hard' && (side.nukes || 0) < 2 && side.m > 9000 && !Game.canQueue(pid, 'nuke', 'nuke')) Game.queue(pid, 'nuke', 'nuke');
@@ -129,6 +141,7 @@ const AI = {
     // Units of a running offensive or landing belong to their battle group and are not pulled into home defense.
     const used = new Set(O.ph === 'wait' ? [] : O.groups.flatMap((g) => g.ids));
     if (A.land && A.land.ids) A.land.ids.forEach((id) => used.add(id));
+    this.probe(S, D, A, O, enemy, land, used);
     const free = land.filter((u) => !u.ord || u.ord.ai === 'wave-done');
     for (const th of threatened.slice(0, 4)) {
       const p = Geo.provinces[th.pid];
@@ -142,15 +155,45 @@ const AI = {
     for (const u of land) if (u.ord && u.ord.ai === 'wave' && !u.path && !u.tgt) u.ord.ai = 'wave-done';
   },
 
+  // Scouting raids between offensives keep the front alive without a swarm: every D.probe seconds one reconnaissance
+  // unit (or two light units) pushes into the nearest hostile province close by and comes back after 75 s.
+  // Starts at half the grace time, so the first minutes are not empty although the big offensives come later.
+  probe(S, D, A, O, enemy, land, used) {
+    const P = A.probe;
+    if (P && P.ids) {
+      const us = P.ids.map((id) => Game.byId.get(id)).filter(Boolean);
+      us.forEach((u) => used.add(u.id));
+      if (S.t >= P.back || !us.length) { Game.order(us, { k: 'move', x: P.hx, y: P.hy }); A.probe = { t: S.t + D.probe * (0.8 + 0.4 * Math.random()) }; }
+      return;
+    }
+    if (O.ph !== 'wait' || S.t < Math.max(D.grace * 0.5, P ? P.t : 0) || !enemy.length) return;
+    const idle = land.filter((u) => !u.ord && !used.has(u.id));
+    const rec = idle.filter((u) => u.t === 'recon'), light = idle.filter((u) => ['inf', 'lt', 'ifv', 'apc'].includes(u.t));
+    const party = rec.length ? rec.slice(0, 1) : light.length >= 4 ? light.slice(0, 2) : [];
+    A.probe = { t: S.t + 30 }; // retry soon when nothing fits
+    if (!party.length) return;
+    const [hx, hy] = Tactics.center(party), pid = this.nearestEnemy(enemy, { x: hx, y: hy });
+    if (pid == null || U.dist(hx, hy, Geo.provinces[pid].x, Geo.provinces[pid].y) > 8) return;
+    Game.order(party, { k: 'amove', x: Geo.provinces[pid].x, y: Geo.provinces[pid].y });
+    A.probe = { ids: party.map((u) => u.id), back: S.t + 75, hx, hy };
+    party.forEach((u) => used.add(u.id));
+  },
+
   // Offensives follow a fixed rhythm so the player can learn them: every D.offEvery seconds the troops first gather
   // at a staging province for D.gather seconds, then attack. The main axis keeps its direction until its target
   // falls (the next target is the one closest to it); a secondary axis hits a different target.
   // The force is split into battle groups of mixed roles instead of one swarm. Each group attacks in phases
   // (reconnaissance → artillery preparation → assault → hold) and breaks off when it has lost too much.
   // Between offensives the AI only defends. A gathering that the player's side can see raises a warning.
+  OFF_MIN: 8,
+  OFF_PARALLEL: 2,
   offensive(S, D, me, mine, enemy, land, heli, pool, O) {
     if (O.ph === 'wait') {
-      if (S.t < O.t || pool.length < 3) return;
+      if (S.t < O.t) return;
+      // Fewer but stronger offensives: a country attacks only with at least OFF_MIN free units (small ones defend and
+      // scout instead), and at most 2 countries of one alliance run an offensive at the same time.
+      const busy = Object.keys(S.ai).filter((o) => o !== me && S.team[o] === S.team[me] && S.ai[o].off && S.ai[o].off.ph !== 'wait').length;
+      if (pool.length < this.OFF_MIN || busy >= this.OFF_PARALLEL) { O.t = S.t + 30; return; }
       const prev = O.main != null && Game.hostile(me, S.prov[O.main].o) ? O.main : null;
       const main = prev ?? this.pickTarget(S, mine, enemy, land, O.main != null ? Geo.provinces[O.main] : null);
       if (main === null) { O.t = S.t + 30; return; }

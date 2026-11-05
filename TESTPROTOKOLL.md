@@ -157,7 +157,10 @@ T-90M, BMP-3, Ka-52M, Orion und Spetsnaz in der Modell-Galerie geprüft (rechts 
 220 px), Spielstart ohne Konsolenfehler. Vergleichsbild West / Ost: `referenzbilder/vergleich/ost-nachher.png`
 (nicht Teil der Abgabe).
 
-## 10. Bildrate auf dem Handy (Kriterium „30+ FPS“) – vorbereitet, Messung offen
+## 10. Bildrate auf dem Handy (Kriterium „30+ FPS“)
+
+**Ergebnis 5. Nov. (Nutzer, Android):** Test durchgeführt, Bildrate stabil – Kriterium erfüllt. Rückmeldung dazu:
+der Einheiten-Ansturm des Gegners am Rundenstart ist zu groß (siehe Abschnitt 11).
 
 Werkzeug (neu, 5. Nov.): **Leistungsanzeige** oben links mit FPS, Rechenzeit pro Bild und Einheitenzahl.
 Einschalten unter *Einstellungen → Leistungsanzeige (FPS)* oder mit
@@ -182,3 +185,37 @@ Bestanden, wenn Ø FPS ≥ 30 in allen Läufen; „1 % low“ unter 15 als spür
 
 Gegenprobe am PC (Vorschau-Browser, Rechenlogik mit künstlichen Bildzeiten): Ø und „1 % low“ werden richtig berechnet;
 Selbsttest `node tools/selftest.js 3 20` danach mit Exit-Code 0.
+
+## 11. KI-Ansturm am Start gebremst, Offensiven gebündelt
+
+Rückmeldung nach dem Handy-Test: zu viele Feindeinheiten, vor allem am Anfang. Messung (untätiger Spieler, Seed 11):
+Die KI rekrutierte in der **ersten Minute** schlagartig, weil jede Provinz mit Kaserne/Werk gleichzeitig vom Startgeld
+baute und die Unterhaltsprüfung Einheiten in der Warteschlange nicht mitzählte. Danach blieb die Zahl am Armee-Limit.
+Außerdem plante jedes Feindland eigene Offensiven, auch Kleinstaaten mit 3–5 Einheiten.
+
+Änderungen (`js/core/ai.js`, Werte in `DIFFICULTY`): Warteschlange zählt bei Limit und Unterhalt mit; je Land höchstens
+eine Rekrutierung alle `recGap` Sekunden (größere Länder schneller), in den ersten `mob` Sekunden halbes Tempo
+(Mobilmachung); Offensiven seltener (`offEvery` Leicht 600 / Normal 450 / Schwer 300 s statt 480 / 360 / 240), erst ab
+8 freien Einheiten, höchstens 2 Länder eines Bündnisses gleichzeitig; dazwischen kleine **Aufklärungsvorstöße**
+(1 Aufklärer oder 2 leichte Einheiten, alle `probe` Sekunden, nach 75 s zurück), damit die Front nicht still wird.
+
+| Lage | Feinde 0 / 1 / 3 / 5 min vorher | nachher | Offensiven in 20 min vorher → nachher |
+|---|---|---|---|
+| Bündniskrieg DE, Normal | 80 / 99 / 107 / 107 | 80 / 85 / 100 / 107 | 11 → 5–7 (Russland jetzt mit 28–40 statt vielen kleinen) |
+| Bündniskrieg DE, Leicht | 76 / 74 / 71 / 71 | 76 / 75 / 74 / 73 | 10 → 4 |
+| Weltkrieg FR, Normal | 510 / 809 / – / 846 (2 min: 850) | 510 / 600 / 679 / 774 | 199 → 58 (weltweit) |
+
+Die Endzahl nach etwa 5 Minuten bleibt gleich (Armee-Limit `cap` unverändert); der Ansturm verteilt sich nun über
+die ersten Minuten. Selbsttest `node tools/selftest.js 3 20`: Exit-Code 0.
+
+**Danach Armee-Limit −25 %** (`cap` Leicht 50 → 38, Normal 80 → 60, Schwer 170 → 128; gilt auch für verbündete KI, die
+mit Normal-Werten spielt). Die KI bleibt jetzt etwa bei ihrer Startarmee und baut nur Verluste nach:
+
+| Lage | Feinde 0 / 1 / 5 / 10 / 20 min | Verbündete 0 / 20 min | Offensiven in 20 min |
+|---|---|---|---|
+| Bündniskrieg DE, Normal | 80 / 82 / 80 / 80 / 78 (vorher bis 107) | 51 / 35 | 4 (Russland mit 24 und 13) |
+| Bündniskrieg DE, Leicht | 76 / 75 / 74 / 73 / 69 | 51 / 38 | 3 |
+| Bündniskrieg PL, Normal | 80 / 83 / 80 / 75 / 73 | 67 / 48 | 5 |
+| Weltkrieg FR, Normal | 510 / 588 / 713 / 700 / 654 (vorher bis 850) | 77 / 55 | 22 (weltweit) |
+
+Selbsttest danach: Exit-Code 0.
