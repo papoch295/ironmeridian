@@ -3,8 +3,11 @@
 // Every storage access is guarded: storage may be unavailable (private mode, blocked site data).
 'use strict';
 
+// The Beta 2 preview on the web (…/beta2/) keeps its own settings and save games, apart from the main version.
+const CHANNEL = /\/beta2\//.test(location.pathname) ? 'beta2' : '';
+
 const Store = {
-  PREFIX: 'ironmeridian.',
+  PREFIX: CHANNEL ? 'ironmeridian.' + CHANNEL + '.' : 'ironmeridian.',
   get(k, def) { try { const v = localStorage.getItem(this.PREFIX + k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } },
   set(k, v) { try { localStorage.setItem(this.PREFIX + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
   del(k) { try { localStorage.removeItem(this.PREFIX + k); } catch (e) { /* ignore */ } },
@@ -17,7 +20,7 @@ const SaveDB = {
     if (this.db) return Promise.resolve(this.db);
     return new Promise((res, rej) => {
       let req;
-      try { req = indexedDB.open('ironmeridian', 1); } catch (e) { rej(e); return; }
+      try { req = indexedDB.open(CHANNEL ? 'ironmeridian-' + CHANNEL : 'ironmeridian', 1); } catch (e) { rej(e); return; }
       req.onupgradeneeded = () => req.result.createObjectStore('saves');
       req.onsuccess = () => { this.db = req.result; res(this.db); };
       req.onerror = () => rej(req.error);

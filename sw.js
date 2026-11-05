@@ -3,7 +3,10 @@
 // Offline the cached copy is used. Bump CACHE when files are added, renamed or removed.
 'use strict';
 
-const CACHE = 'ironmeridian-v11';
+// The Beta 2 preview (…/beta2/) has its own cache family, so the two service workers never delete each other's cache.
+const CH = /\/beta2\//.test(location.pathname) ? 'beta2-' : '';
+const CACHE = 'ironmeridian-' + CH + 'v11';
+const FAMILY = new RegExp('^ironmeridian-' + CH + 'v\\d+$');
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'css/style.css',
   'js/data/world.js', 'js/data/scenario.js', 'js/data/units.js',
@@ -24,7 +27,7 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys()
-    .then((keys) => Promise.all(keys.filter((k) => k.startsWith('ironmeridian-') && k !== CACHE).map((k) => caches.delete(k))))
+    .then((keys) => Promise.all(keys.filter((k) => FAMILY.test(k) && k !== CACHE).map((k) => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 

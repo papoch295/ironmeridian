@@ -3,7 +3,7 @@
 
 const STR = {
   de: {
-    title: 'IRON MERIDIAN', subtitle: 'Globaler Konflikt 2026', alpha: 'Beta-Version',
+    title: 'IRON MERIDIAN', subtitle: 'Globaler Konflikt 2026', alpha: 'Beta-Version', preview: 'Vorschau',
     newGame: 'Neues Spiel', cont: 'Fortsetzen', load: 'Laden', save: 'Speichern', settings: 'Einstellungen', help: 'Hilfe & Einheiten',
     tutorial: 'Tutorial', mainMenu: 'Hauptmenü', resume: 'Weiter spielen', back: 'Zurück', close: 'Schließen', panelFold: 'Fenster einklappen', panelOpen: 'Fenster ausklappen', cmdMore: 'Mehr', cmdLess: 'Weniger', start: 'Kampagne starten',
     loading: 'Lade Weltkarte…', loadingProv: 'Erzeuge Provinzen…',
@@ -123,7 +123,7 @@ const STR = {
     dir: { N: 'Nord', NE: 'Nordost', E: 'Ost', SE: 'Südost', S: 'Süd', SW: 'Südwest', W: 'West', NW: 'Nordwest', C: 'Zentral' },
   },
   en: {
-    title: 'IRON MERIDIAN', subtitle: 'Global Conflict 2026', alpha: 'Beta build',
+    title: 'IRON MERIDIAN', subtitle: 'Global Conflict 2026', alpha: 'Beta build', preview: 'Preview',
     newGame: 'New Game', cont: 'Continue', load: 'Load', save: 'Save', settings: 'Settings', help: 'Help & Units',
     tutorial: 'Tutorial', mainMenu: 'Main Menu', resume: 'Resume', back: 'Back', close: 'Close', panelFold: 'Fold panel', panelOpen: 'Unfold panel', cmdMore: 'More', cmdLess: 'Less', start: 'Start Campaign',
     loading: 'Loading world map…', loadingProv: 'Generating provinces…',
