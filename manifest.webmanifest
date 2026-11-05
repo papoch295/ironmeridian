@@ -4,7 +4,7 @@
   "description": "Globales Echtzeit-Strategiespiel mit Pause (Beta 1.2).",
   "start_url": "./index.html",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#0b141b",
   "theme_color": "#0b141b",
   "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]

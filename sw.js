@@ -3,7 +3,7 @@
 // Offline the cached copy is used. Bump CACHE when files are added, renamed or removed.
 'use strict';
 
-const CACHE = 'ironmeridian-v9';
+const CACHE = 'ironmeridian-v10';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'css/style.css',
   'js/data/world.js', 'js/data/scenario.js', 'js/data/units.js',
