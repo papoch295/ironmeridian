@@ -15,3 +15,6 @@ android/
 Thumbs.db
 desktop.ini
 *.log
+
+# Referenzbilder fuer Modelle (nur Vorlage, nicht Teil der Abgabe)
+referenzbilder/

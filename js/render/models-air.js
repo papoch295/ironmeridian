@@ -141,14 +141,22 @@ Object.assign(Models.m, {
     this.R(ctx, 0.03, -0.38, 0.045, 0.16, C.dark, null, 0.01);
     this.E(ctx, 0.05, -0.45, 0.09, 0.05, Col.adj(B, 14));
     this.ln(ctx, -0.04, -0.45, 0.14, -0.45, 'rgba(0,0,0,0.35)');
-    // Nose sensors and chain gun.
-    this.O(ctx, 0.94, 0.04, 0.065, C.dark); this.O(ctx, 0.985, 0.035, 0.022, GLASS, null, { noLine: true });
-    this.O(ctx, 0.88, -0.055, 0.03, C.dark);
+    // Nose sensors: TADS drum under the chin with day/night windows, PNVS ball above it; M230 chain gun.
+    this.O(ctx, 0.935, 0.045, 0.078, '#2f3437');
+    this.R(ctx, 0.975, 0.0, 0.035, 0.04, GLASS, null, 0.008, { noLine: true }); this.R(ctx, 0.975, 0.05, 0.035, 0.035, GLASS, null, 0.008, { noLine: true });
+    this.glint(ctx, 0.99, 0.015, 0.009);
+    this.O(ctx, 0.88, -0.055, 0.032, '#2f3437'); this.O(ctx, 0.9, -0.058, 0.014, GLASS, null, { noLine: true });
     this.O(ctx, 0.52, 0.16, 0.035, C.dark); this.L(ctx, 0.52, 0.165, 0.76, 0.2, GUN, 0.02);
-    // Stub wing with Hellfire rack.
+    // Stub wing with Hellfire rack (inboard) and a 19-tube Hydra rocket pod (outboard, nearer the viewer).
     this.P(ctx, [[0.13, -0.01], [-0.19, -0.01], [-0.21, 0.025], [0.11, 0.025]], D);
     this.L(ctx, 0.0, 0.02, 0.0, 0.05, C.dark, 0.02);
     for (const y of [0.06, 0.095]) { this.R(ctx, -0.13, y - 0.013, 0.28, 0.026, '#636a4e', null, 0.013); if (this.pass === 'fill') { ctx.fillStyle = '#2b2f26'; ctx.fillRect(0.12, y - 0.013, 0.025, 0.026); } }
+    this.L(ctx, -0.1, 0.02, -0.1, 0.12, C.dark, 0.02);
+    const pod = [[-0.26, 0.12], [-0.25, 0.155], [0.0, 0.155], [0.02, 0.12], [0.0, 0.085], [-0.25, 0.085]];
+    this.P(ctx, pod, '#555c47'); this.airEdge(ctx, pod);
+    this.ln(ctx, -0.2, 0.087, -0.2, 0.153); this.ln(ctx, -0.04, 0.087, -0.04, 0.153);
+    this.E(ctx, 0.012, 0.12, 0.012, 0.034, '#2a2e2b');
+    if (this.pass === 'fill' && !this.small) { ctx.fillStyle = '#0e100f'; for (const y of [0.1, 0.12, 0.14]) { ctx.beginPath(); ctx.arc(0.014, y, 0.006, 0, Math.PI * 2); ctx.fill(); } }
     // Stabilator, gear.
     this.P(ctx, [[-0.82, -0.03], [-1.03, -0.035], [-1.04, 0.0], [-0.84, 0.01]], Col.adj(B, 5));
     this.L(ctx, 0.4, 0.12, 0.42, 0.23, C.dark, 0.022); this.wheel(ctx, 0.42, 0.24, 0.045);
@@ -424,9 +432,15 @@ Object.assign(Models.m, {
     this.P(ctx, [[-0.6, -0.03], [-0.76, -0.27], [-0.85, -0.27], [-0.8, -0.03]], D);
     this.P(ctx, [[-0.64, 0.04], [-0.76, 0.2], [-0.83, 0.2], [-0.8, 0.04]], D);
     this.S(ctx, [[0.88, 0.0], [0.82, -0.06], [0.62, -0.11], [0.3, -0.09], [-0.2, -0.06], [-0.76, -0.035], [-0.86, 0.0], [-0.76, 0.035], [-0.2, 0.06], [0.3, 0.075], [0.62, 0.07], [0.82, 0.05]], B);
-    this.E(ctx, 0.56, -0.08, 0.2, 0.05, B);
+    // Bulbous satcom hump behind the nose, blade antennas, dorsal engine intake and exhaust in front of the prop.
+    this.S(ctx, [[0.84, -0.03], [0.76, -0.13], [0.58, -0.175], [0.4, -0.155], [0.22, -0.1], [0.2, -0.07], [0.5, -0.06], [0.78, -0.03]], Col.adj(B, 3));
+    this.ln(ctx, 0.78, -0.06, 0.26, -0.085, 'rgba(255,255,255,0.18)');
+    this.P(ctx, [[0.12, -0.085], [0.08, -0.15], [0.06, -0.15], [0.07, -0.085]], D);
+    this.P(ctx, [[-0.2, -0.06], [-0.26, -0.105], [-0.42, -0.1], [-0.48, -0.05]], Col.adj(B, -4));
+    this.P(ctx, [[-0.21, -0.065], [-0.25, -0.095], [-0.27, -0.095], [-0.25, -0.062]], '#1d2124');
+    this.R(ctx, -0.8, -0.03, 0.06, 0.06, '#3a3c3a', null, 0.012);
     this.ln(ctx, 0.84, 0.0, -0.8, 0.0, 'rgba(255,255,255,0.14)');
-    this.O(ctx, 0.62, 0.1, 0.055, '#2a2e30'); this.O(ctx, 0.65, 0.1, 0.03, GLASS); this.glint(ctx, 0.66, 0.09, 0.01);
+    this.O(ctx, 0.62, 0.1, 0.06, '#2a2e30'); this.O(ctx, 0.655, 0.1, 0.033, GLASS); this.glint(ctx, 0.665, 0.088, 0.01);
     this.airWing(ctx, [[0.17, 0.02], [0.02, 0.38], [-0.1, 0.38], [-0.07, 0.02]], B);
     this.R(ctx, -0.02, 0.16, 0.12, 0.03, '#4a5054', null, 0.01);
     this.band(ctx, C, -0.83, -0.25, 0.09, 0.05);

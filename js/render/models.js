@@ -651,8 +651,9 @@ const Models = {
         if (lng) { this.R(ctx, 0.2, -0.024, 0.12, 0.024, G, null, 0.01); this.R(ctx, -0.06, -0.074, 0.14, 0.032, G, null, 0.012); this.glint(ctx, 0.07, -0.062, 0.008); }
         else {
           this.L(ctx, car ? 0.1 : 0.15, -0.012, car ? 0.13 : 0.2, -0.012, G, 0.016);
-          if (car) this.R(ctx, 0.11, -0.025, 0.09, 0.026, G, null, 0.01);
+          if (car) this.R(ctx, 0.11, -0.025, opt.nvg ? 0.13 : 0.09, 0.026, G, null, 0.01);
           this.R(ctx, -0.06, -0.056, 0.06, 0.026, G, null, 0.008); this.glint(ctx, 0.0, -0.045, 0.007);
+          if (opt.nvg) { this.R(ctx, 0.04, -0.045, 0.04, 0.018, G2, null, 0.005); this.R(ctx, 0.075, -0.042, 0.012, 0.012, '#e8e2b8', null, 0.003, { noLine: true }); }
         }
         this.P(ctx, [[-0.035, 0.004], [0.0, 0.004], [0.008, lng ? 0.05 : 0.068], [-0.026, lng ? 0.052 : 0.07]], G2);
       }
@@ -690,9 +691,17 @@ const Models = {
       this.paint(ctx, hp, helm, [hx - 0.09, hy - 0.12, hx + 0.1, hy + 0.04], dark ? {} : { camo: true });
       if (fill) { ctx.save(); ctx.clip(hp); ctx.fillStyle = C.accent; ctx.fillRect(hx - 0.12, hy - 0.06, 0.24, 0.024); ctx.restore(); }
       if (opt.nvg) {
-        this.R(ctx, hx + 0.055, hy - 0.1, 0.035, 0.03, G, null, 0.008);
-        this.R(ctx, hx + 0.058, hy - 0.045, 0.055, 0.034, G, null, 0.01);
-        this.R(ctx, hx + 0.1, hy - 0.04, 0.016, 0.024, '#55e07a', null, 0.004, { noLine: true, hi: true });
+        // Comms headset with a big ear cup and boom mic, quad-tube panoramic NVG (GPNVG-type) flipped down on its mount:
+        // the near pair of tubes is visible in profile, the far pair shows as a second lens just above.
+        this.O(ctx, hx - 0.034, hy + 0.002, 0.03, '#2f3331', null, { noLine: true });
+        this.L(ctx, hx - 0.02, hy + 0.024, hx + 0.05, hy + 0.045, '#1b1d1a', 0.01, { noOut: true });
+        this.O(ctx, hx + 0.052, hy + 0.045, 0.009, '#1b1d1a', null, { noLine: true });
+        this.R(ctx, hx + 0.05, hy - 0.105, 0.04, 0.032, G, null, 0.008);
+        this.R(ctx, hx + 0.056, hy - 0.072, 0.03, 0.03, G2, null, 0.006);
+        for (const [dx, dy2] of [[0.0, -0.062], [0.006, -0.03]]) {
+          this.R(ctx, hx + 0.058 + dx, hy + dy2, 0.06, 0.026, G, null, 0.008);
+          this.R(ctx, hx + 0.112 + dx, hy + dy2 + 0.003, 0.012, 0.02, '#6fc3ff', null, 0.004, { noLine: true, hi: true });
+        }
       }
     };
 

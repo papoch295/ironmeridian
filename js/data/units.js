@@ -66,7 +66,7 @@ const UNIT_TYPES = {
   apc:    { cls: 'light', dom: 'land', sym: 'apc', bld: 'factory', tier: 1, cost: { m: 220, i: 80, o: 20 }, time: 16, hp: 90, spd: 0.11, vis: 0.9, st: 0.25, seat: 2, cap: 1, w: ['mg'],
     de: 'Transportpanzer (APC)', en: 'APC', mw: 'Stryker ICV', me: 'BTR-82A', dd: 'Schneller, leicht gepanzerter Transport für einen Infanterietrupp.', ed: 'Fast, lightly armored transport for one infantry squad.' },
   ifv:    { cls: 'light', dom: 'land', sym: 'ifv', bld: 'factory', tier: 1, cost: { m: 380, i: 140, o: 30 }, time: 22, hp: 140, spd: 0.1, vis: 0.95, st: 0.25, seat: 2, cap: 1, w: ['ac30', 'ifvAtgm'],
-    de: 'Schützenpanzer (IFV)', en: 'IFV', mw: 'Puma / M2A4 Bradley', me: 'BMP-3', dd: 'Maschinenkanone und Panzerabwehrrakete, transportiert einen Trupp.', ed: 'Autocannon and ATGM, carries one squad.' },
+    de: 'Schützenpanzer (IFV)', en: 'IFV', mw: 'M2A3 Bradley / Puma', me: 'BMP-3', dd: 'Maschinenkanone und Panzerabwehrrakete, transportiert einen Trupp.', ed: 'Autocannon and ATGM, carries one squad.' },
   lt:     { cls: 'light', dom: 'land', sym: 'lt', bld: 'factory', tier: 1, cost: { m: 450, i: 180, o: 40 }, time: 24, hp: 170, spd: 0.12, vis: 1.0, st: 0.3, seat: 2, w: ['gun105', 'mg'],
     de: 'Leichter Panzer', en: 'Light Tank', mw: 'M10 Booker', me: '2S25 Sprut-SD', dd: 'Schnell und beweglich, ideal für Aufklärung und Flanken.', ed: 'Fast and agile, ideal for scouting and flanking.' },
   aa:     { cls: 'light', dom: 'land', sym: 'aa', bld: 'factory', tier: 1, cost: { m: 500, i: 200, o: 30 }, time: 24, hp: 90, spd: 0.1, vis: 1.3, st: 0.25, seat: 2, w: ['sam'], intercept: 0.35,

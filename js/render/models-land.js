@@ -177,10 +177,76 @@ Object.assign(Models.m, {
   },
 
   // ---------- Tracked vehicles ----------
-  // SPz Puma (7.4 m, 3.1 m to turret roof): high flat-topped hull with a long shallow glacis, deep modular armour skirts
-  // hiding the upper half of the 6 evenly spaced road wheels (front sprocket), low unmanned turret with a long slim
-  // 30 mm MK30-2/ABM, Spike LR (MELLS) twin launcher on the turret side and the commander's PERI sight on a tall mast.
+  // M2A3 Bradley with BUSK III (6.55 m, 3.4 m to the CITV): tall slab-sided box hull with a steep tiled upper glacis,
+  // side covered in rows of applique armour tiles above deep skirt plates (6 road wheels, front sprocket), small
+  // angular two-man turret with a slim 25 mm M242 Bushmaster, twin TOW box on the turret side, tall CITV and
+  // gunner's sight boxes on the roof.
   ifv(ctx, C) {
+    const b = C.body, top = Col.adj(b, 9), tile = Col.adj(b, 4), dk = Col.adj(b, -10);
+    this.tracks(ctx, [[-0.87, 0.15], [-0.83, 0.07], [-0.73, 0.05], [0.7, 0.05], [0.82, 0.07], [0.87, 0.13], [0.81, 0.22], [0.65, 0.3], [-0.63, 0.3], [-0.8, 0.24]],
+      [-0.56, -0.335, -0.11, 0.115, 0.34, 0.565], 0.214, 0.084, [0.79, 0.13, 0.072], [-0.79, 0.15, 0.068]);
+    // Hull: vertical rear with ramp, long flat roof, steep upper glacis to a blunt nose.
+    this.P(ctx, [[-0.9, 0.08], [-0.92, -0.22], [-0.88, -0.26], [0.4, -0.26], [0.86, -0.09], [0.93, -0.04], [0.91, 0.05], [0.8, 0.08]], b);
+    this.topFace(ctx, C, -0.88, 0.4, -0.26, 0.026);
+    const gl = [[0.4, -0.26], [0.43, -0.284], [0.89, -0.112], [0.86, -0.09]];
+    this.P(ctx, gl, top);
+    // Tiled glacis armour (plates seen from above) and the driver's hatch.
+    for (let k = 1; k < 4; k++) { const x = 0.4 + k * 0.115; this.ln(ctx, x, -0.26 + k * 0.0425, x + 0.03, -0.284 + k * 0.0425); }
+    this.hatch(ctx, C, 0.3, -0.26, 0.08);
+    this.ln(ctx, -0.86, -0.22, -0.86, 0.06);
+    // Applique armour: two rows of tiles along the hull side (top row follows the glacis at the front).
+    this.P(ctx, [[-0.86, -0.215], [0.46, -0.215], [0.62, -0.155], [0.62, -0.03], [-0.86, -0.03]], tile);
+    if (this.pass === 'fill' && !this.small) {
+      for (let x = -0.86 + 0.092; x < 0.6; x += 0.092) { this.ln(ctx, x, -0.212, x, -0.124); this.ln(ctx, x - 0.046, -0.12, x - 0.046, -0.032); }
+      this.ln(ctx, -0.86, -0.122, 0.62, -0.122, 'rgba(0,0,0,0.5)');
+    }
+    this.bolts(ctx, -0.83, 0.42, -0.2, 15); this.bolts(ctx, -0.81, 0.58, -0.105, 16);
+    // Skirt plates over the upper running gear: seams, lifting handles, bolts.
+    this.P(ctx, [[-0.89, -0.03], [0.62, -0.03], [0.82, -0.005], [0.84, 0.13], [-0.89, 0.13]], Col.adj(b, -6));
+    this.ln(ctx, -0.89, -0.012, 0.83, -0.012, 'rgba(255,255,255,0.18)');
+    for (const x of [-0.6, -0.3, 0.0, 0.3, 0.6]) this.ln(ctx, x, -0.03, x, 0.13);
+    for (const x of [-0.47, -0.17, 0.13, 0.43]) this.R(ctx, x, 0.02, 0.06, 0.016, dk, null, 0.005);
+    this.bolts(ctx, -0.86, 0.8, 0.1, 18);
+    this.light(ctx, 0.88, -0.055);
+    this.R(ctx, 0.74, -0.16, 0.06, 0.05, Col.adj(b, -3), null, 0.008);
+    this.R(ctx, 0.755, -0.15, 0.03, 0.03, '#d24a3a', null, 0.004);
+    this.tow(ctx, -0.84, 0.04, 0.3, 0.04);
+    this.stow(ctx, -0.84, -0.305, 0.2, 0.045, 1);
+    this.exhaust(ctx, 0.48, -0.25, 0.08, 0.03);
+    // Turret: angular two-man turret with tiled side armour.
+    this.ao(ctx, -0.3, 0.3, -0.26, 0.04);
+    this.P(ctx, [[-0.3, -0.26], [-0.33, -0.37], [-0.28, -0.42], [0.12, -0.42], [0.29, -0.35], [0.31, -0.28], [0.27, -0.26]], b);
+    this.topFace(ctx, C, -0.28, 0.12, -0.42, 0.026);
+    this.P(ctx, [[0.12, -0.42], [0.29, -0.35], [0.31, -0.28], [0.2, -0.3], [0.1, -0.4]], Col.adj(b, -4));
+    if (this.pass === 'fill' && !this.small) for (const x of [-0.18, -0.06, 0.06]) this.ln(ctx, x, -0.4, x, -0.27);
+    this.ln(ctx, -0.31, -0.33, 0.18, -0.33);
+    // 25 mm M242: mantlet, barrel shroud, slim barrel with muzzle; coaxial MG port.
+    this.R(ctx, 0.26, -0.36, 0.08, 0.07, C.dark, null, 0.01);
+    this.R(ctx, 0.32, -0.343, 0.18, 0.034, GUN, null, 0.01);
+    this.barrel(ctx, 0.48, -0.326, 1.0, -0.326, 0.02);
+    this.R(ctx, 0.97, -0.338, 0.045, 0.024, GUN, null, 0.004);
+    this.L(ctx, 0.3, -0.285, 0.38, -0.285, GUN, 0.012);
+    this.smoke(ctx, C, 0.17, -0.37, 2, -0.5, 0.032);
+    // Twin TOW launcher box stowed on the near turret side, two tube caps at the front.
+    this.L(ctx, -0.2, -0.38, -0.2, -0.44, C.dark, 0.026);
+    this.R(ctx, -0.4, -0.5, 0.36, 0.1, Col.adj(b, -8), null, 0.014);
+    this.topFace(ctx, C, -0.39, -0.05, -0.5, 0.016, Col.adj(b, 2));
+    if (this.pass === 'fill' && !this.small) for (const x of [-0.31, -0.22, -0.13]) this.ln(ctx, x, -0.5, x, -0.4);
+    this.R(ctx, -0.06, -0.5, 0.03, 0.1, C.dark, null, 0.006);
+    this.O(ctx, -0.045, -0.475, 0.016, '#1a1c19', null, { noLine: true }); this.O(ctx, -0.045, -0.427, 0.016, '#1a1c19', null, { noLine: true });
+    // Commander's independent viewer (CITV) on a post and the gunner's ISU sight box.
+    this.L(ctx, 0.0, -0.42, 0.0, -0.5, C.dark, 0.03);
+    this.R(ctx, -0.05, -0.58, 0.11, 0.085, Col.adj(b, -2), null, 0.012);
+    this.R(ctx, 0.025, -0.565, 0.03, 0.05, GLASS, null, 0.005); this.glint(ctx, 0.035, -0.55, 0.008);
+    this.R(ctx, 0.1, -0.48, 0.09, 0.06, Col.adj(b, -2), null, 0.01);
+    this.R(ctx, 0.16, -0.47, 0.025, 0.035, GLASS, null, 0.004);
+    this.mark(ctx, 0.64, 0.06, '31', 0.06);
+    this.antenna(ctx, -0.7, -0.26, 0.4);
+    this.pennant(ctx, C, -0.82, -0.26, 0.32);
+  },
+  // SPz Puma (7.4 m, 3.1 m to turret roof): previous Western IFV model, kept for comparison (not referenced by a unit type).
+  // High flat-topped hull, deep modular skirts, low unmanned turret with a long 30 mm MK30-2 and Spike LR launcher.
+  ifvPuma(ctx, C) {
     this.tracks(ctx, [[-0.87, 0.15], [-0.83, 0.07], [-0.73, 0.05], [0.7, 0.05], [0.82, 0.07], [0.87, 0.13], [0.81, 0.22], [0.65, 0.3], [-0.63, 0.3], [-0.8, 0.24]],
       [-0.56, -0.335, -0.11, 0.115, 0.34, 0.565], 0.214, 0.084, [0.79, 0.13, 0.072], [-0.79, 0.15, 0.068]);
     this.P(ctx, [[-0.9, 0.1], [-0.92, -0.17], [-0.88, -0.2], [0.34, -0.2], [0.86, -0.06], [0.93, -0.01], [0.9, 0.06], [0.8, 0.1]], C.body);
@@ -284,6 +350,14 @@ Object.assign(Models.m, {
     this.R(ctx, 0.6, 0.085, 0.045, 0.028, dk, null, 0.004);
     this.R(ctx, 0.36, 0.04, 0.012, 0.05, dk, null, 0.003);
     this.P(ctx, [[0.66, -0.04], [0.8, -0.062], [0.92, -0.02], [0.84, -0.025], [0.7, -0.04]], top);
+    // TUSK kit: two rows of reactive armour tiles on the forward skirt, slat armour over the rear skirt.
+    for (let r = 0; r < 2; r++) for (let i = 0; i < 9; i++) {
+      const x = -0.3 + i * 0.096 + (r ? 0.048 : 0), y = -0.03 + r * 0.088;
+      if (x + 0.09 > 0.74) continue;
+      this.R(ctx, x, y, 0.09, 0.082, Col.adj(b, r ? 1 : 5), null, 0.008);
+      this.bolts(ctx, x + 0.02, x + 0.07, y + 0.014, 2);
+    }
+    this.slats(ctx, C, -0.6, -0.32, -0.03, 0.15, 8);
     this.light(ctx, 0.88, -0.07);
     // Turret: roof (from above), side face, angled front face.
     this.ao(ctx, -0.45, 0.42, -0.13, 0.03);
@@ -320,6 +394,10 @@ Object.assign(Models.m, {
     this.R(ctx, -0.035, -0.465, 0.03, 0.03, '#3a4048', null, 0.005);
     this.E(ctx, 0.05, -0.336, 0.06, 0.016, top);
     this.R(ctx, 0.03, -0.38, 0.03, 0.04, '#2a3038', null, 0.004); this.L(ctx, 0.05, -0.372, 0.14, -0.372, '#2a3038', 0.009);
+    // Commander's independent thermal viewer (CITV): tall armoured box with a glass window, on the loader's side.
+    this.L(ctx, -0.29, -0.33, -0.29, -0.38, C.dark, 0.026);
+    this.R(ctx, -0.35, -0.47, 0.11, 0.095, top, null, 0.012);
+    this.R(ctx, -0.275, -0.455, 0.028, 0.05, GLASS, null, 0.005); this.glint(ctx, -0.265, -0.44, 0.007);
     // Antenna at the turret rear (the faction pennant flies from the second one).
     this.R(ctx, -0.492, -0.335, 0.024, 0.02, dk, null, 0.004); this.L(ctx, -0.48, -0.335, -0.48, -0.475, '#2a2b26', 0.008, { noOut: true });
     this.R(ctx, -0.462, -0.335, 0.024, 0.02, dk, null, 0.004);
