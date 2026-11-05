@@ -431,6 +431,10 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
 | Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
 | Mobil | Handy-Tests auf deinem Android, Android Studio einrichten, APK über Capacitor | 5.2, 6 |
+| Notiz 5. Nov. – in Arbeit | **Bessere Regiment-/Gruppen-Steuerung** (baut auf Army Recruitment im Batch auf); **Einheitenmodelle** realistischer, aber im WC4-Stil, nach Referenzbildern | aus Notiz 5. Nov. |
+| Notiz 5. Nov. – Taktik | Gameplay taktischer: Einheiten müssen ihrer Beschreibung gerecht werden; klare Aufgabenverteilung und Trennung der Rollen | aus Notiz 5. Nov., ergänzt 2.9 |
+| Notiz 5. Nov. – Transport | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
+| Notiz 5. Nov. – Inhalt | Neue Einheiten + Gebäude | aus Notiz 5. Nov., Abschnitt 3 |
 | Später (laut deinen Antworten) | Szenarien mit Briefing, neue Einheiten/Gebäude, mehr Wirtschaft, Gelände und Wetter, Folgen von Atomwaffen, KI-Regeln auf Schwer, Play Store | #6, Abschnitt 3, F8, F14–F16 |
 
 ---
