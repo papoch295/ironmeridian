@@ -25,6 +25,12 @@
   Skript `tools/screenshots.js`. Hauptmenü: Titel „MERIDIAN“ wurde auf breiten Bildschirmen abgeschnitten – behoben.
 - **Handy (nach dem ersten Test):** Im Querformat liegen die Befehlsknöpfe nicht mehr hinter der Schnellleiste oder dem
   Seitenfenster. Verschieben und Zoomen der Karte laufen deutlich flüssiger, der Nebel des Krieges wird schneller gezeichnet.
+- **Gebündelte Meldungen je Armee:** Was einer Armee innerhalb von 30 Spielsekunden passiert, steht in einer Zeile, die
+  sich laufend aktualisiert, z. B. „Armee 2: Sturmangriff · unter Beschuss · Verluste 2 (Kampfpanzer, Infanterie) ·
+  Abschüsse 3“. Gemeldet werden die Phasen des Großangriffs (Aufklärung, Artillerie, Sturm), Ziel erreicht bzw. genommen,
+  Rückzug und Rückzug beendet, Verluste nach Typ, ungeordneter Rückzug, Abschüsse und Verstärkung aus einer
+  Kampfgruppen-Vorlage (statt einer Zeile je Einheit). Antippen springt zur Armee. Auf Handys im Querformat stehen die
+  Meldungen jetzt neben der Schnellleiste statt verdeckt darunter.
 
 ## Beta 1.0 – 4. November 2026 (`v1.0-beta`)
 

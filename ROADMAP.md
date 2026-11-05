@@ -157,7 +157,7 @@ helfen schon; dazu soll der Spieler in **Kampfgruppen** denken statt in Einzelei
 | 70 | **Armee-Übersicht:** Liste aller Kampfgruppen mit Stärke, Zustand und Auftrag; Tippen springt hin | P0 | S–M |
 | 71 | Automatisches Auffrischen: Verluste werden aus der Heimat-Institution nachgebaut (abschaltbar) | P1 | M |
 | 72 | Daueraufträge in der Produktion und Unterhalt-Anzeige mit Warnung, wenn die Einnahmen nicht reichen | P1 | S |
-| 73 | Gebündelte Meldungen je Gruppe („Kampfgruppe 2 wird angegriffen“, „Ziel erreicht“, „zieht sich zurück“) | P1 | S |
+| 73 | Gebündelte Meldungen je Gruppe („Kampfgruppe 2 wird angegriffen“, „Ziel erreicht“, „zieht sich zurück“) – ✔ 5. Nov. | P1 | S |
 
 ---
 
@@ -411,7 +411,7 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 | 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | erledigt (Nachtest ohne Fehler) |
 | 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | erledigt (TESTPROTOKOLL.md, Abschnitte 6–7) |
 | 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | Version und Tag erledigt, Freeze offen |
-| optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | offen |
+| optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | #73 erledigt (5. Nov.), APK offen |
 | optional | **neue Einheiten** vor dem Freeze: Top 4 aus Abschnitt 3.1 (Aufklärungsdrohne, Kamikaze-Drohne, Patriot/S-400, Landungsschiff) | erledigt |
 
 **Nachtrag 4. Nov.:** Bedienung von Luftwaffe und Raketen verbessert (Luftwaffen- und Raketen-Fenster, Dauereinsatz,

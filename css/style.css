@@ -531,6 +531,8 @@ input[type=range] { accent-color: var(--accent); width: 170px; }
   .menu-buttons { gap: 4px; }
   .menu-buttons .btn { padding: 8px 14px 8px 16px; }
   .version { margin: 0; }
+  /* Reports sit right of the quick bar instead of underneath it. */
+  #log { left: calc(220px + var(--safe-l)); }
 }
 @media (max-width: 600px) and (orientation: portrait) {
   .res-group { gap: 4px; }

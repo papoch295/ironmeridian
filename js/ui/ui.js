@@ -505,7 +505,62 @@ const UI = {
     const log = $('#log');
     log.prepend(el);
     while (log.children.length > 6) log.lastChild.remove();
-    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 700); }, 9000);
+    this.fadeLater(el);
+    return el;
+  },
+  fadeLater(el) {
+    clearTimeout(el.fadeT);
+    el.style.opacity = '';
+    el.fadeT = setTimeout(() => { el.style.opacity = '0'; el.fadeT = setTimeout(() => el.remove(), 700); }, 9000);
+  },
+
+  // ---------- Bundled army reports (#73) ----------
+  // Everything that happens to one army within a few seconds (phase, fire, losses, kills, reinforcements) is
+  // collected into a single log line that updates in place instead of one line per unit.
+  ARMY_SEV: { info: 0, good: 1, warn: 2, bad: 3 },
+  ARMY_WINDOW: 30, // game seconds one line keeps collecting
+
+  armyNote(k, add, x, y) {
+    const R = (this.armyRep = this.armyRep || {});
+    let r = R[k];
+    const now = Game.state.t;
+    if (!r || !r.el || !r.el.isConnected || now - r.t0 > this.ARMY_WINDOW || now < r.t0) {
+      r = R[k] = { t0: now, lost: {}, ready: {}, kills: 0, rout: new Set(), fire: false, st: null, kind: 'info' };
+    }
+    if (add.lost) r.lost[add.lost] = (r.lost[add.lost] || 0) + 1;
+    if (add.ready) r.ready[add.ready] = (r.ready[add.ready] || 0) + 1;
+    if (add.kill) r.kills++;
+    if (add.rout) r.rout.add(add.rout);
+    if (add.fire) r.fire = true;
+    if (add.st) r.st = add.st;
+    const kind = add.lost ? 'bad' : add.fire || add.rout ? 'warn' : add.kill ? 'good' : add.kind || 'info';
+    if (this.ARMY_SEV[kind] > this.ARMY_SEV[r.kind]) r.kind = kind;
+    const types = (m) => {
+      const e = Object.entries(m).sort((a, b) => b[1] - a[1]);
+      return e.slice(0, 3).map(([tk, n]) => unitName(tk) + (n > 1 ? ' ×' + n : '')).join(', ') + (e.length > 3 ? ', …' : '');
+    };
+    const sum = (m) => Object.values(m).reduce((s, n) => s + n, 0);
+    const parts = [];
+    if (r.st) parts.push(r.st);
+    if (r.fire) parts.push(t('repFire'));
+    if (sum(r.lost)) parts.push(t('repLost', sum(r.lost), types(r.lost)));
+    if (r.rout.size) parts.push(t('repRout', r.rout.size));
+    if (r.kills) parts.push(t('repKills', r.kills));
+    if (sum(r.ready)) parts.push(t('repReady', sum(r.ready), types(r.ready)));
+    const text = t('armyRep', k, parts.join(' · '));
+    if (x !== undefined) { r.x = x; r.y = y; }
+    if (r.el && r.el.isConnected) {
+      r.el.textContent = text;
+      r.el.className = 'log-item ' + r.kind;
+      if (r.x !== undefined && !r.el.onclick) { r.el.style.pointerEvents = 'auto'; r.el.style.cursor = 'pointer'; }
+      r.el.onclick = r.x !== undefined ? () => Render.flyTo(r.x, r.y, Math.max(Render.cam.z, 18)) : null;
+      const log = $('#log');
+      if (log.firstChild !== r.el) log.prepend(r.el);
+      this.fadeLater(r.el);
+    } else {
+      r.el = this.log(text, r.kind, r.x, r.y);
+      if (r.x !== undefined) r.el.onclick = () => Render.flyTo(r.x, r.y, Math.max(Render.cam.z, 18));
+    }
   },
 
   toast(text, kind = '') {
@@ -547,7 +602,8 @@ const UI = {
       const p = Geo.provinces[pid];
       if (u && it.g) this.joinArmy(it.g, u);
       if (it.kind === 'nuke') this.toast(t('evNukeReady'), 'warn');
-      if (it.kind === 'unit') this.log(t('evProduced', unitName(it.key), pName(pid)), 'info', p.x, p.y);
+      if (it.kind === 'unit' && u && it.g) this.armyNote(it.g, { ready: it.key }, p.x, p.y);
+      else if (it.kind === 'unit') this.log(t('evProduced', unitName(it.key), pName(pid)), 'info', p.x, p.y);
       else if (it.kind === 'msl') this.log(t('evProduced', L(MISSILES[it.key]), pName(pid)), 'info', p.x, p.y);
       else if (it.kind === 'nuke') this.log(t('evProduced', L(NUKE), pName(pid)), 'warn', p.x, p.y);
       else if (it.kind === 'bld') this.log(t('evBuilt', L(BUILDINGS[it.key]), pName(pid)), 'info', p.x, p.y);
@@ -555,7 +611,9 @@ const UI = {
       Sfx.play('build');
       if (Render.selProv === pid) Panels.show();
     });
-    Game.on('killed', ({ u }) => {
+    Game.on('killed', ({ u, killer }) => {
+      if (u.s === me()) { const k = this.armyOf(u.id); if (k) this.armyNote(k, { lost: u.t }, u.x, u.y); }
+      else if (killer && killer.s === me()) { const k = this.armyOf(killer.id); if (k) this.armyNote(k, { kill: 1 }); }
       Sfx.at(UNIT_TYPES[u.t].cls === 'soft' ? 'mg' : 'boom', u.x, u.y, UNIT_TYPES[u.t].cls !== 'soft');
       if (Render.selection.has(u.id)) { Render.selection.delete(u.id); Panels.show(); this.renderCmdbar(); }
       if (Panels.enemy && Panels.enemy.id === u.id) Panels.close();
@@ -589,16 +647,28 @@ const UI = {
       this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
       Render.ping(x, y, 'attack');
     });
-    Game.on('armyTask', ({ k, ev, g }) => {
-      if (ev === 'retreat') { this.log(t('evArmyRetreat', k), 'warn', g.x, g.y); Sfx.play('alert'); }
-      else if (ev === 'taken' && g.pid != null) this.log(t('evArmyTaken', k, pName(g.pid)), 'good', g.tx, g.ty);
+    Game.on('armyTask', ({ k, ev, g, from }) => {
+      const [cx, cy] = Tactics.center(Tactics.members(g));
+      if (ev === 'retreat') { this.armyNote(k, { st: t('repRetreat'), kind: 'warn' }, g.x, g.y); Sfx.play('alert'); }
+      else if (ev === 'taken' && g.pid != null) this.armyNote(k, { st: t('repTaken', pName(g.pid)), kind: 'good' }, g.tx, g.ty);
+      else if (ev === 'phase') {
+        // Phase changes of a running task; the start of a task is the player's own order and is not reported.
+        const st = g.ph === 'recon' ? t('repRecon') : g.ph === 'prep' ? t('repPrep') : g.ph === 'assault' ? t('repAssault')
+          : g.ph === 'hold' && from === 'retreat' ? t('repBack')
+          : g.ph === 'hold' && g.pid == null && (from === 'assault' || from === 'advance') ? t('repArrived') : null;
+        if (st) this.armyNote(k, { st }, cx, cy);
+      }
       this.groupSig = '';
     });
     Game.on('aiRetreat', ({ k, x, y }) =>this.log(t('evRetreat', countryName(Geo.byKey[k])), 'good', x, y));
     Game.on('unloaded', (u) => this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));
     Game.on('noPath', () => this.toast(t('evNoPath'), 'bad'));
     Game.on('crash', (u) => this.log(t('evCrash', unitName(u.t)), 'warn', u.x, u.y));
-    Game.on('rout', (u) => { if (this.sel.has(u.id)) this.log(t('evRout', unitName(u.t)), 'warn', u.x, u.y); });
+    Game.on('rout', (u) => {
+      const k = this.armyOf(u.id);
+      if (k) this.armyNote(k, { rout: u.id }, u.x, u.y);
+      else if (this.sel.has(u.id)) this.log(t('evRout', unitName(u.t)), 'warn', u.x, u.y);
+    });
     Game.on('vpHold', ({ r, ev }) => {
       const key = r === 'win' ? (ev === 'start' ? 'evVpWin' : 'evVpWinBroken') : ev === 'start' ? 'evVpLose' : 'evVpLoseBroken';
       const kind = (r === 'win') === (ev === 'start') ? 'good' : 'bad';
@@ -787,7 +857,7 @@ const UI = {
       const hp = us.length ? us.reduce((s, u) => s + u.hp / UNIT_TYPES[u.t].hp, 0) / us.length : 0;
       const fight = us.some((u) => S.t - u.lastHit < 3 || S.t - (u.lf || -99) < 3);
       const moving = us.some((u) => u.path || (u.ord && u.ord.k !== 'rtb'));
-      if (fight && !(this.fightT && this.fightT[k] > S.t)) { (this.fightT = this.fightT || {})[k] = S.t + 30; if (us.some((u) => S.t - u.lastHit < 3)) this.log(t('groupFight', k), 'warn', us[0].x, us[0].y); }
+      if (fight && !(this.fightT && this.fightT[k] > S.t)) { (this.fightT = this.fightT || {})[k] = S.t + 30; if (us.some((u) => S.t - u.lastHit < 3)) this.armyNote(k, { fire: true }, us[0].x, us[0].y); }
       // Icon of the strongest unit type shows what the army is made of.
       const main = us.slice().sort((a, b) => UNIT_TYPES[b.t].cost.m - UNIT_TYPES[a.t].cost.m)[0];
       const sel = us.length && us.every((u) => this.sel.has(u.id));

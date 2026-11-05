@@ -124,8 +124,9 @@ const Tactics = {
       const a = G[k], g = a.task;
       if (!g) continue;
       g.ids = a.ids; g.side = S.player;
-      const ev = this.step(g);
+      const ph0 = g.ph, ev = this.step(g);
       if (ev) Game.emit('armyTask', { k, ev, g });
+      else if (g.ph !== ph0) Game.emit('armyTask', { k, ev: 'phase', g, from: ph0 });
       if (g.ph === 'done') a.task = null;
     }
   },
