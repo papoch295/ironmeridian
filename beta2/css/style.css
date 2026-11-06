@@ -269,7 +269,7 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .ucard .tm { position: absolute; right: 6px; top: 6px; font-size: 10px; color: var(--muted); background: rgba(5,10,14,.6); padding: 1px 5px; border-radius: 8px; }
 .qitem { display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 12px; background: rgba(5,10,14,.4); border: 1px solid var(--line); border-radius: var(--radius-s); margin-bottom: 4px; }
 .qitem .nm { flex: 2 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.qitem .bar { flex: 1 1 40px; min-width: 36px; margin: 0; }
+.qitem .bar { flex: 1 1 28px; min-width: 24px; margin: 0; }
 .qitem .bar i { transition: width .25s linear; }
 .qitem button { background: transparent; border: 1px solid var(--line-2); border-radius: 3px; width: 26px; height: 26px; cursor: pointer; padding: 0; color: var(--muted); flex: none; transition: color .15s, border-color .15s; }
 .qitem button:hover { color: var(--bad); border-color: var(--bad); }
@@ -294,6 +294,11 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .opt-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .opt-row .seg { flex-wrap: wrap; max-width: 75%; }
 .opt-row .seg.small button { height: 30px; padding: 0 9px; }
+.qitem button.rep:hover { color: var(--accent); border-color: var(--accent); }
+.qitem button.rep.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+.upk-warn { margin: 6px 0; padding: 6px 8px; border: 1px solid var(--bad); border-radius: var(--radius-s); color: var(--bad); background: rgba(5,10,14,.4); }
+.army-miss .miss { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--bad); }
+.army-miss .miss img { width: 24px; height: 16px; }
 .qitem img { width: 26px; height: 18px; flex: none; }
 .qitem .cnt { color: var(--accent); }
 .army-tag { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; font-size: 10px; font-weight: 700; border-radius: 3px; background: var(--accent); color: var(--accent-ink); }

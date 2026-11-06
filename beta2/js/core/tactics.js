@@ -116,10 +116,62 @@ const Tactics = {
     }
   },
 
+  // ---------- Target strength and automatic refill of the player's armies ----------
+  // a.plan = { unit type: target count }. Recruiting or assigning a unit raises it, moving a unit out lowers it;
+  // a unit that dies stays in the plan, so the gap can be rebuilt (a.refill === false switches that off).
+  planOf(ids) {
+    const p = {};
+    for (const id of ids) { const u = Game.unit(id); if (u) p[u.t] = (p[u.t] || 0) + 1; }
+    return p;
+  },
+  planAdd(a, t, n) {
+    const p = (a.plan = a.plan || {}), v = (p[t] || 0) + n;
+    if (v > 0) p[t] = v; else delete p[t];
+  },
+  // Types the army lacks, not counting replacements already in production.
+  missing(a, k) {
+    const miss = { ...(a.plan || {}) };
+    for (const id of a.ids) { const u = Game.unit(id); if (u && miss[u.t]) miss[u.t]--; }
+    for (const pr of Game.state.prov) for (const q of pr.q) if (q.rf && q.g === k && miss[q.key]) miss[q.key] = Math.max(0, miss[q.key] - (q.n || 1));
+    for (const t in miss) if (!miss[t]) delete miss[t];
+    return miss;
+  },
+  // The province nearest to the army that can build this type right now.
+  refillSite(side, t, x, y) {
+    const S = Game.state;
+    let best = null, bd = 1e18;
+    S.prov.forEach((pr, pid) => {
+      if (pr.o !== side || pr.cap || Game.canQueue(pid, 'unit', t)) return;
+      const p = Geo.provinces[pid], d = U.dist2(p.x, p.y, x, y);
+      if (d < bd && !Sim.inFallout(p)) { bd = d; best = pid; }
+    });
+    return best;
+  },
+  REFILL_EVERY: 5,
+  // One replacement per army every few seconds, and none while upkeep already eats the reserves.
+  refill(S) {
+    if (S.t < (S.rfT || 0)) return;
+    S.rfT = S.t + this.REFILL_EVERY;
+    const s = S.side[S.player];
+    if (s.inc && (s.inc.m < 0 || s.inc.o < 0)) return;
+    for (const k in S.groups) {
+      const a = S.groups[k];
+      if (a.refill === false) continue;
+      const alive = a.ids.map((id) => Game.unit(id)).filter(Boolean);
+      if (!alive.length) continue; // a destroyed army is not rebuilt on its own
+      const [x, y] = this.center(alive);
+      for (const t in this.missing(a, k)) {
+        const pid = this.refillSite(S.player, t, x, y);
+        if (pid !== null && !Game.queue(pid, 'unit', t, { g: k, rf: 1 })) break;
+      }
+    }
+  },
+
   // The player's armies with a task (set in the army panel) run through the same steps every AI frame.
   updateArmies(S) {
     const G = S.groups;
     if (!G) return;
+    this.refill(S);
     for (const k in G) {
       const a = G[k], g = a.task;
       if (!g) continue;
