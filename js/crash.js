@@ -157,6 +157,89 @@ const SelfTest = {
     } catch (e) { return (e && e.stack) || String(e); }
   },
 
+  // Army control: target strength, refill, leading several armies, merging, standing orders, old saves.
+  armyTest() {
+    try {
+      const country = 'DE', own = Screens.ownTeam(country);
+      const foe = BLOCS.find((b) => b.id !== own.id && b.members.some((k) => Geo.byKey[k]));
+      Game.newGame({ country, mode: 'bloc', enemyBloc: foe.id, difficulty: 'easy', seed: 7 });
+      const S = Game.state, G = UI.groups(), s = S.side[country];
+      S.paused = true;
+      s.m = s.i = s.o = 1e6;
+      const keys = Object.keys(G).sort();
+      if (keys.length < 2) return 'weniger als zwei Startarmeen';
+      const a = G[keys[0]], planN = (p) => Object.values(p).reduce((n, v) => n + v, 0);
+      if (planN(a.plan) !== a.ids.length) return 'Soll-Bestand passt nicht zur Startarmee';
+      // Refill: a lost unit is ordered once as a replacement and joins without raising the target strength.
+      const cap = Geo.byKey[country].provinces.find((i) => Geo.provinces[i].type === 'capital');
+      S.prov[cap].b.barracks = 3; S.prov[cap].b.factory = 3; S.prov[cap].q = [];
+      s.inc = { m: 1, i: 1, o: 1 };
+      const lost = a.ids.map((id) => Game.unit(id)).find((u) => UNIT_TYPES[u.t].bld === 'barracks' || UNIT_TYPES[u.t].bld === 'factory');
+      if (!lost) return 'keine nachbaubare Einheit in der Armee';
+      const plan0 = planN(a.plan);
+      Game.removeUnit(lost);
+      a.ids = a.ids.filter((id) => id !== lost.id);
+      if (Tactics.missing(a, keys[0])[lost.t] !== 1) return 'Verlust wird nicht als fehlend erkannt';
+      S.rfT = 0; Tactics.refill(S);
+      const queued = S.prov.flatMap((pr, pid) => pr.q.filter((q) => q.rf && q.g === keys[0]).map((q) => [pid, q]));
+      if (queued.length !== 1 || queued[0][1].key !== lost.t) return 'kein Ersatz in Auftrag';
+      if (Tactics.missing(a, keys[0])[lost.t]) return 'Ersatz wird doppelt gezählt';
+      const [rfP, rfQ] = queued[0], n0 = a.ids.length;
+      S.prov[rfP].q = [rfQ]; rfQ.t = rfQ.total; Game.productionStep(0.01);
+      if (a.ids.length !== n0 + 1 || planN(a.plan) !== plan0) return 'Ersatz stößt nicht zur Armee oder ändert den Soll-Bestand';
+      // Switched off: no new order.
+      Game.removeUnit(Game.unit(a.ids[a.ids.length - 1])); a.ids.pop();
+      a.refill = false; S.rfT = 0; Tactics.refill(S);
+      if (S.prov.some((pr) => pr.q.some((q) => q.rf && q.g === keys[0]))) return 'Auffrischen trotz Abschalten';
+      a.refill = true;
+      // Upkeep above income pauses the refill.
+      s.inc = { m: -1, i: 1, o: 1 }; S.rfT = 0; Tactics.refill(S);
+      if (S.prov.some((pr) => pr.q.some((q) => q.rf && q.g === keys[0]))) return 'Auffrischen trotz negativer Einnahmen';
+      s.inc = { m: 1, i: 1, o: 1 };
+      // Leading two armies together; the task reaches both.
+      UI.selectGroup(keys[0]);
+      UI.toggleArmy(keys[1]);
+      if (UI.selectedArmies().join() !== keys.slice(0, 2).join()) return 'zwei Armeen nicht gemeinsam gewählt';
+      UI.armyTask('hold');
+      if (!G[keys[0]].task || !G[keys[1]].task) return 'Auftrag erreicht nicht beide Armeen';
+      UI.toggleArmy(keys[1]);
+      if (UI.selectedArmy() !== keys[0]) return 'Armee lässt sich nicht wieder abwählen';
+      // Merging adds up units and target strengths, and redirects units still in production.
+      const total = planN(G[keys[0]].plan) + planN(G[keys[1]].plan), ids = G[keys[0]].ids.length + G[keys[1]].ids.length;
+      Game.queue(cap, 'unit', 'inf', { g: keys[1] });
+      UI.mergeArmies(keys.slice(0, 2));
+      if (G[keys[1]] || G[keys[0]].ids.length !== ids || planN(G[keys[0]].plan) !== total) return 'Zusammenlegen falsch';
+      if (S.prov[cap].q.some((q) => q.g === keys[1])) return 'Auftrag bleibt bei aufgelöster Armee';
+      S.prov[cap].q = [];
+      // A unit moved out of an army lowers its target strength.
+      const out = G[keys[0]].ids[0];
+      UI.removeFromGroups([out]);
+      if (planN(G[keys[0]].plan) !== total - 1) return 'Soll-Bestand sinkt beim Herauslösen nicht';
+      // Standing order: rebuilds, pays each round, waits when upkeep exceeds income, unpaid rounds are not refunded.
+      Game.queue(cap, 'unit', 'inf');
+      const it = S.prov[cap].q[0], c = it.cost.m;
+      it.rep = true; it.t = it.total;
+      const u0 = S.units.length;
+      Game.productionStep(0.01);
+      if (S.units.length !== u0 + 1 || S.prov[cap].q[0] !== it || !it.unpaid) return 'Dauerauftrag läuft nicht weiter';
+      s.inc.m = -1; const m1 = s.m; Game.productionStep(0.01);
+      if (s.m !== m1 || !it.unpaid) return 'Dauerauftrag zahlt trotz negativer Einnahmen';
+      Game.cancel(cap, 0);
+      if (s.m !== m1) return 'unbezahlte Runde wird erstattet';
+      s.inc.m = 1;
+      Game.queue(cap, 'unit', 'inf'); const it2 = S.prov[cap].q[0]; it2.rep = true; it2.t = it2.total; Game.productionStep(0.01);
+      const m2 = s.m; Game.productionStep(0.01);
+      if (s.m !== m2 - c || it2.unpaid) return 'Dauerauftrag bezahlt die nächste Runde nicht';
+      S.prov[cap].q = [];
+      // Saves from before target strengths get one when loaded.
+      const old = JSON.parse(JSON.stringify(S));
+      for (const k in old.groups) delete old.groups[k].plan;
+      const mig = Saves.migrate({ state: old, keys: Saves.provKeys() });
+      if (!mig || Object.keys(mig.groups).some((k) => !mig.groups[k].plan)) return 'alter Spielstand bekommt keinen Soll-Bestand';
+      return null;
+    } catch (e) { return (e && e.stack) || String(e); }
+  },
+
   async run() {
     const q = new URLSearchParams(location.search);
     const runs = Math.max(1, parseInt(q.get('selftest'), 10) || 3), minutes = parseFloat(q.get('min')) || 20;
@@ -191,7 +274,7 @@ const SelfTest = {
           S.prov.forEach((pr, pid) => { const p = Geo.provinces[pid]; if (Game.hostile(country, pr.o) && U.dist(cx, cy, p.x, p.y) < bd) { bd = U.dist(cx, cy, p.x, p.y); best = pid; } });
           if (us.length && best !== null) {
             Tactics.task(g, 'attack', Geo.provinces[best].x, Geo.provinces[best].y, best);
-            UI.groups()['1'] = { ids, coh: true, task: g };
+            UI.groups()['1'] = { ids, coh: true, task: g, plan: Tactics.planOf(ids) };
           }
         }
         await this.simulate(minutes * 30);
@@ -220,6 +303,9 @@ const SelfTest = {
     const vp = await this.vpTest();
     this.log(vp ? 'FEHL Punktesieg: ' + vp : 'OK   Punktesieg, Kapitulation und Weltmacht-Sieg');
     allOk = allOk && !vp;
+    const army = this.armyTest();
+    this.log(army ? 'FEHL Armee-Führung: ' + army : 'OK   Soll-Bestand, Auffrischen, gemeinsame Führung, Zusammenlegen, Daueraufträge');
+    allOk = allOk && !army;
     this.active = false;
     window.SELFTEST = { ok: allOk, results: this.results };
     this.log(allOk ? 'ERGEBNIS: alles in Ordnung' : 'ERGEBNIS: Probleme gefunden');

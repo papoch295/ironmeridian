@@ -40,7 +40,7 @@ const SaveDB = {
 };
 
 const Saves = {
-  VERSION: 3,       // save format; older saves are migrated in migrate()
+  VERSION: 4,      // save format; older saves are migrated in migrate()
   AUTO_KEEP: 3,     // rotating autosaves
   index: [],        // [{ id, name, auto, when, country, eBloc, t, diff, prov }], newest first
   useDB: true,
@@ -161,6 +161,14 @@ const Saves = {
     S.fallout = S.fallout || [];
     S.vp = S.vp || null; // points victory countdown (Beta 1, step 8)
     for (const k in S.groups || {}) if (Array.isArray(S.groups[k])) S.groups[k] = { ids: S.groups[k], coh: true };
+    // Format 3 → 4: armies remember their target strength; what is alive now becomes the target.
+    const typeOf = new Map((S.units || []).map((u) => [u.id, u.t]));
+    for (const k in S.groups || {}) {
+      const a = S.groups[k];
+      if (a.plan) continue;
+      a.plan = {};
+      for (const id of a.ids) { const ty = typeOf.get(id); if (ty) a.plan[ty] = (a.plan[ty] || 0) + 1; }
+    }
     if (S.cside) this.toFactions(S, keys);
     S.v = this.VERSION;
     // Province layout changed since the save was made: map every current province onto the old one of the same

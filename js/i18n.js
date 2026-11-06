@@ -102,6 +102,12 @@ const STR = {
     armyKeys: 'Taste {0} wählt · Umschalt+{1} fügt hinzu', keepTogether: 'Formation halten', splitArmy: 'Aufteilen', disband: 'Auflösen', newArmy: 'Neue Armee', addToArmy: 'Zu Armee {0} hinzufügen',
     leaveArmy: 'Aus Armee entfernen', vehOk: 'auch Fahrzeuge', nukeAboard: 'Atombombe an Bord', armyFull: 'Alle 9 Armeen sind belegt',
     batchPartial: 'Nur {0} bezahlbar – so viele in Auftrag gegeben', recruitToArmy: 'Neue Einheiten bilden Armee {0}', formQueued: '{0} in Auftrag – wird Armee {1}', addedToArmy: 'Zu Armee {0} hinzugefügt',
+    leadWith: 'Gemeinsam führen', leadTip: 'Mehrere Armeen wählen: Hier antippen, in der Armee-Leiste lange drücken oder Umschalt+Klick. Großangriff, Vorrücken und Halten gelten dann für alle.', armiesLed: 'Armeen {0}',
+    mergeArmies: 'Zusammenlegen', mergeTip: 'Alle gewählten Armeen werden zu Armee {0}', armyMerged: 'Armee {0} geht in Armee {1} auf',
+    missing: 'Fehlt', refill: 'Auffrischen', refillTip: 'Verluste werden automatisch in der nächsten passenden Institution nachgebaut und stoßen dann zur Armee. Kostet normal Geld und pausiert, solange der Unterhalt die Einnahmen übersteigt.',
+    refillPaused: 'pausiert: Unterhalt zu hoch', refillTag: 'Ersatz für Verluste dieser Armee', refillOff: 'Auffrischen für Armee {0} abgeschaltet',
+    repTip: 'Dauerauftrag: wird immer wieder gebaut, solange das Geld reicht und die Einnahmen den Unterhalt decken', repWait: 'wartet auf Geld',
+    upkWarn: 'Unterhalt übersteigt die Einnahmen: {0} −{1}/min, Reserve reicht ca. {2} min. Auffrischen und Daueraufträge pausieren.', evUpkeep: 'Unterhalt zu hoch: {0} sinkt um {1}/min',
     armyDisbanded: 'Armee {0} aufgelöst', armySplit: 'Armee {0} aufgeteilt – neue Armee {1}', armyPending: 'Armee {0} wird noch rekrutiert',
     armyFight: 'Im Gefecht', armyMoving: 'Marsch', armyIdle: 'Bereit', armyRecruiting: 'Rekrutierung',
     cmdTaskAttack: 'Großangriff', cmdTaskAdvance: 'Vorrücken', cmdTaskHold: 'Halten',
@@ -222,6 +228,12 @@ const STR = {
     armyKeys: 'Key {0} selects · Shift+{1} adds', keepTogether: 'Keep together', splitArmy: 'Split', disband: 'Disband', newArmy: 'New army', addToArmy: 'Add to army {0}',
     leaveArmy: 'Remove from army', vehOk: 'vehicles too', nukeAboard: 'Nuclear bomb on board', armyFull: 'All 9 armies are in use',
     batchPartial: 'Only {0} affordable – that many were ordered', recruitToArmy: 'New units will form army {0}', formQueued: '{0} ordered – will become army {1}', addedToArmy: 'Added to army {0}',
+    leadWith: 'Lead together', leadTip: 'Select several armies: tap here, long-press in the army bar or Shift+click. Assault, advance and hold then apply to all of them.', armiesLed: 'Armies {0}',
+    mergeArmies: 'Merge', mergeTip: 'All selected armies become army {0}', armyMerged: 'Army {0} merged into army {1}',
+    missing: 'Missing', refill: 'Refill', refillTip: 'Losses are rebuilt automatically at the nearest suitable institution and then join the army. Costs the normal price and pauses while upkeep exceeds income.',
+    refillPaused: 'paused: upkeep too high', refillTag: 'Replacement for losses of this army', refillOff: 'Refill switched off for army {0}',
+    repTip: 'Standing order: built again and again as long as money lasts and income covers upkeep', repWait: 'waiting for funds',
+    upkWarn: 'Upkeep exceeds income: {0} −{1}/min, reserves last about {2} min. Refills and standing orders are paused.', evUpkeep: 'Upkeep too high: {0} falling by {1}/min',
     armyDisbanded: 'Army {0} disbanded', armySplit: 'Army {0} split – new army {1}', armyPending: 'Army {0} is still being recruited',
     armyFight: 'In combat', armyMoving: 'Marching', armyIdle: 'Ready', armyRecruiting: 'Recruiting',
     cmdTaskAttack: 'Assault', cmdTaskAdvance: 'Advance', cmdTaskHold: 'Hold',
@@ -268,6 +280,7 @@ const HELP = {
       <p>Jede Provinz hat eine Warteschlange mit bis zu acht Aufträgen. Mit <b>Anzahl ×3 / ×5 / ×10</b> rekrutierst du mehrere Einheiten mit einem Klick,
       unter <b>Kampfgruppen</b> eine fertige Armee mit Front, Aufklärung und Unterstützung. Mit <b>Zu Armee</b> stoßen neue Einheiten automatisch zu einer Armee. Abbrechen erstattet die Kosten.</p>
       <h3>Unterhalt</h3><p>Jede Einheit kostet laufend Geld und Öl. Oben siehst du dein Einkommen nach Abzug des Unterhalts; wird es rot, ist die Armee größer als deine Wirtschaft.</p>
+      <h3>Daueraufträge</h3><p>Mit <b>↻</b> in der Produktionsliste wird eine Einheit immer wieder gebaut, solange das Geld reicht und die Einnahmen den Unterhalt decken.</p>
       <h3>Flugabwehr & Forschung</h3><p>Die <b>Flugabwehrstellung</b> schützt eine Provinz vor Flugzeugen, Hubschraubern und Raketen.
       Im <b>Forschungszentrum</b> entstehen Atomsprengköpfe, die jede Rakete einer Raketenbasis oder ein strategischer Bomber tragen kann.</p>`,
     combat: `<h3>Echtzeit mit Pause</h3><p>Der Krieg läuft in Echtzeit. Pausiere jederzeit und gib in Ruhe Befehle – jede Einheit ist einzeln steuerbar.</p>
@@ -285,6 +298,8 @@ const HELP = {
       Nur Transporter gewählt: <b>Aufnehmen</b> lädt Einheiten in der Nähe. <b>Transport nach</b> fährt bzw. fliegt zum Ziel und lädt dort aus.
       Am schnellsten: nur die Truppen wählen, <b>Lufttransport</b> und das Ziel antippen. Freie Hubschrauber und geparkte Transportflugzeuge in der Nähe holen sie ab, starten, sobald alle an Bord sind, und laden am Ziel aus (Flugzeuge landen auf einem eigenen Flugplatz in der Nähe, sonst springen nur Fallschirmjäger). Die Anzeige <b>belegt/Plätze</b> am Transporter zeigt grau = leer, gelb = teilweise, grün = voll.</p>
       <h3>Armeen</h3><p>Armeen 1–9 bündeln Einheiten. Mit <b>Formation halten</b> marschiert die Armee im Tempo der langsamsten Einheit; Kampfeinheiten gehen vorn, Unterstützung hinten.</p>
+      <h3>Mehrere Armeen führen</h3><p>Weitere Armeen nimmst du im Seitenfenster unter <b>Gemeinsam führen</b> dazu, mit langem Drücken in der Armee-Leiste oder mit Umschalt+Klick. Aufträge gelten dann für alle, sie rücken nebeneinander vor. <b>Zusammenlegen</b> macht daraus eine Armee.</p>
+      <h3>Auffrischen</h3><p>Jede Armee merkt sich ihren Soll-Bestand. Mit <b>Auffrischen</b> werden Verluste in der nächsten passenden Institution nachgebaut und stoßen zur Armee. Das kostet normal Geld und pausiert, solange der Unterhalt die Einnahmen übersteigt; eine ganz vernichtete Armee wird nicht neu aufgestellt.</p>
       <h3>Aufträge für Armeen</h3><p>Ist eine ganze Armee gewählt, erscheinen unten <b>Großangriff</b>, <b>Vorrücken</b> und <b>Halten</b>. Beim Großangriff klären Aufklärer auf,
       die Artillerie bereitet vor, dann stürmt die Front. Flugabwehr, Sanitäter und Versorgung folgen von selbst. Mit <b>Rückzug bei Verlusten</b> bricht die Armee ab,
       bevor sie aufgerieben wird. Ein direkter Befehl hebt den Auftrag auf.</p>
@@ -313,6 +328,7 @@ const HELP = {
       <p>Each province has a queue of up to eight orders. With <b>Amount ×3 / ×5 / ×10</b> one click recruits several units,
       <b>Battle groups</b> recruit a ready army with front, reconnaissance and support. With <b>To army</b> new units automatically join an army. Cancelling refunds the cost.</p>
       <h3>Upkeep</h3><p>Every unit costs money and oil continuously. The top bar shows your income after upkeep; when it turns red, your army is larger than your economy.</p>
+      <h3>Standing orders</h3><p>With <b>↻</b> in the production list a unit is built again and again as long as money lasts and income covers upkeep.</p>
       <h3>Air defense & research</h3><p>An <b>Air Defense Site</b> protects a province against aircraft, helicopters and missiles.
       A <b>Research Facility</b> builds nuclear warheads that any missile of a missile base or a strategic bomber can carry.</p>`,
     combat: `<h3>Real time with pause</h3><p>The war runs in real time. Pause at any moment and issue orders calmly – every unit can be commanded individually.</p>
@@ -330,6 +346,8 @@ const HELP = {
       Transports only: <b>Pick up</b> loads nearby units. <b>Transport to</b> drives or flies to the destination and unloads there.
       Quickest: select just the troops, tap <b>Airlift</b> and the destination. Free helicopters and parked transport planes nearby fetch them, take off once everyone is aboard and unload at the destination (planes land at an own airfield nearby, otherwise only paratroopers jump). The <b>used/slots</b> tag on a transport shows grey = empty, yellow = partly loaded, green = full.</p>
       <h3>Armies</h3><p>Armies 1–9 bundle units. With <b>Keep together</b> an army marches at the pace of its slowest unit; combat units lead, support follows.</p>
+      <h3>Leading several armies</h3><p>Add more armies in the side panel under <b>Lead together</b>, with a long press in the army bar or with Shift+click. Tasks then apply to all of them, side by side. <b>Merge</b> turns them into one army.</p>
+      <h3>Refill</h3><p>Every army remembers its target strength. With <b>Refill</b>, losses are rebuilt at the nearest suitable institution and join the army. This costs the normal price and pauses while upkeep exceeds income; an army that was wiped out is not raised again.</p>
       <h3>Army tasks</h3><p>With a whole army selected, <b>Assault</b>, <b>Advance</b> and <b>Hold</b> appear at the bottom. In an assault, scouts probe ahead,
       artillery prepares, then the front attacks. Air defense, medics and supply follow on their own. With <b>Retreat on losses</b> the army breaks off
       before it is destroyed. A direct order cancels the task.</p>

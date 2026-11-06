@@ -31,7 +31,7 @@ const Game = {
   newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed }) {
     const pBloc = blocOf(country);
     const S = {
-      v: 3 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
+      v: 4 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
       mode, player: country, pBloc: pBloc ? pBloc.id : null, eBloc: mode === 'bloc' ? enemyBloc : null, nid: 1,
       side: {}, team: {}, war: {}, prov: [], units: [], shots: [], missiles: [], fallout: [], ai: {}, over: null, vp: null,
     };
@@ -223,7 +223,7 @@ const Game = {
     }
     if (armies) {
       const G = (this.state.groups = this.state.groups || {});
-      armies.forEach((ids, i) => { if (ids.length) G[String(i + 1)] = { ids, coh: true }; });
+      armies.forEach((ids, i) => { if (ids.length) G[String(i + 1)] = { ids, coh: true, plan: Tactics.planOf(ids) }; });
     }
     const air = { ahelo: p >= 4 ? f(1) : 0, thelo: p >= 3 ? 1 : 0, jet: f(Math.floor(p / 3)), tplane: p >= 5 ? 1 : 0, bomber: p >= 9 ? 1 : 0, uav: p >= 4 ? 1 : 0 };
     for (const t in air) for (let n = 0; n < air[t]; n++) this.spawnAt(t, side, cap.id);
@@ -304,6 +304,13 @@ const Game = {
       s.inc = { m: g.m - k.m, i: g.i, o: g.o - k.o };
       s.m = Math.max(0, s.m + s.inc.m * dtMin); s.i += s.inc.i * dtMin; s.o = Math.max(0, s.o + s.inc.o * dtMin);
     }
+    // The player hears once when upkeep starts to exceed income (again only after a recovery and some time).
+    const S = this.state, me = S.side[S.player];
+    if (me && me.inc) {
+      const short = me.inc.m < 0 || me.inc.o < 0;
+      if (short && !S.upkW && S.t >= (S.upkT || 0)) { S.upkW = true; S.upkT = S.t + 120; this.emit('upkeepShort', me); }
+      else if (!short) S.upkW = false;
+    }
   },
 
   afford(side, c) { const s = this.state.side[side]; return s.m >= (c.m || 0) && s.i >= (c.i || 0) && s.o >= (c.o || 0); },
@@ -317,7 +324,7 @@ const Game = {
     if (!pr.o) return 'notOwned';
     // A full queue still accepts more of the item at its end (merged into that batch).
     const last = pr.q[pr.q.length - 1];
-    if (pr.q.length >= this.QUEUE_MAX && !(last && last.kind === kind && last.key === key && kind !== 'bld' && kind !== 'upg')) return 'queueFull';
+    if (pr.q.length >= this.QUEUE_MAX && !(last && !last.rep && last.kind === kind && last.key === key && kind !== 'bld' && kind !== 'upg')) return 'queueFull';
     const c = this.itemCost(pid, kind, key);
     if (kind === 'unit') {
       const T = UNIT_TYPES[key];
@@ -353,7 +360,8 @@ const Game = {
   },
 
   // Queue opt.n items at once (batch). Only as many as the side can afford are queued; more of the item that
-  // ends the queue is merged into that entry. opt.g: army the units join when they are ready.
+  // ends the queue is merged into that entry. opt.g: army the units join when they are ready;
+  // opt.rf: replacement for a lost unit of that army (does not raise its target strength).
   queue(pid, kind, key, opt = {}) {
     const why = this.canQueue(pid, kind, key);
     if (why) return why;
@@ -362,11 +370,13 @@ const Game = {
     let n = batch ? Math.max(1, opt.n || 1) : 1;
     for (const r of ['m', 'i', 'o']) if (c[r]) n = Math.min(n, Math.floor(s[r] / c[r]));
     if (n < 1) return 'noMoney';
-    this.pay(pr.o, c, n);
-    const cost = { m: c.m || 0, i: c.i || 0, o: c.o || 0 }, g = opt.g || null;
+    const cost = { m: c.m || 0, i: c.i || 0, o: c.o || 0 }, g = opt.g || null, rf = opt.rf ? 1 : 0;
     const last = pr.q[pr.q.length - 1];
-    if (batch && last && last.kind === kind && last.key === key && (last.g || null) === g) last.n = (last.n || 1) + n;
-    else pr.q.push({ kind, key, n, t: 0, total: c.t, cost, g });
+    const merge = batch && last && !last.rep && last.kind === kind && last.key === key && (last.g || null) === g && (last.rf || 0) === rf;
+    if (!merge && pr.q.length >= this.QUEUE_MAX) return 'queueFull';
+    this.pay(pr.o, c, n);
+    if (merge) last.n = (last.n || 1) + n;
+    else pr.q.push({ kind, key, n, t: 0, total: c.t, cost, g, rf });
     return null;
   },
 
@@ -391,7 +401,8 @@ const Game = {
     const pr = this.state.prov[pid], it = pr.q[idx];
     if (!it) return;
     pr.q.splice(idx, 1);
-    const s = this.state.side[pr.o], n = it.n || 1;
+    // A standing order waiting for funds has not been paid for yet.
+    const s = this.state.side[pr.o], n = it.unpaid ? 0 : it.n || 1;
     s.m += it.cost.m * n; s.i += it.cost.i * n; s.o += it.cost.o * n;
   },
 
@@ -400,11 +411,23 @@ const Game = {
     S.prov.forEach((pr, pid) => {
       if (!pr.o || !pr.q.length || Sim.inFallout(Geo.provinces[pid])) return;
       const it = pr.q[0];
+      // Standing order: pays for its next round when it comes up; without funds (or while upkeep exceeds income)
+      // it waits at the end of the queue and lets the other items pass.
+      if (it.unpaid) {
+        const sd = S.side[pr.o];
+        if ((sd.inc && (sd.inc.m < 0 || sd.inc.o < 0)) || !this.afford(pr.o, it.cost)) { if (pr.q.length > 1) pr.q.push(pr.q.shift()); return; }
+        this.pay(pr.o, it.cost);
+        it.unpaid = false;
+      }
       const k = this.eK(pr.o, 'build');
       it.t += dt * k * (pr.cap ? 0.3 : 1);
       if (it.t < it.total) return;
       // A batch produces one item after the other.
-      if ((it.n || 1) > 1) { it.n--; it.t = 0; } else pr.q.shift();
+      if ((it.n || 1) > 1) { it.n--; it.t = 0; }
+      else {
+        pr.q.shift();
+        if (it.rep) { it.n = 1; it.t = 0; it.unpaid = true; pr.q.push(it); }
+      }
       const side = pr.o;
       let u = null;
       if (it.kind === 'unit') { u = this.spawnAt(it.key, side, pid); S.side[side].built++; }

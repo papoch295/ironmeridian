@@ -1,6 +1,6 @@
 # Iron Meridian – Roadmap: von der Alpha zur Beta
 
-Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1), Abschnitt 9 am 5. November 2026 (Beta 1.2). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
+Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1), Abschnitt 9 am 5. November 2026 (Beta 1.2) und am 6. November 2026 (Beta 2). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
 Prioritäten: **P0** = höchste Priorität, kommt vor allem anderen (taktisches Gameplay, siehe 2.9 und 2.10) ·
 **P1** = nötig, um die Alpha zu verlassen · **P2** = macht das Spiel deutlich besser · **P3** = später.
 Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
@@ -155,8 +155,8 @@ helfen schon; dazu soll der Spieler in **Kampfgruppen** denken statt in Einzelei
 | 68 | **Gruppen-Haltungen per Knopf:** Halten/Eingraben, Vorrücken, Angreifen, Rückzug bei X % Verlusten – die Gruppe führt den Rest selbst aus | P0 | M |
 | 69 | **Automatische Rollen in der Gruppe:** Artillerie hält Abstand und feuert auf Sicht, Flak, Sanitäter und Versorgung folgen von selbst | P0 | M |
 | 70 | **Armee-Übersicht:** Liste aller Kampfgruppen mit Stärke, Zustand und Auftrag; Tippen springt hin | P0 | S–M |
-| 71 | Automatisches Auffrischen: Verluste werden aus der Heimat-Institution nachgebaut (abschaltbar) | P1 | M |
-| 72 | Daueraufträge in der Produktion und Unterhalt-Anzeige mit Warnung, wenn die Einnahmen nicht reichen | P1 | S |
+| 71 | Automatisches Auffrischen: Verluste werden in der nächsten passenden Institution nachgebaut (abschaltbar) – ✔ 6. Nov. (Beta 2) | P1 | M |
+| 72 | Daueraufträge in der Produktion und Unterhalt-Anzeige mit Warnung, wenn die Einnahmen nicht reichen – ✔ 6. Nov. (Beta 2) | P1 | S |
 | 73 | Gebündelte Meldungen je Gruppe („Kampfgruppe 2 wird angegriffen“, „Ziel erreicht“, „zieht sich zurück“) – ✔ 5. Nov. | P1 | S |
 
 ---
@@ -425,14 +425,15 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 ### Beta 2 und folgende – Dezember 2026 bis Februar 2027
 | Block | Inhalt | Punkte |
 |---|---|---|
-| **Zuerst: Transport** (Notiz 5. Nov.) | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
-| Taktik ausbauen | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung; Auffrischen, Daueraufträge, gebündelte Meldungen | #61–#66, #71–#73 |
+| **Zuerst: Transport** (Notiz 5. Nov.) – ✔ auf Branch `beta2-transport` | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
+| Regiment-Steuerung – ✔ 6. Nov. auf Branch `beta2-transport` | Mehrere Armeen gemeinsam führen, Zusammenlegen, Soll-Bestand mit Anzeige der Lücken, Auffrischen, Daueraufträge, Unterhalt-Warnung | Notiz 5. Nov., #71, #72 |
+| Taktik ausbauen | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung | #61–#66 |
 | Spieltiefe | **Eskalation** (aus Beta 1 verschoben), Technologiebaum, Besatzung und Widerstand, Nachschublinien, Kriegsmüdigkeit, Missionen, Ereignisse, Veteranen und Generäle, Automatisierung, Gegenoffensiven | #43–#51, #53 |
 | Diplomatie & Spionage | Krieg/Frieden/Bündnis, Spionage deckt KI-Angriffsmuster auf, Geheimdienstzentrale | #54, #16, 3.2 |
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
 | Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
 | Mobil | Handy-Tests auf deinem Android, Android Studio einrichten, APK über Capacitor | 5.2, 6 |
-| Notiz 5. Nov. – in Arbeit | **Bessere Regiment-/Gruppen-Steuerung** (baut auf Army Recruitment im Batch auf); **Einheitenmodelle** realistischer, aber im WC4-Stil, nach Referenzbildern | aus Notiz 5. Nov. |
+| Notiz 5. Nov. – in Arbeit | **Einheitenmodelle** realistischer, aber im WC4-Stil, nach Referenzbildern | aus Notiz 5. Nov. |
 | Notiz 5. Nov. – Taktik | Gameplay taktischer: Einheiten müssen ihrer Beschreibung gerecht werden; klare Aufgabenverteilung und Trennung der Rollen | aus Notiz 5. Nov., ergänzt 2.9 |
 | Notiz 5. Nov. – Inhalt | Neue Einheiten + Gebäude | aus Notiz 5. Nov., Abschnitt 3 |
 | Später (laut deinen Antworten) | Szenarien mit Briefing, neue Einheiten/Gebäude, mehr Wirtschaft, Gelände und Wetter, Folgen von Atomwaffen, KI-Regeln auf Schwer, Play Store | #6, Abschnitt 3, F8, F14–F16 |

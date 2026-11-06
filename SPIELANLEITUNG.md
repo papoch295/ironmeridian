@@ -83,6 +83,16 @@ fertige Armeen.
    - **Vorrücken:** gemeinsam zu einem Punkt vorrücken und dort kämpfen.
    - **Halten:** stehen bleiben, eingraben und verteidigen.
 3. **Rückzug bei Verlusten** (im Seitenfenster) lässt die Armee abbrechen, bevor sie aufgerieben wird.
+4. **Auffrischen** (im Seitenfenster) baut Verluste in der nächsten passenden Institution nach; die Ersatzeinheiten stoßen
+   von selbst zur Armee. Das kostet normal Geld und pausiert, solange der Unterhalt die Einnahmen übersteigt. Das Fenster zeigt,
+   was der Armee zum Soll-Bestand fehlt.
+
+**Mehrere Armeen gemeinsam führen:** Im Seitenfenster unter **Gemeinsam führen** weitere Armeen dazunehmen (oder in der
+Armee-Leiste lange drücken, am PC Umschalt+Klick). Aufträge gelten dann für alle, die Armeen rücken nebeneinander vor.
+**Zusammenlegen** macht aus den gewählten Armeen eine einzige; **Aufteilen** macht aus einer Armee zwei.
+
+**Daueraufträge:** Mit **↻** in der Produktionsliste wird eine Einheit immer wieder gebaut, solange das Geld reicht und
+die Einnahmen den Unterhalt decken.
 
 Flugabwehr, Sanitäter und Versorgung folgen der Front von selbst, die Artillerie bleibt in Reichweite. Ein direkter
 Befehl (Bewegen, Angriff …) hebt den Auftrag auf. Unter **Mehr** findest du Stopp, Rückzug, Feuerverhalten und den

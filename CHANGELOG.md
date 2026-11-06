@@ -1,5 +1,15 @@
 # Änderungsprotokoll – Iron Meridian
 
+## Beta 2 – in Arbeit (Branch `beta2-transport`)
+
+- **Mehrere Armeen führen:** „Gemeinsam führen“ im Seitenfenster, langes Drücken in der Armee-Leiste oder Umschalt+Klick;
+  Großangriff, Vorrücken und Halten gelten für alle, die Armeen rücken nebeneinander vor. **Zusammenlegen** macht eine daraus.
+- **Soll-Bestand und Auffrischen (#71):** Jede Armee merkt sich ihre Sollstärke und zeigt, was fehlt. Verluste werden in der
+  nächsten passenden Institution nachgebaut (abschaltbar, pausiert bei zu hohem Unterhalt; Abbruch eines Ersatzauftrags schaltet es ab).
+- **Daueraufträge (#72):** ↻ in der Produktionsliste baut eine Einheit immer wieder.
+- **Unterhalt-Warnung (#72):** Meldung und Hinweis im Rekrutierungsfenster mit der Zeit, die die Reserve noch reicht.
+- Spielstand-Format 4: Alte Stände übernehmen den aktuellen Bestand als Soll. Selbsttest um einen Armee-Test erweitert.
+
 ## Beta 1.2 – 5. November 2026 (`v1.2-beta`)
 
 Neuer Abgabestand für die Uni (ersetzt `v1.1-beta`): KI-Feinschliff und Leistungsanzeige für den Handy-Test.

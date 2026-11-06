@@ -25,7 +25,20 @@ const UI = {
     $$('#speedSeg button').forEach((b) => (b.onclick = () => this.setSpeed(+b.dataset.speed)));
     $('#btnMenu').onclick = () => Screens.pauseMenu();
     $$('#quick button').forEach((b) => { b.innerHTML = ICON['q' + b.dataset.q] + '<span>' + U.esc(t('q' + b.dataset.q[0].toUpperCase() + b.dataset.q.slice(1))) + '</span>'; b.onclick = () => { Sfx.play('click'); const q = b.dataset.q; if (q === 'air' || q === 'msl') Panels.toggleSpecial(q); else this.quickSelect(q); }; });
-    $('#groups').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { Sfx.play('click'); b.dataset.g === 'new' ? this.newGroup() : this.selectGroup(b.dataset.g); } });
+    // Tap selects an army. Shift/Ctrl+click, right click or a long press adds it to the armies being led together.
+    $('#groups').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      Sfx.play('click');
+      if (b.dataset.g === 'new') this.newGroup();
+      else if (e.shiftKey || e.ctrlKey || e.metaKey) this.toggleArmy(b.dataset.g);
+      else this.selectGroup(b.dataset.g);
+    });
+    $('#groups').addEventListener('contextmenu', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const b = e.target.closest('button');
+      if (b && b.dataset.g !== 'new') { Sfx.play('click'); this.toggleArmy(b.dataset.g); }
+    });
     $('#btnObj').onclick = () => { const o = $('#objBox'); o.hidden = !o.hidden; this.renderObjectives(); if (!o.hidden) this.tutDone('obj'); };
     for (const [id, k] of [['#resM', 'money'], ['#resI', 'industry'], ['#resO', 'oil']]) $(id).innerHTML = `${ICON[k]}<span class="num"><span class="v">0</span><span class="inc"></span></span>`;
     this.applyLang();
@@ -102,8 +115,8 @@ const UI = {
     // A direct order replaces the task of every army it touches: the player takes over.
     this.clearTasks(units);
     // Armies set to "keep together" march at the pace of their slowest unit.
-    const ak = this.selectedArmy();
-    if (ak && this.groups()[ak].coh && ['move', 'fast', 'amove'].includes(ord.k)) ord = { ...ord, coh: 1 };
+    const aks = this.selectedArmies();
+    if (aks.length && aks.every((k) => this.groups()[k].coh) && ['move', 'fast', 'amove'].includes(ord.k)) ord = { ...ord, coh: 1 };
     Game.order(units, ord);
     if (['move', 'fast', 'amove', 'attack'].includes(ord.k)) this.tutDone('move');
     // Ground marker where the order was given (or on the attacked unit).
@@ -272,9 +285,8 @@ const UI = {
   // attack: reconnaissance → artillery → assault on the tapped province or point; advance: march there and fight
   // on the way; hold: stop and dig in. Support units follow on their own; heavy losses trigger a retreat.
   armyTask(kind, wx, wy, hit) {
-    const ak = this.selectedArmy();
-    if (!ak) return;
-    const a = this.groups()[ak];
+    const aks = this.selectedArmies();
+    if (!aks.length) return;
     let x = wx, y = wy, pid = null;
     if (kind !== 'hold') {
       const sx = Render.toScreen(wx, wy), site = Input.siteAt(sx[0], sx[1]);
@@ -283,15 +295,27 @@ const UI = {
       else if (p && Game.hostile(Game.me(), Game.state.prov[p.id].o)) { x = p.x; y = p.y; pid = p.id; }
       else if (site !== null) { x = p.x; y = p.y; }
     }
-    const g = { ids: a.ids.slice(), side: Game.me(), ret: a.ret === false ? 0 : Tactics.RETREAT };
-    Tactics.task(g, kind, x, y, pid);
-    a.task = g;
+    // Several armies get the same task side by side instead of piling onto one point.
+    aks.forEach((ak, i) => {
+      const a = this.groups()[ak];
+      let ax = x, ay = y;
+      if (kind !== 'hold' && aks.length > 1) {
+        const [cx, cy] = Tactics.center(this.armyIds(ak).map((id) => Game.unit(id)));
+        const d = Math.max(0.01, U.dist(cx, cy, x, y)), off = (i - (aks.length - 1) / 2) * this.ARMY_GAP;
+        const ox = x - ((y - cy) / d) * off, oy = y + ((x - cx) / d) * off;
+        if (Geo.provinceAt(ox, oy)) { ax = ox; ay = oy; }
+      }
+      const g = { ids: a.ids.slice(), side: Game.me(), ret: a.ret === false ? 0 : Tactics.RETREAT };
+      Tactics.task(g, kind, ax, ay, pid);
+      a.task = g;
+    });
     if (kind !== 'hold') Render.ping(x, y, kind === 'attack' ? 'attack' : 'move');
-    this.toast(t('task_' + kind, ak));
+    this.toast(t('task_' + kind, aks.join(', ')));
     this.tutDone(kind === 'hold' ? 'hold' : 'move');
     Sfx.play('order');
     this.groupSig = ''; this.renderGroups(); Panels.show();
   },
+  ARMY_GAP: 0.3,
   clearTasks(units) {
     const G = this.groups();
     for (const k in G) if (G[k].task && units.some((u) => G[k].ids.includes(u.id))) { G[k].task = null; this.groupSig = ''; }
@@ -374,7 +398,8 @@ const UI = {
     // A whole army gets tasks first: it then fights on its own (see Tactics).
     // Small screens show the main orders first; stop, retreat, stance, box and close sit behind "More".
     let h = '<div class="cmd-main">';
-    if (this.selectedArmy() && anyLand) {
+    const armyBar = this.selectedArmies().length > 0 && anyLand;
+    if (armyBar) {
       h += btn('tAttack', 'target', t('cmdTaskAttack'), 'tAttack') + btn('tAdvance', 'fast', t('cmdTaskAdvance'), 'tAdvance') + btn('tHold', 'shield', t('cmdTaskHold'));
       h += '<div class="sep"></div>';
     }
@@ -398,7 +423,6 @@ const UI = {
     if (us.some((u) => u.slbm > 0)) c += btn('slbm', 'missile', t('cmdSlbm'), 'slbm');
     if (us.some((u) => UNIT_TYPES[u.t].w.includes('bombs') && (u.nuke || Game.state.side[Game.me()].nukes > 0))) c += `<button class="cmd nuke" data-c="nuke" data-mode="nuke"><b class="nuke-ico">☢</b><span>${U.esc(t('cmdNuke'))}</span></button>`;
     // A whole army leads with its tasks; its situational orders move behind "More" as well.
-    const armyBar = this.selectedArmy() && anyLand;
     if (c && !armyBar) h += '<div class="sep"></div>' + c + '<div class="sep"></div>';
     h += '</div><div class="cmd-more">' + (armyBar ? c : '') + board;
     h += btn('stop', 'stop', t('cmdStop'));
@@ -617,9 +641,15 @@ const UI = {
       if (Render.selProv !== null) Panels.show();
     });
     Game.on('casLost', (u) => this.log(t('evCasLost', unitName(u.t)), 'warn', u.x, u.y));
+    Game.on('upkeepShort', (s) => {
+      const k = s.inc.m < 0 ? 'm' : 'o', txt = t('evUpkeep', t(k === 'm' ? 'money' : 'oil'), U.fmt(-s.inc[k]));
+      this.toast(txt, 'warn');
+      this.log(txt, 'warn');
+      Sfx.play('alert');
+    });
     Game.on('produced', ({ pid, it, u }) => {
       const p = Geo.provinces[pid];
-      if (u && it.g) this.joinArmy(it.g, u);
+      if (u && it.g) this.joinArmy(it.g, u, it.rf);
       if (it.kind === 'nuke') this.toast(t('evNukeReady'), 'warn');
       if (it.kind === 'unit' && u && it.g) this.armyNote(it.g, { ready: it.key }, p.x, p.y);
       else if (it.kind === 'unit') this.log(t('evProduced', unitName(it.key), pName(pid)), 'info', p.x, p.y);
@@ -802,22 +832,73 @@ const UI = {
     const ids = this.armyIds(k);
     return ids.length === this.sel.size && ids.every((id) => this.sel.has(id)) ? k : null;
   },
-  setGroup(k, ids) {
+  // All armies when the selection is exactly one or more whole armies, otherwise an empty list.
+  selectedArmies() {
+    if (!this.sel.size) return [];
+    const keys = new Set();
+    for (const id of this.sel) { const k = this.armyOf(id); if (!k) return []; keys.add(k); }
+    let n = 0;
+    for (const k of keys) { const ids = this.armyIds(k); if (!ids.every((id) => this.sel.has(id))) return []; n += ids.length; }
+    return n === this.sel.size ? [...keys].sort() : [];
+  },
+  // Add a whole army to the selection, or take it out again.
+  toggleArmy(k) {
+    const ids = this.armyIds(k);
+    if (!ids.length) { if (this.pendingArmy(k)) this.toast(t('armyPending', k)); return; }
+    const cur = [...this.sel], on = ids.every((id) => this.sel.has(id));
+    const next = on ? cur.filter((id) => !ids.includes(id)) : cur.concat(ids.filter((id) => !this.sel.has(id)));
+    if (next.length) this.select(next); else this.selectGroup(k);
+    this.groupSig = ''; this.renderGroups();
+  },
+  // Merge the given armies into the first one: units, target strength and units still in production.
+  mergeArmies(keys) {
+    const G = this.groups(), into = keys[0], a = G[into];
+    const mates = this.armyIds(into).map((id) => Game.unit(id)).filter((m) => !m.inside && UNIT_TYPES[m.t].dom === 'land');
+    for (const k of keys.slice(1)) {
+      const b = G[k];
+      if (!b) continue;
+      const moved = this.armyIds(k).map((id) => Game.unit(id));
+      a.ids.push(...moved.map((u) => u.id));
+      for (const ty in b.plan || {}) Tactics.planAdd(a, ty, b.plan[ty]);
+      for (const pr of Game.state.prov) if (pr.o === Game.me()) for (const q of pr.q) if (q.g === k) q.g = into;
+      delete G[k];
+      // The newcomers drive to the army they now belong to.
+      const land = moved.filter((u) => !u.inside && UNIT_TYPES[u.t].dom === 'land');
+      if (mates.length && land.length) { const [cx, cy] = Tactics.center(mates); Game.order(land, { k: 'move', x: cx, y: cy, coh: 1 }); }
+    }
+    this.toast(t('armyMerged', keys.slice(1).join(', '), into));
+    this.groupSig = ''; this.renderGroups(); this.renderCmdbar();
+    this.select(this.armyIds(into));
+  },
+  // Take units out of the target strength of the armies they leave (or of army `only`).
+  planDrop(ids, keep) {
     const G = this.groups();
+    for (const g in G) {
+      if (g === keep) continue;
+      for (const id of ids) { const u = Game.unit(id); if (u && G[g].ids.includes(id)) Tactics.planAdd(G[g], u.t, -1); }
+    }
+  },
+  setGroup(k, ids) {
+    const G = this.groups(), old = G[k];
+    this.planDrop(ids, k);
     for (const g in G) G[g].ids = G[g].ids.filter((id) => !ids.includes(id));
-    G[k] = { ids: ids.slice(), coh: G[k] ? G[k].coh : true };
+    const a = { ...(old || {}), ids: ids.slice(), coh: old ? old.coh : true, task: null, plan: { ...((old && old.plan) || {}) } };
+    delete a.res;
+    if (old) for (const id of old.ids) { const u = Game.unit(id); if (u && !ids.includes(id)) Tactics.planAdd(a, u.t, -1); }
+    for (const id of ids) { const u = Game.unit(id); if (u && !(old && old.ids.includes(id))) Tactics.planAdd(a, u.t, 1); }
+    G[k] = a;
     this.groupSig = '';
     this.renderGroups();
     // Army tasks (attack, advance, hold) appear as soon as the selection is an army.
     this.renderCmdbar();
   },
   addToGroup(k, ids) { const cur = this.armyIds(k); this.setGroup(k, cur.concat(ids.filter((id) => !cur.includes(id)))); },
-  removeFromGroups(ids) { const G = this.groups(); for (const g in G) G[g].ids = G[g].ids.filter((id) => !ids.includes(id)); this.groupSig = ''; this.renderGroups(); this.renderCmdbar(); },
+  removeFromGroups(ids) { const G = this.groups(); this.planDrop(ids); for (const g in G) G[g].ids = G[g].ids.filter((id) => !ids.includes(id)); this.groupSig = ''; this.renderGroups(); this.renderCmdbar(); },
   // Reserve an army number for units that are still being recruited.
   reserveArmy() {
     const k = this.freeArmyKey();
     if (!k) return null;
-    this.groups()[k] = { ids: [], coh: true, res: Game.state.t + 2 };
+    this.groups()[k] = { ids: [], coh: true, plan: {}, res: Game.state.t + 2 };
     this.groupSig = '';
     return k;
   },
@@ -845,16 +926,25 @@ const UI = {
     this.select(half.map((u) => u.id));
   },
   // A freshly recruited unit joins its army and drives to the army's ground forces.
-  joinArmy(k, u) {
+  // A replacement (rf) fills a gap; anything else raises the army's target strength.
+  joinArmy(k, u, rf) {
     const G = this.groups();
-    if (!G[k]) G[k] = { ids: [], coh: true };
+    if (!G[k]) G[k] = { ids: [], coh: true, plan: {} };
     const mates = this.armyIds(k).map((id) => Game.unit(id)).filter((m) => !m.inside && UNIT_TYPES[m.t].dom === 'land');
     G[k].ids.push(u.id); delete G[k].res;
+    if (!rf) Tactics.planAdd(G[k], u.t, 1);
     this.groupSig = '';
     if (!u.air && UNIT_TYPES[u.t].dom !== 'sea' && mates.length) {
       const cx = mates.reduce((s, m) => s + m.x, 0) / mates.length, cy = mates.reduce((s, m) => s + m.y, 0) / mates.length;
       if (U.dist(u.x, u.y, cx, cy) > 0.5) Game.order([u], { k: 'move', x: cx, y: cy });
     }
+  },
+  // Replacements still in production are refunded when they are no longer wanted.
+  cancelRefills(k) {
+    Game.state.prov.forEach((pr, pid) => {
+      if (pr.o !== Game.me()) return;
+      for (let i = pr.q.length - 1; i >= 0; i--) if (pr.q[i].rf && pr.q[i].g === k) Game.cancel(pid, i);
+    });
   },
   selectGroup(k) {
     const ids = this.armyIds(k);
