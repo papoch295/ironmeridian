@@ -151,6 +151,8 @@ const AI = {
       if (helpers.length) Game.order(helpers, { k: 'amove', x: p.x, y: p.y });
     }
     this.offensive(S, D, me, mine, enemy, land, heli, free.filter((u) => !used.has(u.id)), O);
+    // Between offensives the idle troops man the front sections and dig in there.
+    if (O.ph === 'wait') this.front(S, me, mine, enemy, land.filter((u) => !u.ord && !used.has(u.id)), A);
     // Units that arrived but the province still stands: push into the city center.
     for (const u of land) if (u.ord && u.ord.ai === 'wave' && !u.path && !u.tgt) u.ord.ai = 'wave-done';
   },
@@ -179,6 +181,61 @@ const AI = {
     party.forEach((u) => used.add(u.id));
   },
 
+  // Front sections: every FRONT_EVERY seconds idle land units are spread over the own provinces closest to the enemy
+  // (at most FRONT_R away) and take position a little towards it, where they get cover and dig in. Units already
+  // at a post stay; a quarter of the rest stays where it is as a reserve.
+  FRONT_EVERY: 40,
+  FRONT_R: 6,
+  front(S, me, mine, enemy, idle, A) {
+    if (S.t < (A.frT || 0) || !idle.length || !enemy.length) return;
+    A.frT = S.t + this.FRONT_EVERY;
+    const posts = [];
+    for (const pid of mine) {
+      const p = Geo.provinces[pid], e = this.nearestEnemy(enemy, p);
+      if (e == null) continue;
+      const q = Geo.provinces[e], d = U.dist(p.x, p.y, q.x, q.y);
+      if (d < this.FRONT_R) posts.push({ p, q, d });
+    }
+    if (!posts.length) return;
+    posts.sort((a, b) => a.d - b.d);
+    const use = posts.slice(0, U.clamp(Math.ceil(idle.length / 4), 1, 6)), cnt = use.map(() => 0);
+    const rest = idle.filter((u) => {
+      const i = use.findIndex((s) => U.dist(u.x, u.y, s.p.x, s.p.y) < 1);
+      if (i >= 0) cnt[i]++;
+      return i < 0;
+    });
+    for (const u of rest.slice(0, Math.ceil(rest.length * 0.75))) {
+      let bi = 0, bs = 1e18;
+      use.forEach((s, i) => { const v = U.dist2(u.x, u.y, s.p.x, s.p.y) * (1 + cnt[i] * 0.5); if (v < bs) { bs = v; bi = i; } });
+      const s = use[bi], k = Math.min(0.35, s.d * 0.3), a = Math.random() * Math.PI * 2;
+      cnt[bi]++;
+      Game.order([u], { k: 'move', x: s.p.x + (s.q.x - s.p.x) / s.d * k + Math.cos(a) * 0.15, y: s.p.y + (s.q.y - s.p.y) / s.d * k + Math.sin(a) * 0.15 });
+    }
+  },
+
+  // Combat value of units (price × remaining health) and of a target: visible enemy ground units around it plus
+  // its garrison. Offensives only attack where they have local superiority (D.sup).
+  value(us) { return us.reduce((s, u) => s + UNIT_TYPES[u.t].cost.m * u.hp / UNIT_TYPES[u.t].hp, 0); },
+  foeValue(S, me, pid) {
+    const p = Geo.provinces[pid];
+    const foes = Game.hash.query(p.x, p.y, 2, []).filter((u) => Game.hostile(me, u.s) && Sim.sees(me, u) && UNIT_TYPES[u.t].dom === 'land');
+    return this.value(foes) + S.prov[pid].def * 4;
+  },
+
+  // Envelopment: a point beside the main target (about 70° off the main axis), on land the troops can reach.
+  flankPoint(mp, st) {
+    const d = U.clamp(U.dist(mp.x, mp.y, st[0], st[1]), 1.8, 3), a0 = Math.atan2(st[1] - mp.y, st[0] - mp.x);
+    for (const da of [1.2, -1.2, 0.9, -0.9]) {
+      const x = mp.x + Math.cos(a0 + da) * d, y = mp.y + Math.sin(a0 + da) * d;
+      if (!Geo.isLand(x, y)) continue;
+      const c = Geo.provinceAt(x, y);
+      if (!c || !Game.bell[c.country]) continue;
+      if (Path.find(st[0], st[1], x, y, 'land', Game.bell, 60000)) return [x, y];
+    }
+    return null;
+  },
+  FLANK_SYNC: 45, // seconds the main groups wait for the flanking group before they assault anyway
+
   // Offensives follow a fixed rhythm so the player can learn them: every D.offEvery seconds the troops first gather
   // at a staging province for D.gather seconds, then attack. The main axis keeps its direction until its target
   // falls (the next target is the one closest to it); a secondary axis hits a different target.
@@ -201,15 +258,19 @@ const AI = {
       // Keep a small garrison at home.
       const force = pool.sort((a, b) => U.dist2(a.x, a.y, mp.x, mp.y) - U.dist2(b.x, b.y, mp.x, mp.y)).slice(0, Math.max(3, Math.floor(pool.length * 0.8)));
       const groups = this.formGroups(force);
-      const sideT = groups.length >= 2 ? this.pickSideTarget(S, mine, enemy, main) : null;
-      // One group (the last, usually the smallest) takes the secondary axis.
-      groups.forEach((g, i) => { g.axis = sideT !== null && i === groups.length - 1 ? 'side' : 'main'; });
-      const st = this.stagingPoint(mine, mp, force), ss = sideT === null ? null : this.stagingPoint(mine, Geo.provinces[sideT], force);
+      const st = this.stagingPoint(mine, mp, force);
+      // One group (the last, usually the smallest) takes the secondary axis: either an envelopment of the main
+      // target from the flank (chance D.flank) or an attack on a different target.
+      const flank = groups.length >= 2 && Math.random() < D.flank ? this.flankPoint(mp, st) : null;
+      const sideT = groups.length >= 2 && !flank ? this.pickSideTarget(S, mine, enemy, main) : null;
+      groups.forEach((g, i) => { g.axis = i === groups.length - 1 ? (flank ? 'flank' : sideT !== null ? 'side' : 'main') : 'main'; });
+      const ss = sideT === null ? null : this.stagingPoint(mine, Geo.provinces[sideT], force);
       Object.assign(O, { ph: 'gather', t: S.t + D.gather, next: S.t + D.offEvery, main, side: sideT, sx: st[0], sy: st[1],
-        ssx: ss && ss[0], ssy: ss && ss[1], groups, warned: false });
+        ssx: ss && ss[0], ssy: ss && ss[1], flank, groups, warned: false, waits: 0, syncT: null });
       // Groups on the same axis assemble side by side, not on one spot.
       const n = { main: 0, side: 0 };
       for (const g of groups) {
+        if (g.axis === 'flank') { g.x = flank[0]; g.y = flank[1]; Game.order(Tactics.members(g), { k: 'amove', x: g.x, y: g.y, coh: 1 }); continue; }
         const [bx, by] = g.axis === 'side' ? ss : st, tp = Geo.provinces[g.axis === 'side' ? sideT : main];
         const a = Math.atan2(tp.y - by, tp.x - bx) + Math.PI / 2, off = (n[g.axis]++ - 0.5 * (groups.filter((x) => x.axis === g.axis).length - 1)) * 0.45;
         g.x = bx + Math.cos(a) * off; g.y = by + Math.sin(a) * off;
@@ -227,11 +288,31 @@ const AI = {
       if (S.t < O.t) return;
       // Attack: targets that fell in the meantime are replaced by the nearest hostile province.
       for (const key of ['main', 'side']) if (O[key] != null && !Game.hostile(me, S.prov[O[key]].o)) O[key] = this.nearestEnemy(enemy, Geo.provinces[O[key]]);
+      // Local superiority: too strong a defence (as far as the AI can see) makes it switch to a weaker target near
+      // the staging point, wait up to twice for 30 s, or call the offensive off.
+      const own = this.value(O.groups.flatMap((g) => Tactics.members(g)));
+      if (O.main != null && own < D.sup * this.foeValue(S, me, O.main)) {
+        O.waits = (O.waits || 0) + 1;
+        const alt = enemy.filter((pid) => pid !== O.main && U.dist(Geo.provinces[pid].x, Geo.provinces[pid].y, O.sx, O.sy) < 5)
+          .map((pid) => ({ pid, v: this.foeValue(S, me, pid) })).filter((c) => own >= D.sup * c.v).sort((a, b) => a.v - b.v)[0];
+        if (alt) {
+          O.main = alt.pid; O.flank = null;
+          for (const g of O.groups) if (g.axis === 'flank') g.axis = 'main';
+        } else if (O.waits <= 2) { O.t = S.t + 30; return; }
+        else {
+          // Only a warned offensive is reported as called off (the player saw it coming).
+          if (O.warned) Game.emit('aiCalledOff', { k: me, x: O.sx, y: O.sy });
+          Object.assign(O, { ph: 'wait', t: S.t + D.offEvery * 0.5, groups: [], warned: false, flank: null });
+          return;
+        }
+      }
       for (const g of O.groups) {
         const pid = this.groupTarget(O, g);
         if (pid == null) { g.ph = 'hold'; continue; }
         Object.assign(g, { side: me, pid, tx: Geo.provinces[pid].x, ty: Geo.provinces[pid].y, ret: Tactics.RETREAT, k: 'attack' });
-        Tactics.phase(g, 'recon');
+        // The flanking group may still be on its way round: it marches up first and attacks from its side.
+        const far = g.axis === 'flank' && U.dist(...Tactics.center(Tactics.members(g)), g.x, g.y) > 0.8;
+        Tactics.phase(g, far ? 'approach' : 'recon');
       }
       const h = heli.filter((u) => !u.ord);
       if (h.length && O.main != null) Game.order(h, { k: 'amove', x: Geo.provinces[O.main].x, y: Geo.provinces[O.main].y });
@@ -242,7 +323,7 @@ const AI = {
     // Attack: every group runs through its own phases; the offensive ends when all are done or time is up.
     for (const g of O.groups) this.groupStep(S, me, g, O, enemy);
     if (S.t >= O.t || O.groups.every((g) => g.ph === 'hold' || g.ph === 'retreat' || g.ph === 'done'))
-      Object.assign(O, { ph: 'wait', t: Math.max(O.next, S.t + 30), groups: [], warned: false });
+      Object.assign(O, { ph: 'wait', t: Math.max(O.next, S.t + 30), groups: [], warned: false, flank: null });
   },
 
   // Battle groups of 4–8 units: front units (tanks, infantry, IFVs) spread evenly, plus support (artillery, air
@@ -270,6 +351,12 @@ const AI = {
       if (next == null) { g.ph = 'hold'; return; }
       O[g.axis === 'side' && O.side != null ? 'side' : 'main'] = next;
       Object.assign(g, { pid: next, tx: Geo.provinces[next].x, ty: Geo.provinces[next].y });
+    }
+    // Envelopment: the main groups hold their assault until the flanking group is in position (at most FLANK_SYNC s).
+    if (g.axis === 'main' && O.flank && (g.ph === 'recon' || g.ph === 'prep') && S.t >= g.t - 0.5) {
+      const fl = O.groups.find((x) => x.axis === 'flank');
+      if (O.syncT == null) O.syncT = S.t + this.FLANK_SYNC;
+      if (fl && fl.ph === 'approach' && S.t < O.syncT) g.t = S.t + 1;
     }
     const pid = g.pid;
     if (Tactics.step(g) === 'retreat') {
@@ -321,6 +408,12 @@ const AI = {
       const val = p.type === 'capital' ? 0.7 : p.type === 'industry' || p.type === 'oil' ? 0.85 : 1;
       return { pid, s: Math.sqrt(dmin) * val + U.dist(cx, cy, p.x, p.y) * 0.15 + (axis ? U.dist(axis.x, axis.y, p.x, p.y) * 0.5 : 0) };
     }).sort((a, b) => a.s - b.s);
+    // Among the closest candidates, strongly held provinces (visible troops, garrison) are less attractive.
+    const me = land[0].s, own = Math.max(1, this.value(land));
+    const top = scored.slice(0, 8);
+    for (const c of top) c.s += 4 * this.foeValue(S, me, c.pid) / own;
+    top.sort((a, b) => a.s - b.s);
+    scored.splice(0, top.length, ...top);
     for (const c of scored.slice(0, 4)) {
       const p = Geo.provinces[c.pid];
       if (Path.find(cx, cy, p.x, p.y, 'land', Game.bell, 120000)) return c.pid;

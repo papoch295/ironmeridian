@@ -714,6 +714,7 @@ const UI = {
       this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
       Render.ping(x, y, 'attack');
     });
+    Game.on('aiCalledOff', ({ k, x, y }) => this.log(t('evCalledOff', countryName(Geo.byKey[k])), 'good', x, y));
     Game.on('aiRetreat', ({ k, x, y }) =>this.log(t('evRetreat', countryName(Geo.byKey[k])), 'good', x, y));
     Game.on('liftGo', (u) => this.log(t('evLiftGo', unitName(u.t), u.cargo.length), 'info', u.x, u.y));
     Game.on('unloaded', (u) => this.log(t('evUnloaded', unitName(u.t)), 'info', u.x, u.y));

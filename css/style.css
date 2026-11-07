@@ -297,6 +297,8 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .qitem button.rep:hover { color: var(--accent); border-color: var(--accent); }
 .qitem button.rep.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
 .upk-warn { margin: 6px 0; padding: 6px 8px; border: 1px solid var(--bad); border-radius: var(--radius-s); color: var(--bad); background: rgba(5,10,14,.4); }
+.cmd-cnt { margin-left: 6px; text-transform: none; letter-spacing: 0; }
+.cmd-cnt.full { color: var(--bad); font-weight: 700; }
 .army-miss .miss { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--bad); }
 .army-miss .miss img { width: 24px; height: 16px; }
 .qitem img { width: 26px; height: 18px; flex: none; }

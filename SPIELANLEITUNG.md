@@ -70,6 +70,9 @@ Tippe eine eigene Provinz an und öffne **Rekrutieren**:
   Höhere Stufen schalten stärkere Einheiten frei.
 - **Zu Armee:** Neue Einheiten stoßen automatisch zu einer gewählten Armee.
 - Jede Provinz hat eine Warteschlange mit bis zu acht Aufträgen. Abbrechen erstattet die Kosten.
+- **Kommandolimit:** Dein Land kann nur eine bestimmte Zahl von Einheiten führen (Anzeige „Kommando 40 / 52“ über den
+  Reitern). Schiffe zählen doppelt, Einheiten in Produktion zählen mit. Provinzen ausbauen oder erobern erhöht das
+  Limit, die Hauptstadt zählt am meisten.
 
 ## 5. Armeen führen
 
@@ -106,7 +109,17 @@ Auswahlrahmen.
   Bodentruppen die Provinz. Infanterie und Pioniere sind am schnellsten.
 - **Eingraben:** Einheiten, die stillstehen, graben sich ein (Sandsack-Bogen) und nehmen bis zu 40 % weniger Schaden.
   Artillerie wirkt dagegen am besten.
-- **Unterdrückung:** Beschuss lähmt Infanterie. Sie trifft schlechter, wird langsamer und flieht bei 100 %.
+- **Flanke und Rücken:** Eine Einheit schaut zu ihrem Ziel (sonst in Fahrtrichtung). Treffer von der Seite richten
+  25 % mehr Schaden an, Treffer von hinten 50 %, und das Eingraben schützt dann weniger. Rote Doppelpfeile neben einer
+  Einheit zeigen, dass sie gerade in der Flanke getroffen wird. Die KI versucht das auch: Bei einer **Umfassung** greift
+  eine ihrer Kampfgruppen dasselbe Ziel von der Seite an (zweiter roter Pfeil).
+- **Deckung:** Nahe der Mitte eigener Provinzen sind Einheiten geschützt, in Städten, Hauptstädten, Häfen und
+  Industriegebieten am stärksten (Infanterie fast halber Schaden).
+- **Unterdrückung:** Beschuss lähmt Infanterie. Sie trifft schlechter, wird langsamer und flieht bei 100 %. Artillerie,
+  Mörser und Raketenwerfer halten deutlich stärker nieder als direktes Feuer.
+- **Frontabschnitte:** Zwischen ihren Offensiven besetzt die KI ihre Grenzprovinzen und gräbt sich dort ein. Angriffe
+  startet sie nur mit örtlicher Übermacht; ist deine Verteidigung zu stark, sucht sie ein anderes Ziel oder bläst den
+  Angriff ab.
 - **Nebel des Krieges:** Feinde siehst du nur in Sichtweite deiner Einheiten, Provinzen, Radare und Drohnen.
 - **Vorwarnung:** Die KI sammelt vor jeder Offensive Truppen. Sieht deine Aufklärung das, kommt die Meldung
   „Aufklärung: … sammelt Truppen“ und ein roter Pfeil zeigt das erwartete Ziel.

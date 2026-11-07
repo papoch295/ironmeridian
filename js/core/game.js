@@ -6,9 +6,11 @@ const DIFFICULTY = {
   // offEvery: seconds between two AI offensives; gather: how long the troops assemble before they attack.
   // recGap: seconds between two recruitments of a mid-sized country (bigger ones faster, see AI.economy); mob: the first
   // seconds of a war count as mobilisation (recruitment at half pace). probe: seconds between two scouting raids.
-  easy:   { inc: 0.45, forces: 0.55, aiTick: 5,   aggr: 2.4, build: 0.6,  cap: 38,  grace: 480, pBonus: 1.6, missiles: 0,   air: 0.25, eDmg: 0.6, offEvery: 600, gather: 150, recGap: 45, mob: 240, probe: 150 },
-  normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 60,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75, offEvery: 450, gather: 120, recGap: 30, mob: 180, probe: 100 },
-  hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 128, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1, offEvery: 300, gather: 75, recGap: 12, mob: 90, probe: 60 },
+  // cmd: command limit factor (CMD) of AI factions hostile to the player. sup: local superiority (own strength / enemy
+  // strength at the target) an AI offensive needs before it attacks. flank: chance that an offensive tries an envelopment.
+  easy:   { inc: 0.45, forces: 0.55, aiTick: 5,   aggr: 2.4, build: 0.6,  cap: 38,  grace: 480, pBonus: 1.6, missiles: 0,   air: 0.25, eDmg: 0.6, offEvery: 600, gather: 150, recGap: 45, mob: 240, probe: 150, cmd: 0.85, sup: 1.6, flank: 0.2 },
+  normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 60,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75, offEvery: 450, gather: 120, recGap: 30, mob: 180, probe: 100, cmd: 1, sup: 1.35, flank: 0.5 },
+  hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 128, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1, offEvery: 300, gather: 75, recGap: 12, mob: 90, probe: 60, cmd: 1.3, sup: 1.15, flank: 0.8 },
 };
 const START_DATE = Date.UTC(2026, 2, 1, 6, 0);
 const blocOf = (k) => BLOCS.find((b) => b.members.includes(k)) || null;
@@ -266,6 +268,7 @@ const Game = {
     const i = S.units.indexOf(u);
     if (i >= 0) S.units.splice(i, 1);
     this.byId.delete(u.id);
+    this._cmd = null;
   },
 
   // ---------- Economy ----------
@@ -316,6 +319,26 @@ const Game = {
   afford(side, c) { const s = this.state.side[side]; return s.m >= (c.m || 0) && s.i >= (c.i || 0) && s.o >= (c.o || 0); },
   pay(side, c, k = 1) { const s = this.state.side[side]; s.m -= (c.m || 0) * k; s.i -= (c.i || 0) * k; s.o -= (c.o || 0) * k; },
 
+  // ---------- Command limit (CMD) ----------
+  cmdW(t) { const T = UNIT_TYPES[t]; return CMD.w[t] || (T.dom === 'sea' ? CMD.ship : 1); },
+  // Limit and use of every faction, computed in one pass and kept until the game time moves on or something changes.
+  cmdAll() {
+    const S = this.state;
+    if (this._cmd && this._cmd.t === S.t && this._cmd.S === S) return this._cmd;
+    const cap = {}, used = {};
+    S.prov.forEach((pr, pid) => {
+      if (!pr.o) return;
+      cap[pr.o] = (cap[pr.o] || CMD.base) + pr.lvl * (CMD.per[Geo.provinces[pid].type] || 1);
+      for (const q of pr.q) if (q.kind === 'unit') used[pr.o] = (used[pr.o] || 0) + this.cmdW(q.key) * (q.n || 1);
+    });
+    for (const u of S.units) used[u.s] = (used[u.s] || 0) + this.cmdW(u.t);
+    for (const k in cap) cap[k] = Math.floor(cap[k] * this.eK(k, 'cmd'));
+    return (this._cmd = { t: S.t, S, cap, used });
+  },
+  cmdDirty() { this._cmd = null; },
+  cmd(side) { const C = this.cmdAll(); return { used: C.used[side] || 0, cap: C.cap[side] || CMD.base }; },
+  cmdFree(side) { const c = this.cmd(side); return c.cap - c.used; },
+
   // ---------- Production ----------
   // Returns null when possible, otherwise a reason key for the UI.
   QUEUE_MAX: 8,
@@ -330,6 +353,7 @@ const Game = {
       const T = UNIT_TYPES[key];
       if ((pr.b[T.bld] || 0) < T.tier) return 'needBuilding';
       if (T.dom === 'sea' && !p.seaPt) return 'notCoastal';
+      if (this.cmdFree(pr.o) < this.cmdW(key)) return 'cmdLimit';
     } else if (kind === 'msl') {
       if (pr.b.silo < MISSILES[key].tier) return 'needBuilding';
     } else if (kind === 'nuke') {
@@ -370,6 +394,9 @@ const Game = {
     let n = batch ? Math.max(1, opt.n || 1) : 1;
     for (const r of ['m', 'i', 'o']) if (c[r]) n = Math.min(n, Math.floor(s[r] / c[r]));
     if (n < 1) return 'noMoney';
+    if (kind === 'unit') n = Math.min(n, Math.floor(this.cmdFree(pr.o) / this.cmdW(key)));
+    if (n < 1) return 'cmdLimit';
+    this.cmdDirty();
     const cost = { m: c.m || 0, i: c.i || 0, o: c.o || 0 }, g = opt.g || null, rf = opt.rf ? 1 : 0;
     const last = pr.q[pr.q.length - 1];
     const merge = batch && last && !last.rep && last.kind === kind && last.key === key && (last.g || null) === g && (last.rf || 0) === rf;
@@ -387,10 +414,12 @@ const Game = {
     if (pr.q.length + types.length > this.QUEUE_MAX) return 'queueFull';
     for (const k of types) { const why = this.canQueue(pid, 'unit', k); if (why && why !== 'noMoney') return why; }
     if (!this.afford(pr.o, this.formationCost(F))) return 'noMoney';
+    if (this.cmdFree(pr.o) < this.formationCmd(F)) return 'cmdLimit';
     for (const k of types) this.queue(pid, 'unit', k, { n: F.u[k], g });
     return null;
   },
 
+  formationCmd(F) { let n = 0; for (const k in F.u) n += this.cmdW(k) * F.u[k]; return n; },
   formationCost(F) {
     const c = { m: 0, i: 0, o: 0 };
     for (const k in F.u) for (const r in c) c[r] += (UNIT_TYPES[k].cost[r] || 0) * F.u[k];
@@ -401,6 +430,7 @@ const Game = {
     const pr = this.state.prov[pid], it = pr.q[idx];
     if (!it) return;
     pr.q.splice(idx, 1);
+    this.cmdDirty();
     // A standing order waiting for funds has not been paid for yet.
     const s = this.state.side[pr.o], n = it.unpaid ? 0 : it.n || 1;
     s.m += it.cost.m * n; s.i += it.cost.i * n; s.o += it.cost.o * n;
@@ -415,7 +445,9 @@ const Game = {
       // it waits at the end of the queue and lets the other items pass.
       if (it.unpaid) {
         const sd = S.side[pr.o];
-        if ((sd.inc && (sd.inc.m < 0 || sd.inc.o < 0)) || !this.afford(pr.o, it.cost)) { if (pr.q.length > 1) pr.q.push(pr.q.shift()); return; }
+        // A standing order already counts once against the command limit; the next round needs the room for it.
+        const full = it.kind === 'unit' && this.cmdFree(pr.o) < 0;
+        if ((sd.inc && (sd.inc.m < 0 || sd.inc.o < 0)) || full || !this.afford(pr.o, it.cost)) { if (pr.q.length > 1) pr.q.push(pr.q.shift()); return; }
         this.pay(pr.o, it.cost);
         it.unpaid = false;
       }

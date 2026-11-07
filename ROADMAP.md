@@ -1,6 +1,6 @@
 # Iron Meridian – Roadmap: von der Alpha zur Beta
 
-Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1), Abschnitt 9 am 5. November 2026 (Beta 1.2) und am 6. November 2026 (Beta 2). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
+Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1), Abschnitt 9 am 5. November 2026 (Beta 1.2), am 6. November 2026 (Beta 2) und am 7. November 2026 (Beta 1.2 abgegeben, ab jetzt nur noch Beta 2). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
 Prioritäten: **P0** = höchste Priorität, kommt vor allem anderen (taktisches Gameplay, siehe 2.9 und 2.10) ·
 **P1** = nötig, um die Alpha zu verlassen · **P2** = macht das Spiel deutlich besser · **P3** = später.
 Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
@@ -138,12 +138,12 @@ Gilt für KI **und** Spieler gleichermaßen.
 | 58 | **KI-Kampfgruppen statt Blob:** Gruppen aus 4–8 Einheiten mit Rollen (Aufklärer vorn, Panzer/Infanterie Mitte, Artillerie und Flak hinten), je Gruppe ein eigener Auftrag | P0 | L |
 | 59 | **Angriff in Phasen:** Aufklärung → Artillerie-Vorbereitung auf erkannte Ziele → Sturm → Stellung halten und eingraben | P0 | M |
 | 60 | **Rückzug und Schonung:** Gruppe bricht bei hohen Verlusten ab, zieht sich zurück, repariert/füllt auf und greift erneut an | P0 | M |
-| 61 | Kommandolimit: Einheitenzahl hängt an Hauptquartieren/Provinzstufe statt nur am Geld | P2 | M |
-| 62 | Längere Bauzeiten und höhere Preise für schwere Einheiten | P2 | S |
-| 63 | KI-Frontabschnitte: Gruppen halten eine Linie, Angriff nur mit örtlicher Übermacht | P2 | M |
-| 64 | Echte Umfassung: Nebenachse greift zeitgleich an einer anderen Seite an | P2 | M |
-| 65 | Flanken- und Rückenbonus im Kampf | P2 | S–M |
-| 66 | Städte als Verteidigungsbonus, stärkeres Niederhalten durch Artillerie | P2 | S |
+| 61 | Kommandolimit: Einheitenzahl hängt an Hauptquartieren/Provinzstufe statt nur am Geld – ✔ 7. Nov. (Beta 2): Limit aus Provinzstufen (`CMD`), Anzeige „Kommando x / y“ | P2 | M |
+| 62 | Längere Bauzeiten und höhere Preise für schwere Einheiten – ✔ 7. Nov. (Beta 2): Kampfpanzer, Panzerhaubitze, Raketenwerfer, Kampfhubschrauber, Jets, Bomber u. a. ca. 15 % teurer und 25–35 % längere Bauzeit | P2 | S |
+| 63 | KI-Frontabschnitte: Gruppen halten eine Linie, Angriff nur mit örtlicher Übermacht – ✔ 7. Nov. (Beta 2) | P2 | M |
+| 64 | Echte Umfassung: Nebenachse greift zeitgleich an einer anderen Seite an – ✔ 7. Nov. (Beta 2) | P2 | M |
+| 65 | Flanken- und Rückenbonus im Kampf – ✔ 7. Nov. (Beta 2): +25 % / +50 %, Eingraben zählt weniger | P2 | S–M |
+| 66 | Städte als Verteidigungsbonus, stärkeres Niederhalten durch Artillerie – ✔ 7. Nov. (Beta 2) | P2 | S |
 
 ### 2.10 Einfachere Führung für den Spieler (P0 – gehört zu 2.9)
 Wenn das Spiel langsamer und taktischer wird, darf es nicht mehr Klickarbeit werden. Weniger, aber wertvollere Einheiten
@@ -422,12 +422,14 @@ schneller, Touch-Geräte zeichnen mit 1,5-facher Auflösung. Nachtest auf dem Ha
 Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kamikaze-Drohnentrupp war zu stark
 (21 % aller Abschüsse) und wurde abgeschwächt (jetzt 5 %), Details in `TESTPROTOKOLL.md`.
 
-### Beta 2 und folgende – Dezember 2026 bis Februar 2027
+**7. Nov.: Beta 1.2 (`v1.2-beta`) ist fertig und an der Uni abgegeben.** Ab jetzt wird nur noch an Beta 2 gearbeitet.
+
+### Beta 2 und folgende – Dezember 2026 bis Februar 2027 (begonnen 6. Nov.)
 | Block | Inhalt | Punkte |
 |---|---|---|
 | **Zuerst: Transport** (Notiz 5. Nov.) – ✔ auf Branch `beta2-transport` | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
 | Regiment-Steuerung – ✔ 6. Nov. auf Branch `beta2-transport` | Mehrere Armeen gemeinsam führen, Zusammenlegen, Soll-Bestand mit Anzeige der Lücken, Auffrischen, Daueraufträge, Unterhalt-Warnung | Notiz 5. Nov., #71, #72 |
-| Taktik ausbauen | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung | #61–#66 |
+| Taktik ausbauen – ✔ 7. Nov. auf Branch `beta2-transport` | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung | #61–#66 |
 | Spieltiefe | **Eskalation** (aus Beta 1 verschoben), Technologiebaum, Besatzung und Widerstand, Nachschublinien, Kriegsmüdigkeit, Missionen, Ereignisse, Veteranen und Generäle, Automatisierung, Gegenoffensiven | #43–#51, #53 |
 | Diplomatie & Spionage | Krieg/Frieden/Bündnis, Spionage deckt KI-Angriffsmuster auf, Geheimdienstzentrale | #54, #16, 3.2 |
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
@@ -437,6 +439,11 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 | Notiz 5. Nov. – Taktik | Gameplay taktischer: Einheiten müssen ihrer Beschreibung gerecht werden; klare Aufgabenverteilung und Trennung der Rollen | aus Notiz 5. Nov., ergänzt 2.9 |
 | Notiz 5. Nov. – Inhalt | Neue Einheiten + Gebäude | aus Notiz 5. Nov., Abschnitt 3 |
 | Später (laut deinen Antworten) | Szenarien mit Briefing, neue Einheiten/Gebäude, mehr Wirtschaft, Gelände und Wetter, Folgen von Atomwaffen, KI-Regeln auf Schwer, Play Store | #6, Abschnitt 3, F8, F14–F16 |
+
+**Nachtrag 7. Nov. (Taktik ausbauen):** Werte in `js/data/units.js` (`FLANK`, `COVER`, `ARTY_SUP`, `CMD`) und `DIFFICULTY`
+(`cmd`, `sup`, `flank`). Vergleich alt/neu, untätiger Spieler (Deutschland gegen Eurasien, 40 Spielminuten): auf Normal hält
+das eigene Bündnis 12–18 statt 12–15 Provinzen bei weniger Verlusten (Deckung, Frontabschnitte, Übermacht-Regel); auf Schwer
+ist die KI dank häufiger Umfassungen deutlich gefährlicher (9–11 statt 15–16 Provinzen). Selbsttest ohne Fehler.
 
 ---
 

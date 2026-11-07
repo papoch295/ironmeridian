@@ -333,21 +333,40 @@ const Sim = {
     if (!base) return;
     let dmg = base * (0.8 + Math.random() * 0.4) * (mult || 1);
     if (attacker) dmg *= Game.eK(attacker.s);
-    if (cls === 'soft' && this.inCover(t)) dmg *= 0.7;
+    dmg *= this.cover(t, cls);
     if (t.emb) dmg *= 1.5;
-    const dig = t.dig ? DIG.max * t.dig * (w.indirect ? 0.5 : 1) : 0;
+    // Flank / rear hits (FLANK): more damage and less use of the target's trench.
+    const asp = attacker && !w.indirect ? this.aspect(t, attacker) : 0;
+    if (asp) dmg *= asp === 2 ? FLANK.rear : FLANK.side;
+    const dig = t.dig ? DIG.max * t.dig * (w.indirect ? 0.5 : 1) * (asp === 2 ? FLANK.rearDig : asp ? FLANK.sideDig : 1) : 0;
     dmg *= 1 - dig;
     t.hp -= dmg;
-    t.sup = Math.min(100, t.sup + (w.sup || 5) * (cls === 'soft' ? 1 : 0.5) * (1 - dig));
+    t.sup = Math.min(100, t.sup + (w.sup || 5) * (cls === 'soft' ? 1 : 0.5) * (1 - dig) * (w.indirect ? ARTY_SUP : 1));
+    if (asp) t.flk = S.t; // shown on the map for a moment (renderer)
     t.lastHit = S.t;
     if (attacker) t.lastAtk = attacker.id;
     if (t.hp <= 0) this.kill(t, attacker);
     else if (t.s === S.player) Game.emit('underFire', t);
   },
 
-  inCover(u) {
+  // Damage factor from cover (COVER): near the center of an own or allied province, built-up areas protect best.
+  cover(u, cls) {
+    if (Game.T(u).dom !== 'land' || u.emb) return 1;
     const p = Geo.provinceAt(u.x, u.y);
-    return p && Game.allied(Game.state.prov[p.id].o, u.s) && U.dist(u.x, u.y, p.x, p.y) < 0.6;
+    if (!p || !Game.allied(Game.state.prov[p.id].o, u.s) || U.dist(u.x, u.y, p.x, p.y) >= COVER.r) return 1;
+    const C = COVER.types[p.type] ? COVER.urban : COVER.open;
+    return cls === 'soft' ? C.soft : C.veh;
+  },
+
+  // Where a hit on a ground unit comes from: 0 = front, 1 = flank, 2 = rear (direct fire of ground units and
+  // helicopters only). The target faces its current target, otherwise its direction of travel.
+  aspect(t, a) {
+    const TT = UNIT_TYPES[t.t], AT = UNIT_TYPES[a.t];
+    if (TT.dom !== 'land' || t.emb || (AT.dom !== 'land' && !AT.heli)) return 0;
+    const f = t.tgt && Game.unit(t.tgt), face = f ? Math.atan2(f.y - t.y, f.x - t.x) : t.hd || 0;
+    let d = Math.abs(Math.atan2(a.y - t.y, a.x - t.x) - face) % (Math.PI * 2);
+    if (d > Math.PI) d = Math.PI * 2 - d;
+    return d > Math.PI * 2 / 3 ? 2 : d > Math.PI / 3 ? 1 : 0;
   },
 
   hitProvince(pid, dmg, side) {
