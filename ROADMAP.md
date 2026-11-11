@@ -1,6 +1,6 @@
 # Iron Meridian – Roadmap: von der Alpha zur Beta
 
-Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1), Abschnitt 9 am 5. November 2026 (Beta 1.2), am 6. November 2026 (Beta 2) und am 7. November 2026 (Beta 1.2 abgegeben, ab jetzt nur noch Beta 2). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
+Stand: 2. November 2026 (Alpha 0.1), Abschnitte 0, 3.1 und 9 aktualisiert am 4. November 2026 (Beta 1), Abschnitt 9 am 5. November 2026 (Beta 1.2), am 6. November 2026 (Beta 2) und am 7. November 2026 (Beta 1.2 abgegeben, ab jetzt nur noch Beta 2), aufgeräumt am 11. November 2026 (erledigte Punkte in allen Tabellen abgehakt, veraltete Termine entfernt). Grundlage: Durchsicht des Codes (`js/core`, `js/data`, `js/ui`, `js/save.js`).
 Prioritäten: **P0** = höchste Priorität, kommt vor allem anderen (taktisches Gameplay, siehe 2.9 und 2.10) ·
 **P1** = nötig, um die Alpha zu verlassen · **P2** = macht das Spiel deutlich besser · **P3** = später.
 Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
@@ -31,6 +31,16 @@ Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
 
 Der frühere größte Umbau (nur zwei feste Seiten `P`/`E`) ist mit Schritt 2 erledigt.
 
+**Stand Beta 2 (7. Nov., Branch `beta2-transport`, Vorschau unter `/beta2/`)** – drei Blöcke aus Abschnitt 9 sind erledigt:
+- **Transport:** mehr Plätze (Transportpanzer 3, Schützenpanzer 2, Transporthubschrauber 4, Transportflugzeug 8,
+  Landungsschiff 16), Ladeanzeige „belegt/Plätze“ auf der Karte und in allen Listen, neuer Befehl **Lufttransport**.
+- **Regiment-Steuerung:** mehrere Armeen gemeinsam führen, Armeen zusammenlegen, Soll-Bestand mit Lücken-Anzeige,
+  **Auffrischen** (#71), Daueraufträge und Unterhalt-Warnung (#72); Spielstand-Format 4.
+- **Taktik ausbauen:** Flanken- und Rückenbonus, Deckung in Städten, stärkeres Niederhalten, teurere schwere Einheiten,
+  **Kommandolimit**, KI-Frontabschnitte mit Übermacht-Regel und Umfassung (#61–#66).
+- 10 Modelle im Referenzstil neu gezeichnet (5. Nov.): Bradley, Abrams, Apache, Reaper, Spezialkräfte (West) sowie
+  T-90M, BMP-3, Ka-52M, Orion, Spetsnaz (Ost).
+
 ---
 
 ## 1. Was „raus aus der Alpha“ bedeutet (Vorschlag für die Beta-Kriterien)
@@ -53,11 +63,11 @@ Bitte bestätigen oder ändern (Frage F1):
 ### 2.1 Spielmodi, Länder, Szenarien
 | # | Funktion | Prio | Aufwand |
 |---|---|---|---|
-| 1 | **Mehr-Seiten-Kern:** beliebig viele Fraktionen statt `P`/`E` (Besitz, Sicht, Kriegszustand, KI je Fraktion) | P1 | L |
-| 2 | **Freie Länderwahl:** jedes Land spielbar, nicht nur Bündnisführer; Start allein oder mit Bündnis | P1 | M |
-| 3 | **Modus „Jeder gegen jeden“** (alle Länder bzw. Bündnisse kämpfen gegeneinander) | P1 | M (nach #1) |
-| 4 | **Modus „Mit befreundeter KI“:** Verbündete werden von der KI gesteuert und helfen aktiv | P1 | M (nach #1) |
-| 5 | **Alle Provinzen / ganze Welt bespielbar**, neutrale Länder angreifbar (Kriegserklärung) | P1 | M |
+| 1 | **Mehr-Seiten-Kern:** beliebig viele Fraktionen statt `P`/`E` (Besitz, Sicht, Kriegszustand, KI je Fraktion) – ✔ 2. Nov. (Beta 1) | P1 | L |
+| 2 | **Freie Länderwahl:** jedes Land spielbar, nicht nur Bündnisführer; Start allein oder mit Bündnis – ✔ 2. Nov. (Beta 1) | P1 | M |
+| 3 | **Modus „Jeder gegen jeden“** (alle Länder bzw. Bündnisse kämpfen gegeneinander) – ✔ 2. Nov. (Beta 1): Modus „Weltkrieg“ | P1 | M (nach #1) |
+| 4 | **Modus „Mit befreundeter KI“:** Verbündete werden von der KI gesteuert und helfen aktiv – ✔ 2. Nov. (Beta 1) | P1 | M (nach #1) |
+| 5 | **Alle Provinzen / ganze Welt bespielbar**, neutrale Länder angreifbar (Kriegserklärung) – ✔ 2. Nov. (Beta 1) | P1 | M |
 | 6 | **Szenario-Auswahl:** vorgefertigte Lagen (z. B. „Baltikum 2026“, „Taiwan-Straße“, „Nahost“, „Weltkrieg“) mit eigenem Start, Zielen und Größe | P2 | M je Szenario |
 | 7 | **Spieleinstellungen:** Kartengröße/Region, Startgeld, Siegbedingung, Atomwaffen an/aus, Spieltempo | P2 | M |
 | 8 | **Siegbedingungen:** Eroberung, Hauptstädte, Punkte nach Zeit, Szenarioziele | P2 | M |
@@ -66,22 +76,22 @@ Bitte bestätigen oder ändern (Frage F1):
 ### 2.2 Spielstände (mehrere Sitzungen)
 | # | Funktion | Prio | Aufwand |
 |---|---|---|---|
-| 10 | Unbegrenzte, **benannte Spielstände** mit Datum, Land, Spielzeit und kleinem Kartenbild | P1 | M |
-| 11 | **Versionierung und Migration:** Stände bleiben nach Updates ladbar (heute: neue Provinzanzahl macht sie unbrauchbar) | P1 | M |
-| 12 | Speicher auf **IndexedDB** umstellen (localStorage ist auf ca. 5 MB begrenzt, große Partien passen bald nicht mehr) | P1 | S–M |
-| 13 | Autosave alle X Minuten + rotierende Autosaves (3 Stück), Speichern beim Schließen der App | P1 | S |
+| 10 | Unbegrenzte, **benannte Spielstände** mit Datum, Land, Spielzeit und kleinem Kartenbild – ✔ 2. Nov. (Beta 1) | P1 | M |
+| 11 | **Versionierung und Migration:** Stände bleiben nach Updates ladbar (heute: neue Provinzanzahl macht sie unbrauchbar) – ✔ 2. Nov. (Beta 1) | P1 | M |
+| 12 | Speicher auf **IndexedDB** umstellen (localStorage ist auf ca. 5 MB begrenzt, große Partien passen bald nicht mehr) – ✔ 2. Nov. (Beta 1) | P1 | S–M |
+| 13 | Autosave alle X Minuten + rotierende Autosaves (3 Stück), Speichern beim Schließen der App – ✔ 2. Nov. (Beta 1) | P1 | S |
 | 14 | Export/Import als Datei (Backup, Gerätewechsel) | P2 | S |
 | 15 | Cloud-Speicher (Konto nötig) | P3 | L |
 
 ### 2.3 Gegner-KI (klug, aber fair und berechenbar)
 | # | Funktion | Prio | Aufwand |
 |---|---|---|---|
-| 16 | **Angriffe ankündigen:** Aufklärung meldet „Feind sammelt Truppen bei X“ einige Minuten vorher (Vorwarnung) | P1 | M |
-| 17 | **Feste Angriffsachsen:** KI wählt 1–3 Frontabschnitte und bleibt dort, statt zufällig zu springen | P1 | M |
-| 18 | KI nutzt **Armeen** statt Einzelwellen (gemischte Verbände, Artillerie hinten, Panzer vorne) | P2 | M |
+| 16 | **Angriffe ankündigen:** Aufklärung meldet „Feind sammelt Truppen bei X“ einige Minuten vorher (Vorwarnung) – ✔ 2. Nov. (Beta 1) | P1 | M |
+| 17 | **Feste Angriffsachsen:** KI wählt 1–3 Frontabschnitte und bleibt dort, statt zufällig zu springen – ✔ 2. Nov. (Beta 1) | P1 | M |
+| 18 | KI nutzt **Armeen** statt Einzelwellen (gemischte Verbände, Artillerie hinten, Panzer vorne) – ✔ 2. Nov. (Beta 1): KI-Kampfgruppen mit Rollen | P2 | M |
 | 19 | KI-**Persönlichkeiten** je Land (vorsichtig, aggressiv, Luftmacht, Seemacht) | P2 | M |
 | 20 | KI **zieht sich zurück**, verteidigt Hauptstadt, startet Gegenoffensiven, nutzt Transporte/Landungen | P2 | M |
-| 21 | Verbündete KI (siehe #4) und KI gegen KI im Modus „Jeder gegen jeden“ | P1 | M |
+| 21 | Verbündete KI (siehe #4) und KI gegen KI im Modus „Jeder gegen jeden“ – ✔ 2. Nov. (Beta 1) | P1 | M |
 
 ### 2.4 Bedienung und Übersicht
 | # | Funktion | Prio | Aufwand |
@@ -89,14 +99,14 @@ Bitte bestätigen oder ändern (Frage F1):
 | 22 | **Strategische Übersicht:** Frontlinien, Armeepfeile, Liste aller Armeen und Produktionen | P1 | M |
 | 23 | **Ereignis-Meldungen** mit Klick zum Ort (Angriff, Provinz verloren, Einheit fertig) | P1 | S |
 | 24 | Armee-Befehle: Verteidigen, Front halten, Patrouille, Rückzug bei X % Verlusten, Sammelpunkt je Institution | P2 | M |
-| 25 | Wiederholte Produktion (Schleife) und Produktionsvorlagen | P2 | S |
-| 26 | Obere Leiste im Hochformat zu breit (Menü-Knopf abgeschnitten) – Fehler | P1 | S |
+| 25 | Wiederholte Produktion (Schleife) und Produktionsvorlagen – ✔ Vorlagen über Kampfgruppen-Vorlagen (2. Nov.), Schleife über Daueraufträge (6. Nov., Beta 2) | P2 | S |
+| 26 | Obere Leiste im Hochformat zu breit (Menü-Knopf abgeschnitten) – Fehler – ✔ 2. Nov. (Beta 1) | P1 | S |
 | 27 | Tooltips/Vergleich: Stärken und Schwächen jeder Einheit (gegen wen gut) | P2 | S |
 
 ### 2.5 Tutorial und Einstieg
 | # | Funktion | Prio | Aufwand |
 |---|---|---|---|
-| 28 | **Interaktives Tutorial** in kleiner Spielszene: Pfeile/Hervorhebungen auf echte Knöpfe, Schritt erst nach Aktion | P1 | M |
+| 28 | **Interaktives Tutorial** in kleiner Spielszene: Pfeile/Hervorhebungen auf echte Knöpfe, Schritt erst nach Aktion – ✔ 3. Nov. (Beta 1) | P1 | M |
 | 29 | Kapitel: Bewegen → Kämpfen → Erobern → Wirtschaft → Rekrutieren → Armeen → Luft/See → Raketen | P1 | M |
 | 30 | Kontext-Tipps beim ersten Mal (erste Werft, erster Flugplatz, erste Rakete) | P2 | S |
 | 31 | Einheiten-Lexikon mit Modellbild, Rolle, Konter | P2 | S |
@@ -104,7 +114,7 @@ Bitte bestätigen oder ändern (Frage F1):
 ### 2.6 Optik
 | # | Funktion | Prio | Aufwand |
 |---|---|---|---|
-| 32 | Luftfahrzeuge, Schiffe und Infanterie im neuen Referenzstil (wie Abrams) | P2 | L |
+| 32 | Luftfahrzeuge, Schiffe und Infanterie im neuen Referenzstil (wie Abrams) – begonnen 5. Nov.: Apache, Ka-52M, Reaper, Orion, Spezialkräfte, Spetsnaz fertig; Schiffe offen | P2 | L |
 | 33 | Gefechtseffekte: Mündungsfeuer, Explosionen, Rauch, Wracks, Krater | P2 | M |
 | 34 | Kartenstil: Gelände (Wald, Gebirge, Wüste), Flüsse, Frontlinie, Wetter-/Tag-Nacht-Tönung | P2 | M–L |
 | 35 | Überarbeitete Menüs (Hauptmenü mit Hintergrundbild, Ladebildschirm, Endbildschirm mit Statistik) | P2 | M |
@@ -113,9 +123,9 @@ Bitte bestätigen oder ändern (Frage F1):
 ### 2.7 Stabilität und Qualität
 | # | Funktion | Prio | Aufwand |
 |---|---|---|---|
-| 37 | **Automatische Tests** (Node-Skript): 30-min-Partie im Zeitraffer je Modus, prüft Fehler, Speicherstand, Sieg/Niederlage | P1 | M |
+| 37 | **Automatische Tests** (Node-Skript): 30-min-Partie im Zeitraffer je Modus, prüft Fehler, Speicherstand, Sieg/Niederlage – ✔ 2. Nov. (Beta 1): `node tools/selftest.js` | P1 | M |
 | 38 | Leistung: Begrenzung der Einheitenzahl, Sicht/Pfad nur bei Bedarf neu berechnen, Profiling auf Handy | P1 | M |
-| 39 | Fehlerfang: Absturz zeigt Meldung + Autosave statt schwarzen Bildschirm | P1 | S |
+| 39 | Fehlerfang: Absturz zeigt Meldung + Autosave statt schwarzen Bildschirm – ✔ 2. Nov. (Beta 1): Meldung + Notfall-Spielstand | P1 | S |
 | 40 | Balance-Tabellen pro Einheit (Kosten/Stärke) und Testläufe KI gegen KI | P2 | M |
 
 ### 2.8 Ton und Musik (spätere Phase, wie gewünscht)
@@ -132,12 +142,12 @@ Gilt für KI **und** Spieler gleichermaßen.
 
 | # | Funktion | Prio | Aufwand |
 |---|---|---|---|
-| 55 | **Unterhalt:** jede Einheit kostet laufend Geld und Öl; große Armeen belasten die Wirtschaft, Spam lohnt sich nicht mehr | P0 | M |
-| 56 | **Langsameres Tempo:** Bewegung, Eroberung und Verteidigungsaufbau von Provinzen langsamer; Partien länger, jede Bewegung zählt | P0 | S–M |
-| 57 | **Eingraben:** stehende Einheiten bekommen mit der Zeit einen wachsenden Verteidigungsbonus; gehaltene Stellungen brauchen vorbereitete Angriffe | P0 | M |
-| 58 | **KI-Kampfgruppen statt Blob:** Gruppen aus 4–8 Einheiten mit Rollen (Aufklärer vorn, Panzer/Infanterie Mitte, Artillerie und Flak hinten), je Gruppe ein eigener Auftrag | P0 | L |
-| 59 | **Angriff in Phasen:** Aufklärung → Artillerie-Vorbereitung auf erkannte Ziele → Sturm → Stellung halten und eingraben | P0 | M |
-| 60 | **Rückzug und Schonung:** Gruppe bricht bei hohen Verlusten ab, zieht sich zurück, repariert/füllt auf und greift erneut an | P0 | M |
+| 55 | **Unterhalt:** jede Einheit kostet laufend Geld und Öl; große Armeen belasten die Wirtschaft, Spam lohnt sich nicht mehr – ✔ 2. Nov. (Beta 1) | P0 | M |
+| 56 | **Langsameres Tempo:** Bewegung, Eroberung und Verteidigungsaufbau von Provinzen langsamer; Partien länger, jede Bewegung zählt – ✔ 2. Nov. (Beta 1) | P0 | S–M |
+| 57 | **Eingraben:** stehende Einheiten bekommen mit der Zeit einen wachsenden Verteidigungsbonus; gehaltene Stellungen brauchen vorbereitete Angriffe – ✔ 2. Nov. (Beta 1) | P0 | M |
+| 58 | **KI-Kampfgruppen statt Blob:** Gruppen aus 4–8 Einheiten mit Rollen (Aufklärer vorn, Panzer/Infanterie Mitte, Artillerie und Flak hinten), je Gruppe ein eigener Auftrag – ✔ 2. Nov. (Beta 1) | P0 | L |
+| 59 | **Angriff in Phasen:** Aufklärung → Artillerie-Vorbereitung auf erkannte Ziele → Sturm → Stellung halten und eingraben – ✔ 2. Nov. (Beta 1) | P0 | M |
+| 60 | **Rückzug und Schonung:** Gruppe bricht bei hohen Verlusten ab, zieht sich zurück, repariert/füllt auf und greift erneut an – ✔ 2. Nov. (Beta 1) | P0 | M |
 | 61 | Kommandolimit: Einheitenzahl hängt an Hauptquartieren/Provinzstufe statt nur am Geld – ✔ 7. Nov. (Beta 2): Limit aus Provinzstufen (`CMD`), Anzeige „Kommando x / y“ | P2 | M |
 | 62 | Längere Bauzeiten und höhere Preise für schwere Einheiten – ✔ 7. Nov. (Beta 2): Kampfpanzer, Panzerhaubitze, Raketenwerfer, Kampfhubschrauber, Jets, Bomber u. a. ca. 15 % teurer und 25–35 % längere Bauzeit | P2 | S |
 | 63 | KI-Frontabschnitte: Gruppen halten eine Linie, Angriff nur mit örtlicher Übermacht – ✔ 7. Nov. (Beta 2) | P2 | M |
@@ -151,10 +161,10 @@ helfen schon; dazu soll der Spieler in **Kampfgruppen** denken statt in Einzelei
 
 | # | Funktion | Prio | Aufwand |
 |---|---|---|---|
-| 67 | **Kampfgruppen-Vorlagen:** eine ganze Gruppe (z. B. „Mechanisierte Kampfgruppe“, „Panzerkampfgruppe“, „Artilleriebatterie“) mit einem Tippen rekrutieren; sie erscheint direkt als Armee | P0 | M |
-| 68 | **Gruppen-Haltungen per Knopf:** Halten/Eingraben, Vorrücken, Angreifen, Rückzug bei X % Verlusten – die Gruppe führt den Rest selbst aus | P0 | M |
-| 69 | **Automatische Rollen in der Gruppe:** Artillerie hält Abstand und feuert auf Sicht, Flak, Sanitäter und Versorgung folgen von selbst | P0 | M |
-| 70 | **Armee-Übersicht:** Liste aller Kampfgruppen mit Stärke, Zustand und Auftrag; Tippen springt hin | P0 | S–M |
+| 67 | **Kampfgruppen-Vorlagen:** eine ganze Gruppe (z. B. „Mechanisierte Kampfgruppe“, „Panzerkampfgruppe“, „Artilleriebatterie“) mit einem Tippen rekrutieren; sie erscheint direkt als Armee – ✔ 2. Nov. (Beta 1) | P0 | M |
+| 68 | **Gruppen-Haltungen per Knopf:** Halten/Eingraben, Vorrücken, Angreifen, Rückzug bei X % Verlusten – die Gruppe führt den Rest selbst aus – ✔ 2. Nov. (Beta 1) | P0 | M |
+| 69 | **Automatische Rollen in der Gruppe:** Artillerie hält Abstand und feuert auf Sicht, Flak, Sanitäter und Versorgung folgen von selbst – ✔ 2. Nov. (Beta 1) | P0 | M |
+| 70 | **Armee-Übersicht:** Liste aller Kampfgruppen mit Stärke, Zustand und Auftrag; Tippen springt hin – ✔ 2. Nov. (Beta 1) | P0 | S–M |
 | 71 | Automatisches Auffrischen: Verluste werden in der nächsten passenden Institution nachgebaut (abschaltbar) – ✔ 6. Nov. (Beta 2) | P1 | M |
 | 72 | Daueraufträge in der Produktion und Unterhalt-Anzeige mit Warnung, wenn die Einnahmen nicht reichen – ✔ 6. Nov. (Beta 2) | P1 | S |
 | 73 | Gebündelte Meldungen je Gruppe („Kampfgruppe 2 wird angegriffen“, „Ziel erreicht“, „zieht sich zurück“) – ✔ 5. Nov. | P1 | S |
@@ -164,15 +174,16 @@ helfen schon; dazu soll der Spieler in **Kampfgruppen** denken statt in Einzelei
 ## 3. Fehlende Einheiten und Gebäude
 
 Vorhanden: Infanterie, Spezialkräfte, Scharfschützen, Aufklärer, Panzerabwehr, Pioniere, Sanitäter, Mörser, Fallschirmjäger,
-Lkw, Transportpanzer, Schützenpanzer, leichter Panzer, Flugabwehr (Kurzstrecke), Feldartillerie, Kampfpanzer, Jagdpanzer,
-Panzerhaubitze, Raketenwerfer (kurz/lang), Transport- und Kampfhubschrauber, Transportflugzeug, Kampfjet, Bomber,
-Korvette, U-Boot, Zerstörer, Flugzeugträger, Atom-U-Boot.
+Lkw, Transportpanzer, Schützenpanzer, leichter Panzer, Flugabwehr (Kurzstrecke), weitreichende Flugabwehr (Patriot / S-400),
+Feldartillerie, Kampfpanzer, Jagdpanzer, Panzerhaubitze, Raketenwerfer (kurz/lang), Transport- und Kampfhubschrauber,
+Transportflugzeug, Kampfjet, Bomber, Aufklärungsdrohne, Kamikaze-Drohnentrupp, Korvette, U-Boot, Zerstörer,
+Flugzeugträger, Atom-U-Boot, Landungsschiff.
 
 ### 3.1 Einheiten (Vorschläge, du entscheidest – Frage F7)
 Überarbeitet am 4. November 2026 auf Wunsch nach neuen Einheiten. Jede neue Einheit braucht West- und Ost-Modell, Werte,
-Texte DE/EN und KI-Einbindung; bis zum Feature-Freeze (ca. 15. Nov.) sind realistisch **3–4 Einheiten** machbar.
+Texte DE/EN und KI-Einbindung.
 
-**Top 4 – Vorschlag für Beta 1** (passen zu „taktisch statt Spam“ und nutzen Kampfgruppen und Raketen, die es schon gibt):
+**Top 4 – für Beta 1 umgesetzt** (passen zu „taktisch statt Spam“ und nutzen Kampfgruppen und Raketen, die es schon gibt):
 
 | Einheit | Vorbild West / Ost | Rolle im Spiel | Warum | Prio |
 |---|---|---|---|---|
@@ -207,7 +218,7 @@ ist eine **eigene Einheit** (Rüstungswerk Stufe 3). KI-Landungen mit dem Landun
 |---|---|---|
 | **Bunker / Befestigungslinie** | Verteidigungsbonus, macht Fronten planbar | P1 |
 | **Nachschubdepot** | versorgt Armeen in Reichweite (Basis für Nachschublinien, siehe 4) | P1 |
-| **Drohnenfabrik** | baut Drohnen (siehe 3.1) | P1 |
+| ~~**Drohnenfabrik**~~ | entfällt: Drohnen kommen vom Flugplatz (Entscheidung 4. Nov., siehe 3.1) | – |
 | **Raffinerie / Kraftwerk** | mehr Öl bzw. Industrie, lohnende Angriffsziele | P2 |
 | **Lazarett** | heilt Infanterie, weniger Verluste | P2 |
 | **Geheimdienstzentrale** | Spionage, Sabotage, Vorwarnung (siehe 16) | P2 |
@@ -250,7 +261,9 @@ Das Spiel ist eine reine Web-App (HTML/CSS/JS, keine Abhängigkeiten). Es gibt z
 2. ~~**Service Worker**~~ – erledigt (3. Nov.): `sw.js` speichert alle Spieldateien zwischen. Online wird jede Datei
    kurz beim Server nachgefragt (neue Version sofort beim nächsten Start), offline kommt die gespeicherte Kopie.
    Neue Dateien in `FILES` eintragen und `CACHE` hochzählen; der Selbsttest bricht ab, wenn eine Datei fehlt.
-3. `manifest.webmanifest` prüfen: Name, Symbole (192 und 512 px PNG), `display: fullscreen`, `orientation: landscape`.
+3. `manifest.webmanifest`: Name, `display: fullscreen` und `orientation: any` (seit 5. Nov. nicht mehr auf Querformat
+   gesperrt, damit Tablets auch im Hochformat drehen) sind gesetzt. Offen: Symbole als PNG in 192 und 512 px (heute nur
+   `assets/icon.svg`), die manche Android-Versionen für das Startbildschirm-Symbol brauchen.
 4. Auf dem Handy die Seite in Chrome öffnen → Menü → **„Zum Startbildschirm hinzufügen“**. Es erscheint ein App-Symbol,
    das Spiel startet im Vollbild wie eine App.
 5. Vorteil: Updates kommen automatisch. Nachteil: nicht im Play Store.
@@ -331,7 +344,7 @@ Festgelegt am 2. November 2026 nach deinen Antworten (Abschnitt 10). Gearbeitet 
 Android Studio und Google-Play-Konto fehlen noch. Vorbild neben World Conqueror 4 und WARNO: **Supremacy: World War 3 /
 Conflict of Nations** (moderne Weltkarte, Provinzen, Bündnisse, Forschung, Spionage, auf Handy spielbar).
 
-### Beta 1 – Ziel: Ende November 2026 (Uni-Abgabe)
+### Beta 1 – Uni-Abgabe (✔ abgegeben am 7. Nov. 2026 als `v1.2-beta`)
 Alles, was die Abgabe stabil, vorführbar und spürbar besser macht. Reihenfolge = Arbeitsreihenfolge.
 
 **Stand 2. Nov.:** Schritt 1 erledigt (Repository auf GitHub: papoch295/ironmeridian, öffentlich): Spielstände (Namen,
@@ -410,7 +423,7 @@ reduziert, danach rutschen #60 (Rückzug) und #70 (Armee-Übersicht) nach Beta 2
 | 9. Dokumentation | README und Roadmap auf Beta 1, kurze Spielanleitung, Screenshots, Quellen/Lizenzen (Natural Earth), `CHANGELOG.md` | erledigt (`SPIELANLEITUNG.md`, `QUELLEN.md`, `docs/screenshots/`) |
 | 10. Handy-Test (vorgezogen aus Beta 2) | Web-Version auf deinem Android testen: FPS, Bedienung, Hoch-/Querformat, Offline-Start | erledigt (Nachtest ohne Fehler) |
 | 11. Testpartien | je Modus 3 Partien bis zum Ende, Ergebnisse und FPS als kurzes Testprotokoll festhalten | erledigt (TESTPROTOKOLL.md, Abschnitte 6–7) |
-| 12. Abschluss | sichtbare Versionsnummer „Beta 1.0“, git-Tag `v1.0-beta`, Feature-Freeze ca. 15. Nov., danach nur Fehlerbehebung | erledigt: Beta 1.2 mit Tag `v1.2-beta` (5. Nov., ersetzt `v1.1-beta`) als Abgabestand, danach nur Fehlerbehebung |
+| 12. Abschluss | sichtbare Versionsnummer, git-Tag als Abgabestand, danach auf `main` nur Fehlerbehebung | erledigt: Beta 1.2 mit Tag `v1.2-beta` (5. Nov., ersetzt `v1.1-beta`) als Abgabestand, danach nur Fehlerbehebung |
 | optional | gebündelte Meldungen (#73) vorziehen, falls Zeit bleibt; APK nur, falls die Uni eine installierbare App verlangt | #73 erledigt (5. Nov.); APK für die Abgabe **nicht nötig** (Entscheidung 5. Nov.: Web-App reicht), kommt in Beta 2 |
 | optional | **neue Einheiten** vor dem Freeze: Top 4 aus Abschnitt 3.1 (Aufklärungsdrohne, Kamikaze-Drohne, Patriot/S-400, Landungsschiff) | erledigt |
 
@@ -435,7 +448,7 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
 | Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
 | Mobil | Handy-Tests auf deinem Android, Android Studio einrichten, APK über Capacitor | 5.2, 6 |
-| Notiz 5. Nov. – in Arbeit | **Einheitenmodelle** realistischer, aber im WC4-Stil, nach Referenzbildern | aus Notiz 5. Nov. |
+| Notiz 5. Nov. – begonnen | **Einheitenmodelle** realistischer, aber im WC4-Stil, nach Referenzbildern. ✔ 10 Modelle (5. Nov.): Bradley, Abrams, Apache, Reaper, Spezialkräfte, T-90M, BMP-3, Ka-52M, Orion, Spetsnaz; die übrigen Einheiten sind offen | aus Notiz 5. Nov., #32 |
 | Notiz 5. Nov. – Taktik | Gameplay taktischer: Einheiten müssen ihrer Beschreibung gerecht werden; klare Aufgabenverteilung und Trennung der Rollen | aus Notiz 5. Nov., ergänzt 2.9 |
 | Notiz 5. Nov. – Inhalt | Neue Einheiten + Gebäude | aus Notiz 5. Nov., Abschnitt 3 |
 | Später (laut deinen Antworten) | Szenarien mit Briefing, neue Einheiten/Gebäude, mehr Wirtschaft, Gelände und Wetter, Folgen von Atomwaffen, KI-Regeln auf Schwer, Play Store | #6, Abschnitt 3, F8, F14–F16 |
@@ -447,7 +460,9 @@ ist die KI dank häufiger Umfassungen deutlich gefährlicher (9–11 statt 15–
 
 ---
 
-## 10. Fragen an dich
+## 10. Entscheidungen (Fragebogen vom 2. Nov., alle beantwortet)
+
+Deine Antworten stehen jeweils am Ende der Frage. Neue offene Fragen kommen ans Ende dieses Abschnitts.
 
 **Rahmen**
 - **F1** Passen die Beta-Kriterien in Abschnitt 1? Was fehlt, was ist zu viel? Woran erkennst du „fertig und richtig“? spielstände kann man löschen
