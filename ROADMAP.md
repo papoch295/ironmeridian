@@ -13,7 +13,7 @@ Aufwand: **S** = Stunden · **M** = 1–3 Tage · **L** = eine Woche oder mehr.
 - Weltkarte mit allen Ländern, Provinzen (Hauptstadt, Stadt, Industrie, Ölfeld, Hafen, Luftwaffenbasis), Provinzstufen 1–5.
 - Wirtschaft mit Geld, Industrie und Öl plus **Unterhalt** je Einheit; Institutionen: Kaserne, Rüstungswerk, Flugplatz, Werft,
   Raketenbasis, Radar, Flugabwehrstellung, Forschungszentrum (nur für Atomsprengköpfe).
-- 34 Einheitentypen zu Land, Luft und See mit West- und Ost-Modellen (neu: Aufklärungs- und Kamikaze-Drohne,
+- 42 Einheitentypen (Beta 2; Beta 1: 34) zu Land, Luft und See mit West- und Ost-Modellen (neu: Aufklärungs- und Kamikaze-Drohne,
   Patriot / S-400, Landungsschiff), Raketen (SRBM, Marschflugkörper, ICBM, SLBM), Atomwaffen
   mit Fallout, Transport, Nachschub, Reparatur, Sanitäter.
 - **Beliebig viele Fraktionen:** jedes Land mit eigener Wirtschaft und KI, Bündnisse als Teams, freie Länderwahl, Modi
@@ -198,22 +198,27 @@ Texte DE/EN und KI-Einbindung.
 **✔ Alle vier umgesetzt (4. Nov.).** Entschieden: Drohnen kommen vom **Flugplatz** (keine eigene Fabrik), Patriot / S-400
 ist eine **eigene Einheit** (Rüstungswerk Stufe 3). KI-Landungen mit dem Landungsschiff ✔ 5. Nov. (eigene Operation neben den Offensiven, Inseln zuerst, Vorwarnung).
 
+**✔ Acht weitere umgesetzt (11. Nov., Beta 2):** Erdkampfflugzeug, Tarnkappen-Jäger, AWACS, Fregatte, Marineinfanterie,
+Küsten-Seezielbatterie, EloKa-Fahrzeug und Gefechtsstand – mit West- und Ost-Modell, Texten DE/EN und KI-Einbindung.
+Wirkungen stehen in `SUPPORT_FX` (`js/data/units.js`), Modelle in `js/render/models-beta2.js`. Offen bleiben die
+Kandidaten, die erst neue Systeme brauchen (Minen, Flüsse, Gelände) oder Prio 3 haben.
+
 **Weitere Kandidaten (Beta 2):**
 
 | Bereich | Einheit | Rolle im Spiel | Prio |
 |---|---|---|---|
-| Land | **Elektronische Kampfführung** (EloKa-Fahrzeug) | stört Drohnen, Radar, Lenkwaffen in der Nähe | P2 |
-| Land | **Hauptquartier / Gefechtsstand** | Bonus für Armee in Reichweite, lohnendes Ziel für den Feind | P2 |
-| Land | **Küsten-Seezielbatterie** (NSM / Bastion) | Küstenverteidigung | P2 |
+| Land | ✔ **Elektronische Kampfführung** (EloKa-Fahrzeug) | stört Drohnen, Radar, Lenkwaffen in der Nähe | erledigt |
+| Land | ✔ **Hauptquartier / Gefechtsstand** | Bonus für Armee in Reichweite, lohnendes Ziel für den Feind | erledigt |
+| Land | ✔ **Küsten-Seezielbatterie** (NSM / Bastion) | Küstenverteidigung | erledigt |
 | Land | **Brückenleger / Minenleger / Minenräumer** | Flüsse, Sperren, Verteidigungslinien | P2 |
 | Land | **Bergepanzer** | repariert/birgt Panzer | P3 |
-| Luft | **Erdkampfflugzeug** (A-10 / Su-25) | billiger und robuster als der Kampfjet gegen Bodentruppen | P2 |
-| Luft | **AWACS** | Luftlagebild, Bonus für Jäger | P2 |
-| Luft | **Tarnkappen-Jäger** | schwer zu orten, teuer | P2 |
+| Luft | ✔ **Erdkampfflugzeug** (A-10 / Su-25) | billiger und robuster als der Kampfjet gegen Bodentruppen | erledigt |
+| Luft | ✔ **AWACS** | Luftlagebild, Bonus für Jäger | erledigt |
+| Luft | ✔ **Tarnkappen-Jäger** | schwer zu orten, teuer | erledigt |
 | Luft | **Tankflugzeug** | größere Reichweite für Jets | P3 |
-| See | **Fregatte** (U-Jagd/Flugabwehr) | Lücke zwischen Korvette und Zerstörer | P2 |
+| See | ✔ **Fregatte** (U-Jagd/Flugabwehr) | Lücke zwischen Korvette und Zerstörer | erledigt |
 | See | **Schnellboot, Minensucher** | Küstenkrieg | P3 |
-| Infanterie | **Marineinfanterie** | Landungsbonus (passt zum Landungsschiff) | P2 |
+| Infanterie | ✔ **Marineinfanterie** | Landungsbonus (passt zum Landungsschiff) | erledigt |
 | Infanterie | **Gebirgsjäger** | Geländebonus (braucht erst Gelände, F14) | P3 |
 
 ### 3.2 Gebäude / Institutionen

@@ -200,7 +200,7 @@ den letzten Stand.
 
 ## 12. Einheiten
 
-Unter **Hilfe & Einheiten** findest du alle 34 Einheiten mit Bild, Rolle und Werten, jeweils mit westlichem und
+Unter **Hilfe & Einheiten** findest du alle 42 Einheiten mit Bild, Rolle und Werten, jeweils mit westlichem und
 östlichem Vorbild.
 
 ![Einheiten-Modelle](docs/screenshots/07-modelle.png)

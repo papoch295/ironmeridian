@@ -34,7 +34,8 @@ Dieses Projekt ist ausschließlich das Spiel **IRON MERIDIAN – Globaler Konfli
   - Simulation (Kampf, Sicht, Eroberung): `js/core/sim.js`; KI: `js/core/ai.js`; Kampfgruppen-Taktik für KI und
     Spieler-Armeen (Phasen, Rückzug, Rollen): `js/core/tactics.js`.
   - Darstellung: `js/render/renderer.js`, NATO-Symbole `js/render/symbols.js`. Modelle: Kern, Helfer, Tarnung und Infanterie
-    in `js/render/models.js`; Fahrzeuge in `models-land.js` (West) / `models-east-land.js` (Ost), `models-air.js`, `models-sea.js`.
+    in `js/render/models.js`; Fahrzeuge in `models-land.js` (West) / `models-east-land.js` (Ost), `models-air.js`, `models-sea.js`; die acht Beta-2-Einheiten
+    (beide Fraktionen) in `models-beta2.js`, ihre Sonderwirkungen in `SUPPORT_FX` (`units.js`).
     Jede Fraktion hat eigene Modelle (`Models.m` = West/P, `Models.mE` = Ost/E, Vorbilder `mw`/`me` in `units.js`).
     Modell-Galerie zum Prüfen: `tools/gallery.html?only=mbt,ifv&sz=90` (bzw. `only=land|air|sea`).
   - Oberfläche: `js/ui/*.js`, Texte DE/EN in `js/i18n.js` (immer beide Sprachen pflegen).

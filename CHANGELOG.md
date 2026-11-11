@@ -2,6 +2,16 @@
 
 ## Beta 2 – in Arbeit (Branch `beta2-transport`)
 
+- **Acht neue Einheiten (ROADMAP 3.1)** mit eigenen West- und Ost-Modellen, auch für die KI:
+  Erdkampfflugzeug (A-10C / Su-25SM3), Tarnkappen-Jäger (F-22A / Su-57), AWACS (E-3G / A-50U), Fregatte
+  (F126 / Admiral Grigorowitsch), Marineinfanterie, Küsten-Seezielbatterie (NMESIS / Bastion-P), EloKa-Fahrzeug
+  (TLS-BCT / Krasucha-4) und Gefechtsstand (Stryker CV / R-149MA1). Neue Wirkungen (`SUPPORT_FX` in `units.js`):
+  Gefechtsstand stärkt Truppen in der Nähe, EloKa stört Lenkflugkörper und Drohnenaufklärung, AWACS sieht Flugzeuge
+  und Schiffe weit und stärkt eigene Flugzeuge, Fregatte mit weitreichendem Sonar, Landungen an fremder Küste
+  unterdrücken alle Truppen außer Marineinfanterie. Spielstand-Format unverändert.
+- **Realistischere Einheitenmodelle:** neuer Zeichenstil für alle Modelle (feine Kontur, gedämpfte Farben, flacher
+  Fraktionsring statt Sockel, Infanterie in natürlichen Proportionen, detailliertere Schiffe und Luftfahrzeuge).
+
 - **Eskalation (#44):** Hat ein Bündnis netto 12 Siegpunkte erobert, mobilisiert das nächste neutrale Bündnis gegen es –
   mit Vorwarnung (Leicht 4, Normal 3, Schwer 2 Minuten) und Abbruch, wenn der Vorsprung wieder verloren geht. Gilt für
   Spieler und KI gleich; jeder Eintritt hebt die Schwelle um 10. Schalter im Setup (Standard an), Stand im Ziele-Fenster.

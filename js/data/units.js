@@ -38,10 +38,20 @@ const W = {
   // like artillery in a battle group, noProv = never wasted on a province garrison).
   loiter:  { r: 2.4,  rof: 12,  acc: 0.8,  dmg: { light: 45, armor: 60, ship: 25 }, ammo: 3, sup: 20, fx: 'missile', standoff: 1, noProv: 1 },
   lrsam:   { r: 4.0,  rof: 5,   acc: 0.8,  dmg: { heli: 70, air: 85 }, ammo: 6, fx: 'missile', aa: 1 },
+  // Beta 2 units: ground-attack aircraft (gun + Maverick / Kh-25), stealth fighter, frigate, coastal battery.
+  gau:     { r: 0.6,  rof: 0.9, acc: 0.6,  dmg: { soft: 12, light: 24, armor: 16, heli: 10 }, sup: 25, fx: 'cannon' },
+  mav:     { r: 0.8,  rof: 4,   acc: 0.75, dmg: { light: 50, armor: 65, ship: 30 }, ammo: 6, sup: 20, fx: 'rocket' },
+  aam2:    { r: 2.1,  rof: 3.5, acc: 0.8,  dmg: { air: 90, heli: 70 }, ammo: 6, fx: 'missile', aa: 1 },
+  navSamS: { r: 2.4,  rof: 4,   acc: 0.72, dmg: { heli: 60, air: 60 }, ammo: 16, fx: 'missile', aa: 1 },
+  asw2:    { r: 1.6,  rof: 7,   acc: 0.7,  dmg: { sub: 75 }, ammo: 14, fx: 'torpedo' },
+  ashmC:   { r: 4.5,  rof: 14,  acc: 0.8,  dmg: { ship: 140 }, ammo: 4, fx: 'missile', standoff: 1, noProv: 1 },
 };
 
 // cls: target class. dom: land/air/sea. bld/tier: required building and level. cost: m = money, i = industry, o = oil.
 // men: squad size (infantry hp = men * 10). cap: transport slots. seat: slots it occupies. fuel: sortie seconds.
+// Special roles: awacs (radius in which friendly aircraft shoot better; sees aircraft and ships at full range),
+// sonar (share of vis at which submarines are found), amph (lands without disorder), jam (jamming radius),
+// hq (command radius) – the effects are tuned in SUPPORT_FX below.
 const UNIT_TYPES = {
   inf:    { cls: 'soft', dom: 'land', sym: 'inf', bld: 'barracks', tier: 1, cost: { m: 120, i: 20, o: 0 }, time: 14, men: 10, hp: 100, spd: 0.055, vis: 0.9, st: 0.3, seat: 1, w: ['rifle', 'rpg'],
     de: 'Infanterie', en: 'Infantry', mw: 'Mech. Infanteriezug', me: 'Motostrelki', dd: 'Rückgrat jeder Armee. Günstig, kann Provinzen erobern und Städte halten.', ed: 'Backbone of every army. Cheap, captures provinces and holds cities.' },
@@ -112,6 +122,23 @@ const UNIT_TYPES = {
     de: 'Landungsschiff', en: 'Landing Ship', mw: 'San-Antonio-Klasse', me: 'Iwan-Gren-Klasse', dd: 'Bringt 16 Plätze Truppen und Fahrzeuge über See (Kampfpanzer = 3) und setzt sie an jeder Küste ab: „Transport nach“ und das Ufer antippen.', ed: 'Carries 16 slots of troops and vehicles across the sea (main battle tank = 3) and lands them on any coast: "Transport to" and tap the shore.' },
   ssbn:   { cls: 'sub', dom: 'sea', sym: 'ssbn', bld: 'shipyard', tier: 3, cost: { m: 5000, i: 2500, o: 300 }, time: 80, hp: 400, spd: 0.15, vis: 1.4, st: 0.8, w: ['torpedo'], slbm: 2,
     de: 'Atom-U-Boot (SSBN)', en: 'Ballistic Missile Sub (SSBN)', mw: 'Columbia-Klasse', me: 'Borei-A-Klasse', dd: 'Trägt ballistische Raketen. Lädt im eigenen Hafen nach.', ed: 'Carries ballistic missiles. Reloads in a friendly port.' },
+  // ---------- Added in Beta 2 (ROADMAP 3.1) ----------
+  cas:    { cls: 'air', dom: 'air', sym: 'cas', bld: 'airfield', tier: 1, cost: { m: 950, i: 420, o: 80 }, time: 34, hp: 230, spd: 0.75, vis: 1.4, st: 0.1, w: ['gau', 'mav'], plane: 1, fuel: 95,
+    de: 'Erdkampfflugzeug', en: 'Ground-Attack Aircraft', mw: 'A-10C Thunderbolt II', me: 'Su-25SM3', dd: 'Billiger und robuster als der Kampfjet. Bordkanone und Lenkraketen gegen Fahrzeuge und Infanterie, wehrlos gegen Jäger.', ed: 'Cheaper and tougher than the fighter. Gun and guided missiles against vehicles and infantry, defenceless against fighters.' },
+  sjet:   { cls: 'air', dom: 'air', sym: 'sjet', bld: 'airfield', tier: 3, cost: { m: 2600, i: 1150, o: 170 }, time: 58, hp: 110, spd: 1.45, vis: 1.8, st: 0.8, w: ['aam2', 'agm'], plane: 1, fuel: 70,
+    de: 'Tarnkappen-Jäger', en: 'Stealth Fighter', mw: 'F-22A Raptor', me: 'Su-57', dd: 'Schwer zu orten: Flugabwehr und Jäger sehen ihn erst spät. Weitreichende Luft-Luft-Raketen, teuer.', ed: 'Hard to detect: air defense and fighters see it late. Long-range air-to-air missiles, expensive.' },
+  awacs:  { cls: 'air', dom: 'air', sym: 'awacs', bld: 'airfield', tier: 2, cost: { m: 1400, i: 600, o: 110 }, time: 44, hp: 180, spd: 0.8, vis: 7, st: 0, w: [], plane: 1, fuel: 240, awacs: 2.5,
+    de: 'Frühwarnflugzeug (AWACS)', en: 'Airborne Early Warning (AWACS)', mw: 'E-3G Sentry', me: 'A-50U', dd: 'Fliegendes Radar: entdeckt Flugzeuge und Schiffe auf große Entfernung, auch Tarnkappen-Jäger. Eigene Flugzeuge in der Nähe treffen besser. Unbewaffnet – im Dauereinsatz über eigenem Gebiet kreisen lassen.', ed: 'Flying radar: detects aircraft and ships at long range, stealth fighters included. Friendly aircraft nearby hit better. Unarmed – keep it circling over own territory on a standing mission.' },
+  frig:   { cls: 'ship', dom: 'sea', sym: 'frig', bld: 'shipyard', tier: 2, cost: { m: 1500, i: 700, o: 100 }, time: 42, hp: 380, spd: 0.17, vis: 1.9, st: 0.15, w: ['corvGun', 'ashmS', 'navSamS', 'asw2'], intercept: 0.35, sonar: 0.8,
+    de: 'Fregatte', en: 'Frigate', mw: 'F126 / FREMM', me: 'Admiral-Grigorowitsch-Klasse', dd: 'Zwischen Korvette und Zerstörer: bester U-Boot-Jäger der Flotte mit weitreichendem Sonar, dazu Flugabwehr und Seezielflugkörper.', ed: 'Between corvette and destroyer: the fleet\'s best submarine hunter with long-range sonar, plus air defense and anti-ship missiles.' },
+  marine: { cls: 'soft', dom: 'land', sym: 'mar', bld: 'barracks', tier: 2, cost: { m: 240, i: 40, o: 0 }, time: 18, men: 10, hp: 110, spd: 0.058, vis: 0.95, st: 0.3, seat: 1, w: ['rifle', 'rpg'], capture: 1.5, amph: 1,
+    de: 'Marineinfanterie', en: 'Marines', mw: 'USMC Rifle Squad', me: 'Morskaja Pechota', dd: 'Für Landungen: geht vom Landungsschiff geordnet an Land (andere Truppen sind kurz unterdrückt) und erobert schneller.', ed: 'Built for landings: goes ashore from a landing ship in good order (other troops are briefly suppressed) and captures faster.' },
+  coast:  { cls: 'light', dom: 'land', sym: 'coast', bld: 'factory', tier: 2, cost: { m: 950, i: 420, o: 40 }, time: 36, hp: 80, spd: 0.09, vis: 2.2, st: 0.3, seat: 3, w: ['ashmC'],
+    de: 'Küsten-Seezielbatterie', en: 'Coastal Missile Battery', mw: 'NMESIS (NSM)', me: 'K-300P Bastion-P', dd: 'Seezielflugkörper von Land: hält feindliche Schiffe und Landungen weit vor der Küste auf. Nur gegen Schiffe.', ed: 'Anti-ship missiles from land: stops enemy ships and landings far off the coast. Against ships only.' },
+  ew:     { cls: 'light', dom: 'land', sym: 'ew', bld: 'factory', tier: 2, cost: { m: 700, i: 320, o: 30 }, time: 30, hp: 80, spd: 0.1, vis: 1.6, st: 0.3, seat: 2, w: [], jam: 1.8,
+    de: 'EloKa-Fahrzeug', en: 'Electronic Warfare Vehicle', mw: 'TLS-BCT Stryker', me: '1RL257 Krasucha-4', dd: 'Elektronische Kampfführung: feindliche Lenkflugkörper und Kamikaze-Drohnen treffen im Störbereich deutlich schlechter, Aufklärungsdrohnen sehen dort keine Bodentruppen. Unbewaffnet.', ed: 'Electronic warfare: enemy guided missiles and loitering munitions hit far worse inside the jamming area, reconnaissance drones cannot see ground troops there. Unarmed.' },
+  hq:     { cls: 'light', dom: 'land', sym: 'hq', bld: 'factory', tier: 1, cost: { m: 520, i: 220, o: 20 }, time: 26, hp: 110, spd: 0.1, vis: 1.2, st: 0.2, seat: 2, w: ['mg'], hq: 1.4,
+    de: 'Gefechtsstand', en: 'Command Post', mw: 'M1130 Stryker CV', me: 'R-149MA1', dd: 'Führt die Truppen in der Nähe: sie treffen besser und erholen sich schneller von Unterdrückung. Fällt er aus, sind sie geschockt – gut schützen.', ed: 'Leads the troops nearby: they hit better and recover from suppression faster. If it is lost they are shocked – protect it well.' },
 };
 
 // Missiles are stored in a province's missile base and launched from there (SLBM from SSBN).
@@ -176,6 +203,12 @@ const VICTORY = { win: 0.7, world: 0.25, lose: 0.3, hold: 60 };
 // of a joining country, because neutral countries save money all game long.
 const ESCALATION = { gain: 12, step: 10, reach: 25, cancel: 0.75, pow: 1.2, forces: 0.6, cash: 2 };
 
+// Support effects of the Beta 2 units: accuracy factor for guided missiles fired into a hostile jamming area (jam),
+// for aircraft firing air-to-air inside a friendly AWACS radius, and for land units near their command post (hq);
+// hqSup = extra suppression recovery per second there, hqShock = suppression when the command post is destroyed,
+// landSup = suppression of troops (except amph units) landed from a ship onto a foreign shore.
+const SUPPORT_FX = { jamAcc: 0.6, awacsAcc: 1.25, hqAcc: 1.12, hqSup: 5, hqShock: 35, landSup: 40 };
+
 const WEAPON_NAMES = {
   rifle: ['Sturmgewehre', 'Assault rifles'], carbine: ['Karabiner (schallgedämpft)', 'Suppressed carbines'], rpg: ['Panzerfaust', 'Rocket launcher'],
   flamer: ['Flammenwerfer', 'Flamethrower'], sniper: ['Präzisionsgewehr', 'Sniper rifle'], atgm: ['Panzerabwehrlenkrakete', 'Anti-tank missile'],
@@ -188,6 +221,8 @@ const WEAPON_NAMES = {
   navGun: ['127-mm-Schiffsgeschütz', '127 mm naval gun'], corvGun: ['76-mm-Geschütz', '76 mm gun'], ashm: ['Seezielflugkörper', 'Anti-ship missile'],
   ashmS: ['Seezielflugkörper', 'Anti-ship missile'], navSam: ['Schiffsflugabwehr', 'Naval SAM'], asw: ['U-Jagd-Torpedo', 'ASW torpedo'], torpedo: ['Torpedo', 'Torpedo'],
   loiter: ['Kamikaze-Drohne', 'Loitering munition'], lrsam: ['Weitreichende Flugabwehrrakete', 'Long-range SAM'],
+  gau: ['30-mm-Bordkanone', '30 mm gun'], mav: ['Luft-Boden-Lenkrakete', 'Air-to-ground missile'], aam2: ['Weitreichende Luft-Luft-Rakete', 'Long-range air-to-air missile'],
+  navSamS: ['Schiffsflugabwehr (mittel)', 'Naval SAM (medium)'], asw2: ['U-Jagd-Torpedo (Bordhubschrauber)', 'ASW torpedo (ship helicopter)'], ashmC: ['Küsten-Seezielflugkörper', 'Coastal anti-ship missile'],
 };
 const MAX_LEVEL = 5;
 const UPGRADE_COST = (lvl) => ({ m: 400 * lvl, i: 200 * lvl, t: 25 * lvl });

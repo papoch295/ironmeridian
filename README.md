@@ -45,7 +45,7 @@ Spielminute lang halten (zu Beginn hält jedes Bündnis höchstens etwa 5 %).
   Vorrat aller Basen und U-Boote; die nächste Basis in Reichweite feuert automatisch. Beim Zielen zeigen Kreise die Reichweite.
 - **KI:** Greift in festen Offensiven an (erst Truppen sammeln, dann gemeinsamer Angriff entlang einer Hauptachse) und nutzt
   dieselbe Kampfgruppen-Taktik wie der Spieler, inklusive Rückzug. Aufklärung warnt rechtzeitig vor dem Truppensammeln.
-- **34 Einheitentypen** mit eigenen Modellen für West und Ost, Deutsch und Englisch, Touch- und Maussteuerung –
+- **42 Einheitentypen** mit eigenen Modellen für West und Ost, Deutsch und Englisch, Touch- und Maussteuerung –
   darunter Aufklärungs- und Kamikaze-Drohnen, Patriot / S-400 als Raketenabwehr und ein Landungsschiff für Landungen
   an jeder Küste.
 
@@ -113,7 +113,7 @@ der Bewegung nur verschoben und erst im Stillstand neu gezeichnet; Touch-Geräte
 - Bodentruppen betreten neutrale Länder erst nach einer Kriegserklärung; Luftwaffe und Marine dürfen sie überqueren.
 - Balancing ist auf „Leicht“ und „Normal“ abgestimmt; „Schwer“ wird in späteren Versionen verfeinert.
 - Noch nicht enthalten (geplant ab Beta 2): Diplomatie, Technologiebaum, Eskalation, Szenarien mit Briefing, Musik, Android-App.
-- **Weitere Einheiten in Planung** (`ROADMAP.md` Abschnitt 3.1): u. a. Erdkampfflugzeug, Fregatte, EloKa-Fahrzeug,
-  Gefechtsstand und Marineinfanterie.
+- **Neu in der Beta-2-Vorschau:** Erdkampfflugzeug, Tarnkappen-Jäger, AWACS, Fregatte, Marineinfanterie,
+  Küsten-Seezielbatterie, EloKa-Fahrzeug und Gefechtsstand. Weitere Kandidaten stehen in `ROADMAP.md` Abschnitt 3.1.
 
 Weitere Planung: [`ROADMAP.md`](ROADMAP.md).

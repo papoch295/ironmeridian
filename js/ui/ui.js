@@ -225,7 +225,7 @@ const UI = {
     }
     else if (m === 'cas') {
       // Standing air mission: only planes whose airfield can reach the point take it.
-      const planes = this.selUnits().filter((u) => u.air && (UNIT_TYPES[u.t].w.length || UNIT_TYPES[u.t].uav));
+      const planes = this.selUnits().filter((u) => u.air && (UNIT_TYPES[u.t].w.length || UNIT_TYPES[u.t].uav || UNIT_TYPES[u.t].awacs));
       const ok = planes.filter((u) => this.inAirReach(u, wx, wy));
       if (!ok.length) { this.toast(t('outOfRange'), 'bad'); return; }
       if (ok.length < planes.length) this.toast(t('casPartial', ok.length, planes.length), 'bad');
@@ -417,7 +417,7 @@ const UI = {
     const board = soft && !ls.carriers.length ? btn('load', 'load', t('cmdLoad'), 'load') : '';
     if (us.some((u) => u.cargo.length)) { c += btn('unloadAt', 'drop', t('cmdUnloadAt'), 'unloadAt'); c += btn('unload', 'unload', t('cmdUnload')); }
     if (us.some((u) => UNIT_TYPES[u.t].plane && u.cargo.length)) c += btn('drop', 'drop', t('cmdDrop'), 'drop');
-    if (us.some((u) => u.air && (UNIT_TYPES[u.t].w.length || UNIT_TYPES[u.t].uav))) c += btn('cas', 'target', t('cmdCas'), 'cas');
+    if (us.some((u) => u.air && (UNIT_TYPES[u.t].w.length || UNIT_TYPES[u.t].uav || UNIT_TYPES[u.t].awacs))) c += btn('cas', 'target', t('cmdCas'), 'cas');
     if (anyPlane) c += btn('rtb', 'rtb', t('cmdRtb'));
     if (us.some((u) => UNIT_TYPES[u.t].strike)) c += btn('strike', 'strike', t('cmdStrike'), 'strike');
     if (us.some((u) => u.slbm > 0)) c += btn('slbm', 'missile', t('cmdSlbm'), 'slbm');

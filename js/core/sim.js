@@ -30,6 +30,18 @@ const Sim = {
   fxClean: 0,
 
   cls(u) { return u.emb ? 'ship' : UNIT_TYPES[u.t].cls; },
+  // Active jammers and airborne AWACS, refreshed with the visibility pass: [{ x, y, s, r }].
+  jam: [], aw: [],
+  // Is (x, y) inside the jamming area of a unit hostile to `side`?
+  jammed(side, x, y) {
+    for (const j of this.jam) if (Game.hostile(j.s, side) && U.dist2(j.x, j.y, x, y) <= j.r * j.r) return true;
+    return false;
+  },
+  // Is u inside the radius of a friendly AWACS?
+  awacsNear(u) {
+    for (const a of this.aw) if (Game.allied(a.s, u.s) && U.dist2(a.x, a.y, u.x, u.y) <= a.r * a.r) return true;
+    return false;
+  },
   inFallout(p) {
     const S = Game.state, F = S.fallout;
     if (!F || !F.length) return false;
@@ -43,11 +55,14 @@ const Sim = {
   // ---------- Visibility (fog of war) ----------
   visibility() {
     const S = Game.state, h = Game.hash, near = this.near;
+    this.jam.length = 0; this.aw.length = 0;
     for (const e of S.units) {
       if (e.inside) continue;
       const T = UNIT_TYPES[e.t];
       e.vm = Game.vbit(e.s);
       if (e.air && e.air.st === 'ground') continue;
+      if (T.jam) this.jam.push({ x: e.x, y: e.y, s: e.s, r: T.jam });
+      if (T.awacs) this.aw.push({ x: e.x, y: e.y, s: e.s, r: T.awacs });
       const stealth = e.rev > S.t ? T.st * 0.3 : T.st;
       const isSub = T.cls === 'sub';
       h.query(e.x, e.y, 2.6, near);
@@ -56,21 +71,23 @@ const Sim = {
         if (e.vm & ob || Game.allied(o.s, e.s)) continue;
         const OT = UNIT_TYPES[o.t];
         let r = OT.vis * (1 - stealth * 0.6);
-        if (isSub) r = OT.w.includes('asw') || OT.w.includes('torpedo') ? OT.vis * 0.55 : 0;
+        if (isSub) r = OT.vis * (OT.sonar || (OT.w.includes('asw') || OT.w.includes('torpedo') ? 0.55 : 0));
         if (U.dist2(o.x, o.y, e.x, e.y) <= r * r) e.vm |= ob;
       }
     }
-    // Reconnaissance drones see much further than the shared 2.6 search radius above: they get their own pass.
-    // Stealth still shortens the range; submarines stay hidden.
+    // Reconnaissance drones and AWACS see much further than the shared 2.6 search radius above: they get their own
+    // pass. Drones: stealth still shortens the range, ground troops under hostile jamming stay hidden. AWACS: aircraft
+    // and ships at full range whatever their stealth, ground units only at 40 %. Submarines stay hidden from both.
     for (const o of S.units) {
       const OT = UNIT_TYPES[o.t];
-      if (!OT.uav || o.inside || (o.air && o.air.st === 'ground')) continue;
+      if (!(OT.uav || OT.awacs) || o.inside || (o.air && o.air.st === 'ground')) continue;
       const ob = Game.vbit(o.s);
       h.query(o.x, o.y, OT.vis, near);
       for (const e of near) {
         const ET = UNIT_TYPES[e.t];
         if (e.vm & ob || ET.cls === 'sub' || Game.allied(o.s, e.s)) continue;
-        const r = OT.vis * (1 - (e.rev > S.t ? ET.st * 0.3 : ET.st) * 0.6);
+        if (OT.uav && ET.dom === 'land' && this.jammed(o.s, e.x, e.y)) continue;
+        const r = OT.awacs ? (ET.dom === 'land' ? OT.vis * 0.4 : OT.vis) : OT.vis * (1 - (e.rev > S.t ? ET.st * 0.3 : ET.st) * 0.6);
         if (U.dist2(o.x, o.y, e.x, e.y) <= r * r) e.vm |= ob;
       }
     }
@@ -316,6 +333,10 @@ const Sim = {
     const firepower = T.cls === 'soft' && T.men ? 0.4 + 0.6 * u.hp / T.hp : 1;
     let acc = w.acc * (u.sup > 60 ? 0.55 : 1) * (u.mv && !T.heli && !T.plane ? 0.8 : 1);
     if (target && target.mv && !w.indirect) acc *= 0.85;
+    // Beta 2 support effects (SUPPORT_FX): hostile jamming at the target, friendly AWACS, own command post nearby.
+    if (w.fx === 'missile' && this.jam.length && this.jammed(u.s, tx, ty)) acc *= SUPPORT_FX.jamAcc;
+    if (w.aa && T.plane && this.aw.length && this.awacsNear(u)) acc *= SUPPORT_FX.awacsAcc;
+    if (u.hqT > S.t) acc *= SUPPORT_FX.hqAcc;
     if (w.aoe) {
       const miss = Math.random() > acc;
       const sc = miss ? 0.08 + Math.random() * 0.25 : Math.random() * 0.04;
@@ -388,6 +409,10 @@ const Sim = {
       else { S.side[c.s].losses++; Game.removeUnit(c); }
     }
     t.cargo = [];
+    // A lost command post shocks the troops it was leading.
+    if (T.hq) for (const f of Game.hash.query(t.x, t.y, T.hq, [])) {
+      if (f !== t && f.s === t.s && UNIT_TYPES[f.t].dom === 'land') { f.sup = Math.min(100, f.sup + SUPPORT_FX.hqShock); f.lastHit = S.t; f.hqT = 0; }
+    }
     S.side[t.s].losses++;
     if (killer) { S.side[killer.s].kills++; killer.kills++; }
     Game.removeUnit(t);
@@ -716,14 +741,16 @@ const Sim = {
           if (T.slbm && u.slbm < T.slbm && Math.random() < 0.04) u.slbm++;
         }
       }
-      if (T.supply || T.heal || T.repair) {
-        Game.hash.query(u.x, u.y, 0.45, near);
+      if (T.supply || T.heal || T.repair || T.hq) {
+        Game.hash.query(u.x, u.y, T.hq || 0.45, near);
         for (const f of near) {
           if (f === u || !Game.allied(f.s, u.s)) continue;
           const FT = UNIT_TYPES[f.t];
           if (T.supply && FT.dom === 'land') this.resupply(f, FT, 0.2 * dt);
           if (T.heal && FT.cls === 'soft') { f.hp = Math.min(FT.hp, f.hp + T.heal * dt); f.sup = Math.max(0, f.sup - 8 * dt); }
           if (T.repair && FT.dom === 'land' && FT.cls !== 'soft') f.hp = Math.min(FT.hp, f.hp + T.repair * dt);
+          // Command post: marks the units it leads (accuracy bonus in shoot) and steadies them.
+          if (T.hq && FT.dom === 'land' && !f.inside) { f.hqT = S.t + 3; if (f.sup > 0) f.sup = Math.max(0, f.sup - SUPPORT_FX.hqSup * dt); }
         }
       }
     }
