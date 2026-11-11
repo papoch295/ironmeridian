@@ -62,6 +62,15 @@ const Sym = {
       case 'loit': X(); ctx.beginPath(); ctx.moveTo(-w * 0.5, -h * 0.55); ctx.lineTo(0, -h * 0.85); ctx.lineTo(w * 0.5, -h * 0.55); ctx.stroke(); break;
       // Long-range air defense: air-defense dome with a missile through it.
       case 'sam2': ctx.beginPath(); ctx.ellipse(0, h * 0.75, w * 0.7, h * 1.1, 0, Math.PI, 0); ctx.moveTo(0, h * 0.8); ctx.lineTo(0, -h * 0.75); ctx.moveTo(-w * 0.18, -h * 0.4); ctx.lineTo(0, -h * 0.8); ctx.lineTo(w * 0.18, -h * 0.4); ctx.stroke(); break;
+      // Marines: infantry cross over a wave line.
+      case 'mar': X(); ctx.beginPath(); ctx.moveTo(-w * 0.55, h * 0.72); ctx.quadraticCurveTo(-w * 0.28, h * 0.42, 0, h * 0.72); ctx.quadraticCurveTo(w * 0.28, h * 1.02, w * 0.55, h * 0.72); ctx.stroke(); break;
+      // Coastal missile battery: missile over a wave line.
+      case 'coast': ctx.beginPath(); ctx.moveTo(0, h * 0.35); ctx.lineTo(0, -h * 0.8); ctx.moveTo(-w * 0.2, -h * 0.4); ctx.lineTo(0, -h * 0.85); ctx.lineTo(w * 0.2, -h * 0.4);
+        ctx.moveTo(-w * 0.7, h * 0.68); ctx.quadraticCurveTo(-w * 0.35, h * 0.38, 0, h * 0.68); ctx.quadraticCurveTo(w * 0.35, h * 0.98, w * 0.7, h * 0.68); ctx.stroke(); break;
+      // Electronic warfare: lightning flash.
+      case 'ew': ctx.beginPath(); ctx.moveTo(w * 0.3, -h * 0.8); ctx.lineTo(-w * 0.3, h * 0.05); ctx.lineTo(w * 0.15, h * 0.05); ctx.lineTo(-w * 0.3, h * 0.8); ctx.stroke(); break;
+      // Command post: staff with a command flag.
+      case 'hq': txt('HQ', 0, 0.4); ctx.beginPath(); ctx.moveTo(-w * 0.92, h * 0.92); ctx.lineTo(-w * 0.92, -h * 0.92); ctx.stroke(); break;
       default: txt('?');
     }
   },
@@ -73,7 +82,7 @@ const Sym = {
     ctx.translate(x, y);
     ctx.globalAlpha = alpha ?? 1;
     // Shadow for aircraft height impression.
-    const air = !['corv', 'sub', 'dd', 'cv', 'ssbn', 'lst'].includes(sym);
+    const air = !['corv', 'sub', 'dd', 'cv', 'ssbn', 'lst', 'frig'].includes(sym);
     if (air) { ctx.save(); ctx.translate(s * 0.35, s * 0.45); ctx.rotate(hd); ctx.fillStyle = 'rgba(0,0,0,0.35)'; this.shape(ctx, sym, s); ctx.fill(); ctx.restore(); }
     ctx.rotate(hd);
     ctx.fillStyle = c.fill; ctx.strokeStyle = c.dark; ctx.lineWidth = Math.max(1, s * 0.07); ctx.lineJoin = 'round';
@@ -99,6 +108,14 @@ const Sym = {
       case 'uav': P([[0.42, 0], [0.3, 0.05], [0.08, 0.06], [0.04, 0.72], [-0.06, 0.72], [-0.08, 0.06], [-0.42, 0.04], [-0.56, 0.2], [-0.6, 0.2], [-0.54, 0], [-0.6, -0.2], [-0.56, -0.2], [-0.42, -0.04], [-0.08, -0.06], [-0.06, -0.72], [0.04, -0.72], [0.08, -0.06], [0.3, -0.05]]); break;
       // Landing ship: wide hull with a square stern (well deck).
       case 'lst': P([[0.68, 0], [0.42, 0.16], [-0.66, 0.16], [-0.66, -0.16], [0.42, -0.16]]); break;
+      // Ground-attack aircraft: straight wings, twin tail fins, engine pods beside the rear fuselage.
+      case 'cas': P([[0.56, 0], [0.4, 0.06], [0.14, 0.07], [0.1, 0.66], [-0.06, 0.66], [-0.08, 0.08], [-0.2, 0.16], [-0.36, 0.16], [-0.38, 0.06], [-0.5, 0.05], [-0.52, 0.26], [-0.62, 0.26], [-0.6, 0], [-0.62, -0.26], [-0.52, -0.26], [-0.5, -0.05], [-0.38, -0.06], [-0.36, -0.16], [-0.2, -0.16], [-0.08, -0.08], [-0.06, -0.66], [0.1, -0.66], [0.14, -0.07], [0.4, -0.06]]); break;
+      // Stealth fighter: diamond wing and tailplanes with aligned edges.
+      case 'sjet': P([[0.66, 0], [0.3, 0.1], [0.12, 0.14], [-0.22, 0.52], [-0.36, 0.52], [-0.3, 0.2], [-0.44, 0.2], [-0.6, 0.36], [-0.68, 0.36], [-0.6, 0.08], [-0.56, 0], [-0.6, -0.08], [-0.68, -0.36], [-0.6, -0.36], [-0.44, -0.2], [-0.3, -0.2], [-0.36, -0.52], [-0.22, -0.52], [0.12, -0.14], [0.3, -0.1]]); break;
+      // AWACS: airliner planform with the rotodome on the back.
+      case 'awacs': P([[0.58, 0], [0.48, 0.08], [0.14, 0.08], [-0.06, 0.7], [-0.2, 0.7], [-0.08, 0.08], [-0.46, 0.07], [-0.58, 0.3], [-0.66, 0.3], [-0.6, 0], [-0.66, -0.3], [-0.58, -0.3], [-0.46, -0.07], [-0.08, -0.08], [-0.2, -0.7], [-0.06, -0.7], [0.14, -0.08], [0.48, -0.08]]); ctx.moveTo(-0.02 * s, 0); ctx.arc(-0.24 * s, 0, 0.22 * s, 0, Math.PI * 2); break;
+      // Frigate: between corvette and destroyer.
+      case 'frig': P([[0.68, 0], [0.36, 0.12], [-0.58, 0.11], [-0.63, 0], [-0.58, -0.11], [0.36, -0.12]]); break;
       case 'corv': P([[0.6, 0], [0.3, 0.11], [-0.5, 0.1], [-0.55, 0], [-0.5, -0.1], [0.3, -0.11]]); break;
       case 'sub': case 'ssbn': ctx.beginPath(); ctx.ellipse(0, 0, s * (sym === 'ssbn' ? 0.72 : 0.6), s * 0.1, 0, 0, Math.PI * 2); ctx.rect(-s * 0.05, -s * 0.06, s * 0.16, s * 0.12); break;
       default: ctx.beginPath(); ctx.arc(0, 0, s * 0.3, 0, Math.PI * 2);

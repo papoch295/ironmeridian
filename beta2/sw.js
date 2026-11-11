@@ -5,7 +5,7 @@
 
 // The Beta 2 preview (…/beta2/) has its own cache family, so the two service workers never delete each other's cache.
 const CH = /\/beta2\//.test(location.pathname) ? 'beta2-' : '';
-const CACHE = 'ironmeridian-' + CH + 'v12';
+const CACHE = 'ironmeridian-' + CH + 'v13';
 const FAMILY = new RegExp('^ironmeridian-' + CH + 'v\\d+$');
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'css/style.css',
@@ -13,7 +13,7 @@ const FILES = [
   'js/core/util.js', 'js/i18n.js', 'js/core/geo.js', 'js/core/path.js', 'js/core/game.js', 'js/core/sim.js',
   'js/core/tactics.js', 'js/core/ai.js',
   'js/render/symbols.js', 'js/render/models.js', 'js/render/models-land.js', 'js/render/models-east-land.js',
-  'js/render/models-air.js', 'js/render/models-sea.js', 'js/render/renderer.js',
+  'js/render/models-air.js', 'js/render/models-sea.js', 'js/render/models-beta2.js', 'js/render/renderer.js',
   'js/audio.js', 'js/save.js', 'js/ui/icons.js', 'js/ui/ui.js', 'js/ui/panels.js', 'js/ui/screens.js',
   'js/ui/input.js', 'js/ui/perf.js', 'js/crash.js', 'js/main.js',
 ];

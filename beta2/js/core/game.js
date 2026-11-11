@@ -632,7 +632,7 @@ const Game = {
     return shared || { mode, sx: u.x, sy: u.y, path: p };
   },
 
-  isSupport(T) { return T.dom === 'land' && !!(T.supply || T.heal || T.intercept || T.w.some((k) => W[k].indirect || W[k].standoff)); },
+  isSupport(T) { return T.dom === 'land' && !!(T.supply || T.heal || T.intercept || T.hq || T.jam || T.w.some((k) => W[k].indirect || W[k].standoff)); },
 
   seatsUsed(tr) { return tr.cargo.reduce((s, id) => s + (UNIT_TYPES[this.unit(id)?.t]?.seat || 0), 0); },
   // Could the unit ride in this transport at all (ignoring free seats)?
@@ -761,11 +761,14 @@ const Game = {
   unload(tr, force) {
     if (!tr.cargo.length || (!force && !this.canUnloadHere(tr))) return false;
     // Ships land their troops on the nearest shore, everyone else gets out next to the transport.
-    const at = this.T(tr).dom === 'sea' ? this.shore(tr.x, tr.y) || [tr.x, tr.y] : [tr.x, tr.y];
+    const sea = this.T(tr).dom === 'sea', at = sea ? this.shore(tr.x, tr.y) || [tr.x, tr.y] : [tr.x, tr.y];
+    // Landing on a foreign shore: troops arrive disordered (suppressed) – except amphibious units (marines).
+    const lp = sea ? Geo.provinceAt(at[0], at[1]) : null, rough = sea && (!lp || !this.allied(this.state.prov[lp.id].o, tr.s));
     tr.cargo.forEach((id, i) => {
       const u = this.unit(id);
       if (!u) return;
       u.inside = null; u.emb = false;
+      if (rough && !this.T(u).amph) { u.sup = Math.max(u.sup || 0, SUPPORT_FX.landSup); u.lastHit = this.state.t; }
       const a = (i / tr.cargo.length) * Math.PI * 2;
       u.x = at[0] + Math.cos(a) * 0.08; u.y = at[1] + Math.sin(a) * 0.08;
     });
