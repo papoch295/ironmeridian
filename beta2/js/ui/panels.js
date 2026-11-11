@@ -155,7 +155,8 @@ const Panels = {
     if (this.view === 'build' || !tabs.length) return h + this.buildHtml(pid, !tabs.length) + '</div>';
 
     if (!tabs.includes(this.tab)) this.tab = tabs[0];
-    h += `<h3>${U.esc(t('recruit'))}</h3><div class="tabs">${tabs.map((b) => `<button data-act="tab" data-k="${b}" class="${b === this.tab ? 'on' : ''}">${U.esc(b === 'form' ? t('formations') : this.tabName(b))}${b !== 'form' ? `<small>${pr.b[b]}</small>` : ''}</button>`).join('')}</div>`;
+    const cm = Game.cmd(Game.me());
+    h += `<h3>${U.esc(t('recruit'))} <span class="muted small cmd-cnt${cm.used >= cm.cap ? ' full' : ''}" title="${U.esc(t('cmdTip'))}">${U.esc(t('cmdShort', cm.used, cm.cap))}</span></h3><div class="tabs">${tabs.map((b) => `<button data-act="tab" data-k="${b}" class="${b === this.tab ? 'on' : ''}">${U.esc(b === 'form' ? t('formations') : this.tabName(b))}${b !== 'form' ? `<small>${pr.b[b]}</small>` : ''}</button>`).join('')}</div>`;
     if (this.tab !== 'form') {
       h += `<div class="opt-row"><span>${U.esc(t('amount'))}</span><div class="seg small">${[1, 3, 5, 10].map((n) => `<button data-act="batch" data-k="${n}" class="${this.batch === n ? 'on' : ''}">×${n}</button>`).join('')}</div></div>`;
     }
@@ -178,7 +179,7 @@ const Panels = {
       for (const F of FORMATIONS) {
         let lock = null;
         for (const k in F.u) { const T = UNIT_TYPES[k]; if ((pr.b[T.bld] || 0) < T.tier) { lock = this.reason('needBuilding', T.bld, T.tier); break; } }
-        const off = lock || !Game.afford(Game.me(), Game.formationCost(F)) || pr.q.length + Object.keys(F.u).length > Game.QUEUE_MAX;
+        const off = lock || !Game.afford(Game.me(), Game.formationCost(F)) || pr.q.length + Object.keys(F.u).length > Game.QUEUE_MAX || Game.cmdFree(Game.me()) < Game.formationCmd(F);
         h += `<button class="ucard fcard ${off ? 'off' : ''}" data-act="form" data-k="${F.id}"><span class="nm">${U.esc(L(F))}</span>
           <span class="fl">${Object.keys(F.u).map((k) => `<span title="${U.esc(unitName(k))}"><img src="${UnitIcon.get(k)}" alt="">${F.u[k]}</span>`).join('')}</span>
           ${lock ? `<span class="lock">${U.esc(lock)}</span>` : costHtml(Game.formationCost(F), Game.me()) + this.upkHtml(Game.formationCost(F))}</button>`;
@@ -190,7 +191,7 @@ const Panels = {
         const why = Game.canQueue(pid, 'unit', key);
         h += `<button class="ucard ${why ? 'off' : ''}" data-act="unit" data-k="${key}" title="${U.esc(L({ de: T.dd, en: T.ed }))}">
           <span class="tm">${Math.round(T.time * TIME_SCALE)}s</span><span class="top"><img src="${UnitIcon.get(key)}" alt=""><span class="nm">${U.esc(L(T))}</span></span>
-          ${why === 'needBuilding' ? `<span class="lock">${U.esc(this.reason(why, T.bld, T.tier))}</span>` : costHtml(this.mult(T.cost, n), Game.me()) + this.upkHtml(this.mult(T.cost, n))}</button>`;
+          ${why === 'needBuilding' || why === 'cmdLimit' ? `<span class="lock">${U.esc(this.reason(why, T.bld, T.tier))}</span>` : costHtml(this.mult(T.cost, n), Game.me()) + this.upkHtml(this.mult(T.cost, n))}</button>`;
       }
     }
     h += '</div>';

@@ -73,25 +73,25 @@ const UNIT_TYPES = {
     de: 'Flugabwehr (SAM)', en: 'Air Defense (SAM)', mw: 'NASAMS / Avenger', me: 'Pantsir-S1', dd: 'Schießt Flugzeuge und Hubschrauber ab, fängt Raketen teilweise ab.', ed: 'Shoots down aircraft and helicopters, partially intercepts missiles.' },
   arty:   { cls: 'light', dom: 'land', sym: 'art', bld: 'factory', tier: 1, cost: { m: 350, i: 150, o: 10 }, time: 22, hp: 60, spd: 0.05, vis: 0.7, st: 0.35, seat: 2, w: ['how155'],
     de: 'Feldartillerie', en: 'Towed Artillery', mw: 'M777 155mm', me: '2A65 Msta-B', dd: 'Gezogene Haubitze. Hohe Reichweite, aber langsam und verwundbar.', ed: 'Towed howitzer. Long range but slow and vulnerable.' },
-  mbt:    { cls: 'armor', dom: 'land', sym: 'arm', bld: 'factory', tier: 2, cost: { m: 800, i: 350, o: 60 }, time: 32, hp: 300, spd: 0.1, vis: 1.0, st: 0.15, seat: 3, w: ['gun120', 'mg'],
+  mbt:    { cls: 'armor', dom: 'land', sym: 'arm', bld: 'factory', tier: 2, cost: { m: 950, i: 420, o: 70 }, time: 44, hp: 300, spd: 0.1, vis: 1.0, st: 0.15, seat: 3, w: ['gun120', 'mg'],
     de: 'Kampfpanzer (MBT)', en: 'Main Battle Tank', mw: 'Leopard 2A7 / M1A2', me: 'T-90M', dd: 'Schwer gepanzert, starke Kanone. Herzstück jeder Offensive.', ed: 'Heavily armored with a powerful gun. Core of every offensive.' },
-  td:     { cls: 'light', dom: 'land', sym: 'td', bld: 'factory', tier: 2, cost: { m: 600, i: 250, o: 40 }, time: 26, hp: 150, spd: 0.11, vis: 1.0, st: 0.35, seat: 2, w: ['hvAtgm'],
+  td:     { cls: 'light', dom: 'land', sym: 'td', bld: 'factory', tier: 2, cost: { m: 660, i: 280, o: 40 }, time: 32, hp: 150, spd: 0.11, vis: 1.0, st: 0.35, seat: 2, w: ['hvAtgm'],
     de: 'Jagdpanzer', en: 'Tank Destroyer', mw: 'M1134 ATGM', me: '9P163 Kornet-T', dd: 'Weitreichende Panzerabwehr. Zerstört Panzer, bevor sie feuern können.', ed: 'Long-range anti-tank. Kills tanks before they can fire.' },
-  spg:    { cls: 'light', dom: 'land', sym: 'spa', bld: 'factory', tier: 2, cost: { m: 700, i: 300, o: 40 }, time: 28, hp: 120, spd: 0.09, vis: 0.8, st: 0.25, seat: 3, w: ['spg155'],
+  spg:    { cls: 'light', dom: 'land', sym: 'spa', bld: 'factory', tier: 2, cost: { m: 820, i: 350, o: 45 }, time: 38, hp: 120, spd: 0.09, vis: 0.8, st: 0.25, seat: 3, w: ['spg155'],
     de: 'Panzerhaubitze', en: 'Self-Propelled Gun', mw: 'PzH 2000 / M109A7', me: '2S19M2 Msta-S', dd: 'Selbstfahrende Artillerie: feuert und wechselt schnell die Stellung.', ed: 'Self-propelled artillery: fires and relocates quickly.' },
-  mlrs:   { cls: 'light', dom: 'land', sym: 'mlrs', bld: 'factory', tier: 2, cost: { m: 750, i: 320, o: 40 }, time: 30, hp: 90, spd: 0.1, vis: 0.8, st: 0.25, seat: 2, w: ['mlrs'],
+  mlrs:   { cls: 'light', dom: 'land', sym: 'mlrs', bld: 'factory', tier: 2, cost: { m: 880, i: 380, o: 45 }, time: 40, hp: 90, spd: 0.1, vis: 0.8, st: 0.25, seat: 2, w: ['mlrs'],
     de: 'Raketenwerfer (kurz)', en: 'Rocket Artillery (short)', mw: 'M270 MLRS', me: 'BM-30 Smerch', dd: 'Salvenfeuer auf große Flächen. Verheerend gegen Ansammlungen.', ed: 'Saturation fire on large areas. Devastating against concentrations.' },
-  tbm:    { cls: 'light', dom: 'land', sym: 'tbm', bld: 'factory', tier: 3, cost: { m: 1300, i: 500, o: 60 }, time: 40, hp: 90, spd: 0.09, vis: 0.8, st: 0.25, seat: 3, w: ['tbm'],
+  tbm:    { cls: 'light', dom: 'land', sym: 'tbm', bld: 'factory', tier: 3, cost: { m: 1500, i: 600, o: 70 }, time: 52, hp: 90, spd: 0.09, vis: 0.8, st: 0.25, seat: 3, w: ['tbm'],
     de: 'Raketenartillerie (lang)', en: 'Rocket Artillery (long)', mw: 'HIMARS ATACMS', me: '9K720 Iskander-M', dd: 'Präzise Raketen mit sehr großer Reichweite gegen wichtige Ziele.', ed: 'Precise long-range missiles against high-value targets.' },
   thelo:  { cls: 'heli', dom: 'air', sym: 'thelo', bld: 'airfield', tier: 1, cost: { m: 450, i: 200, o: 40 }, time: 24, hp: 120, spd: 0.35, vis: 1.2, st: 0.2, cap: 4, w: ['mg'], heli: 1,
     de: 'Transporthubschrauber', en: 'Transport Helicopter', mw: 'UH-60M Black Hawk', me: 'Mi-8AMTSh', dd: 'Bringt vier Trupps schnell über Hindernisse und Flüsse.', ed: 'Moves four squads quickly over obstacles and rivers.' },
-  ahelo:  { cls: 'heli', dom: 'air', sym: 'ahelo', bld: 'airfield', tier: 2, cost: { m: 900, i: 400, o: 60 }, time: 30, hp: 160, spd: 0.4, vis: 1.3, st: 0.2, w: ['heliAtgm', 'heliGun'], heli: 1,
+  ahelo:  { cls: 'heli', dom: 'air', sym: 'ahelo', bld: 'airfield', tier: 2, cost: { m: 1050, i: 460, o: 70 }, time: 40, hp: 160, spd: 0.4, vis: 1.3, st: 0.2, w: ['heliAtgm', 'heliGun'], heli: 1,
     de: 'Kampfhubschrauber', en: 'Attack Helicopter', mw: 'AH-64E Apache', me: 'Ka-52M Alligator', dd: 'Jagt Panzer aus der Luft. Anfällig für Flugabwehr.', ed: 'Hunts tanks from the air. Vulnerable to air defense.' },
   tplane: { cls: 'air', dom: 'air', sym: 'tpl', bld: 'airfield', tier: 1, cost: { m: 700, i: 300, o: 80 }, time: 30, hp: 160, spd: 0.75, vis: 1.0, st: 0.1, cap: 8, capVeh: 1, w: [], plane: 1,
     de: 'Transportflugzeug', en: 'Transport Aircraft', mw: 'C-17 Globemaster III', me: 'Il-76MD-90A', dd: 'Fliegt Truppen und Fahrzeuge zwischen Flugplätzen, setzt Fallschirmjäger ab.', ed: 'Flies troops and vehicles between airfields, drops paratroopers.' },
-  jet:    { cls: 'air', dom: 'air', sym: 'jet', bld: 'airfield', tier: 2, cost: { m: 1400, i: 600, o: 120 }, time: 36, hp: 120, spd: 1.3, vis: 1.6, st: 0.3, w: ['aam', 'agm'], plane: 1, fuel: 70,
+  jet:    { cls: 'air', dom: 'air', sym: 'jet', bld: 'airfield', tier: 2, cost: { m: 1600, i: 700, o: 130 }, time: 46, hp: 120, spd: 1.3, vis: 1.6, st: 0.3, w: ['aam', 'agm'], plane: 1, fuel: 70,
     de: 'Mehrzweckkampfjet', en: 'Multirole Fighter', mw: 'F-35A / Eurofighter', me: 'Su-35S', dd: 'Luftüberlegenheit und Präzisionsangriffe. Kehrt zum Auftanken zur Basis zurück.', ed: 'Air superiority and precision strikes. Returns to base to refuel.' },
-  bomber: { cls: 'air', dom: 'air', sym: 'bmb', bld: 'airfield', tier: 3, cost: { m: 2500, i: 1000, o: 200 }, time: 50, hp: 220, spd: 0.9, vis: 1.2, st: 0.25, w: ['bombs'], plane: 1, fuel: 140,
+  bomber: { cls: 'air', dom: 'air', sym: 'bmb', bld: 'airfield', tier: 3, cost: { m: 2900, i: 1200, o: 220 }, time: 64, hp: 220, spd: 0.9, vis: 1.2, st: 0.25, w: ['bombs'], plane: 1, fuel: 140,
     de: 'Strategischer Bomber', en: 'Strategic Bomber', mw: 'B-21 Raider', me: 'Tu-160M', dd: 'Teppichbombardement großer Flächen weit hinter der Front.', ed: 'Carpet-bombs large areas far behind the front.' },
   corv:   { cls: 'ship', dom: 'sea', sym: 'corv', bld: 'shipyard', tier: 1, cost: { m: 900, i: 400, o: 60 }, time: 34, hp: 260, spd: 0.17, vis: 1.6, st: 0.2, w: ['corvGun', 'ashmS', 'asw'],
     de: 'Korvette', en: 'Corvette', mw: 'Braunschweig-Klasse', me: 'Karakurt-Klasse', dd: 'Kleines, schnelles Küstenkampfschiff mit Seezielflugkörpern.', ed: 'Small, fast littoral warship with anti-ship missiles.' },
@@ -106,7 +106,7 @@ const UNIT_TYPES = {
     de: 'Aufklärungsdrohne', en: 'Reconnaissance Drone', mw: 'MQ-9B Reaper', me: 'Orion (Inochodez)', dd: 'Langsam und unbewaffnet, aber mit riesiger Sichtweite – weiter als jede Radarstation. Im Dauereinsatz kreist sie über einem Gebiet und tankt von selbst nach.', ed: 'Slow and unarmed, but with a huge field of view – further than any radar station. On a standing mission it circles an area and refuels on its own.' },
   loit:   { cls: 'soft', dom: 'land', sym: 'loit', bld: 'airfield', tier: 1, cost: { m: 450, i: 150, o: 10 }, time: 26, men: 4, hp: 40, spd: 0.05, vis: 0.9, st: 0.55, seat: 1, w: ['loiter'],
     de: 'Kamikaze-Drohnentrupp', en: 'Loitering Munition Team', mw: 'Switchblade 600', me: 'Lancet-3', dd: 'Schickt Kamikaze-Drohnen auf gesichtete Fahrzeuge weit hinter der Front. 3 Drohnen, Nachschub in eigenen Provinzen und durch Versorgung.', ed: 'Sends loitering munitions at spotted vehicles far behind the front. 3 drones, resupplied in own provinces and by supply units.' },
-  sam2:   { cls: 'light', dom: 'land', sym: 'sam2', bld: 'factory', tier: 3, cost: { m: 1600, i: 700, o: 60 }, time: 40, hp: 110, spd: 0.07, vis: 2.4, st: 0.2, seat: 3, w: ['lrsam'], intercept: 1.3, icR: 5,
+  sam2:   { cls: 'light', dom: 'land', sym: 'sam2', bld: 'factory', tier: 3, cost: { m: 1800, i: 800, o: 60 }, time: 50, hp: 110, spd: 0.07, vis: 2.4, st: 0.2, seat: 3, w: ['lrsam'], intercept: 1.3, icR: 5,
     de: 'Weitreichende Flugabwehr', en: 'Long-Range Air Defense', mw: 'Patriot PAC-3 MSE', me: 'S-400 Triumf', dd: 'Schießt Flugzeuge auf große Entfernung ab und fängt Raketen in weitem Umkreis ab. Langsam und am Boden verwundbar.', ed: 'Downs aircraft at long range and intercepts missiles over a wide area. Slow and vulnerable on the ground.' },
   lst:    { cls: 'ship', dom: 'sea', sym: 'lst', bld: 'shipyard', tier: 1, cost: { m: 1000, i: 450, o: 60 }, time: 36, hp: 420, spd: 0.16, vis: 1.3, st: 0.15, cap: 16, capVeh: 1, w: ['corvGun', 'ciws'],
     de: 'Landungsschiff', en: 'Landing Ship', mw: 'San-Antonio-Klasse', me: 'Iwan-Gren-Klasse', dd: 'Bringt 16 Plätze Truppen und Fahrzeuge über See (Kampfpanzer = 3) und setzt sie an jeder Küste ab: „Transport nach“ und das Ufer antippen.', ed: 'Carries 16 slots of troops and vehicles across the sea (main battle tank = 3) and lands them on any coast: "Transport to" and tap the shore.' },
@@ -167,6 +167,14 @@ const PROVINCE_TYPES = {
 // VICTORY.hold seconds; the player loses once the own country keeps less than VICTORY.lose of its points as long.
 // World war (mode 'ffa'): the player's alliance has to hold VICTORY.world of all victory points on the map instead.
 const VICTORY = { win: 0.7, world: 0.25, lose: 0.3, hold: 60 };
+// Escalation (#44): a team at war that holds `gain` victory points more than its home countries are worth (plus `step`
+// for every alliance that already joined against it) makes the nearest neutral alliance within `reach` of its
+// conquests mobilise against it. The warning time and the pause between two escalations depend on the difficulty
+// (DIFFICULTY.escWarn / escEvery). If the lead shrinks below `cancel` of the threshold meanwhile, the neutral stands down.
+// pow: an alliance joins only if its military weight is at most this share of the leader's (DIFFICULTY.escPow when
+// the leader is the player's alliance). forces: size of the mobilised armies. cash: treasury cap (× starting funds)
+// of a joining country, because neutral countries save money all game long.
+const ESCALATION = { gain: 12, step: 10, reach: 25, cancel: 0.75, pow: 1.2, forces: 0.6, cash: 2 };
 
 const WEAPON_NAMES = {
   rifle: ['Sturmgewehre', 'Assault rifles'], carbine: ['Karabiner (schallgedämpft)', 'Suppressed carbines'], rpg: ['Panzerfaust', 'Rocket launcher'],
@@ -194,5 +202,18 @@ const UPKEEP = { m: 0.015, o: 0.03 };
 // Entrenchment: a land unit that stands still digs in over DIG.time seconds and then takes DIG.max less damage
 // (indirect fire ignores half of it, so artillery preparation pays off).
 const DIG = { time: 75, max: 0.4 };
+// Flank and rear: direct fire from a ground unit or helicopter that hits a ground unit from the side (60–120° off its
+// facing) or from behind deals more damage, and the target's entrenchment only counts partly (dig = share it keeps).
+// The facing is towards the unit's current target, otherwise its last direction of travel.
+const FLANK = { side: 1.25, rear: 1.5, sideDig: 0.75, rearDig: 0.5 };
+// Cover near the center of an own or allied province (r map units): damage factor for infantry and for vehicles.
+// Built-up areas (capital, city, port, industry) protect much better than open country.
+const COVER = { r: 0.6, urban: { soft: 0.55, veh: 0.8 }, open: { soft: 0.75, veh: 1 }, types: { capital: 1, city: 1, port: 1, industry: 1 } };
+// Command limit: how many units a country can lead. base + per province (level × weight of its type); every unit
+// counts 1, ships 2 (or w). Units in production count too. Upgrading or capturing provinces raises the limit.
+// Germany at the start: about 40 of 49 used.
+const CMD = { base: 12, per: { capital: 5, city: 2.5, port: 2.5, industry: 2.5, oil: 1.5, airbase: 1.5 }, ship: 2, w: { cv: 4, ssbn: 3 } };
+// Suppression by indirect fire (artillery, mortars, rockets) is stronger than by direct fire.
+const ARTY_SUP = 1.6;
 // Province vision radius by radar level (0 = no radar).
 const RADAR_RANGE = [1.1, 3, 5, 8];

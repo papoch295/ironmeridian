@@ -185,9 +185,11 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 #objBox .meter i { display: block; height: 100%; background: linear-gradient(90deg, #3f86c4, var(--blue)); box-shadow: 0 0 10px rgba(111,179,234,.6); }
 #objBox .meter.vp { position: relative; height: 10px; }
 #objBox .meter.vp s { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent); box-shadow: 0 0 6px rgba(232,181,74,.8); }
+#objBox h3.obj-sub { margin: 12px 0 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
 #objBox .stat-line b.neg { color: var(--bad, #e2553c); }
 #objBox .desc.small { font-size: 11px; margin: 0 0 10px; }
 #objBox .vp-hold { margin: 0 0 8px; padding: 6px 10px; border-radius: 3px; font-weight: 700; font-size: 12px; background: rgba(143,209,106,.15); color: #c6efad; border: 1px solid rgba(143,209,106,.5); }
+#objBox .vp-hold.other { background: rgba(255,255,255,.06); color: inherit; border-color: var(--line); }
 #objBox .vp-hold.lose { background: rgba(226,85,60,.15); color: #ffd2c8; border-color: rgba(226,85,60,.6); }
 
 /* Points victory / surrender countdown under the top bar. */
@@ -297,6 +299,8 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .qitem button.rep:hover { color: var(--accent); border-color: var(--accent); }
 .qitem button.rep.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
 .upk-warn { margin: 6px 0; padding: 6px 8px; border: 1px solid var(--bad); border-radius: var(--radius-s); color: var(--bad); background: rgba(5,10,14,.4); }
+.cmd-cnt { margin-left: 6px; text-transform: none; letter-spacing: 0; }
+.cmd-cnt.full { color: var(--bad); font-weight: 700; }
 .army-miss .miss { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--bad); }
 .army-miss .miss img { width: 24px; height: 16px; }
 .qitem img { width: 26px; height: 18px; flex: none; }

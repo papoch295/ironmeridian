@@ -469,6 +469,8 @@ const Render = {
       if (!O || !O.warned || (O.ph !== 'gather' && O.ph !== 'attack') || !Game.hostile(k, S.player)) continue;
       if (O.main != null) arrow(O.sx, O.sy, O.main, true);
       if (O.side != null && O.ssx != null) arrow(O.ssx, O.ssy, O.side, false);
+      // Envelopment: a second arrow onto the main target from the flank.
+      if (O.flank && O.main != null) arrow(O.flank[0], O.flank[1], O.main, false);
     }
     ctx.restore();
   },
@@ -566,6 +568,14 @@ const Render = {
         ctx.beginPath(); ctx.ellipse(sx, gy, s * 0.95, s * 0.32, 0, Math.PI * (0.5 - 0.45 * dg), Math.PI * (0.5 + 0.45 * dg));
         ctx.strokeStyle = 'rgba(20,14,6,0.7)'; ctx.lineWidth = 5; ctx.stroke();
         ctx.strokeStyle = `rgba(206,180,118,${0.5 + 0.5 * dg})`; ctx.lineWidth = 3; ctx.stroke();
+      }
+      // Hit in the flank or rear within the last 2 s: small red warning chevrons beside the unit.
+      if (c.units.some((x) => x.flk !== undefined && S.t - x.flk < 2)) {
+        const fx = sx - s * 1.05, fy = sy;
+        ctx.beginPath(); ctx.moveTo(fx + 4, fy - 6); ctx.lineTo(fx - 2, fy); ctx.lineTo(fx + 4, fy + 6);
+        ctx.moveTo(fx + 9, fy - 6); ctx.lineTo(fx + 3, fy); ctx.lineTo(fx + 9, fy + 6);
+        ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 4; ctx.stroke();
+        ctx.strokeStyle = '#ff5a3c'; ctx.lineWidth = 2; ctx.stroke();
       }
       if (n === 1 && u.sup > 20 && T.cls === 'soft') { rr(sx - bw / 2, by + 5, bw * u.sup / 100, 2, 1); ctx.fillStyle = 'rgba(255,214,90,0.9)'; ctx.fill(); }
       if (n > 1) {
