@@ -34,6 +34,7 @@
   function draw() {
     const s = +document.getElementById('sz').value, hd = +document.getElementById('hd').value, g = document.getElementById('g');
     g.innerHTML = '';
+    g.style.gridTemplateColumns = `repeat(auto-fill, minmax(min(100%, ${Math.max(380, s * 6 + 10)}px), 1fr))`;
     Models.cache.clear();
     const only = (Q.get('only') || '').split(',').filter(Boolean);
     for (const t of Object.keys(UNIT_TYPES)) {

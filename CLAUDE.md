@@ -18,6 +18,9 @@ Dieses Projekt ist ausschließlich das Spiel **IRON MERIDIAN – Globaler Konfli
 - Bei unklarem Feedback lieber kurz mit konkreten Optionen nachfragen, statt zu raten.
 - Bisheriges Feedback: KI war zu stark (inzwischen auf Leicht/Normal deutlich entschärft), Bedienung soll einfach sein
   (Stapel, Klick-Befehle, Armeen), Modelle im WC4-Stil (Seitenansicht-Spielfiguren).
+- Feedback 11. Nov.: Modelle sollen realistischer und professioneller wirken (Vorbild Conflict of Nations). Stil seitdem:
+  realistische Seitenansicht mit echten Proportionen, feine dunkle Kontur statt Comic-Tusche, gedämpfte Lackfarben,
+  flacher Fraktionsring statt Sechseck-Sockel, Soldaten in natürlichen Proportionen, dezente Hoheitszeichen.
 - Feedback 2. Nov.: Gameplay soll langsamer und taktischer werden, kein Einheiten-Spam, KI ohne „Schwarm“ – dafür muss die
   Führung für den Spieler einfacher werden (Kampfgruppen statt Einzeleinheiten). Höchste Priorität, siehe ROADMAP.md 2.9/2.10.
 
