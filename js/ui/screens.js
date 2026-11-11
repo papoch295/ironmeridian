@@ -2,7 +2,7 @@
 'use strict';
 
 const Screens = {
-  setup: { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'normal' },
+  setup: { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'normal', esc: true },
   attract: true,
 
   show(id) {
@@ -44,6 +44,7 @@ const Screens = {
     this.attract = false;
     // The tutorial skips the setup: a fixed, easy scenario starts right away.
     if (tutorial) { Object.assign(this.setup, { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'easy' }); this.startGame(); return; }
+    $$('#escSeg button').forEach((b) => (b.onclick = () => { this.setup.esc = b.dataset.esc === '1'; Sfx.play('click'); this.renderSetup(); }));
     this.show('#setup');
     $('#setupSearch').value = '';
     $('#setupSearch').oninput = () => this.renderNations();
@@ -105,6 +106,8 @@ const Screens = {
     }
     $$('#diffSeg button').forEach((b) => b.classList.toggle('on', b.dataset.diff === S.diff));
     $('#diffDesc').textContent = t(S.diff + 'D');
+    $$('#escSeg button').forEach((b) => b.classList.toggle('on', (b.dataset.esc === '1') === !!S.esc));
+    $('#escDesc').textContent = t(S.esc ? 'escOnD' : 'escOffD');
     // Preview on the map: own country, allies, enemies (world war: every other bloc).
     const foes = ffa ? BLOCS.filter((b) => b.id !== own.id).flatMap(members) : members(en);
     Render.preview = { P: new Set([S.country]), A: new Set(allies), E: new Set(foes) };
@@ -118,7 +121,8 @@ const Screens = {
   startGame() {
     Sfx.unlock();
     Render.preview = null;
-    const S = Game.newGame({ country: this.setup.country, mode: this.setup.mode, enemyBloc: this.setup.enemy, difficulty: this.setup.diff });
+    const S = Game.newGame({ country: this.setup.country, mode: this.setup.mode, enemyBloc: this.setup.enemy, difficulty: this.setup.diff,
+      escalation: this.setup.esc && !this.tutorial }); // the tutorial stays a plain two-sided war
     this.enterHud();
     S.paused = true;
     UI.renderTime();

@@ -38,6 +38,9 @@ Der frühere größte Umbau (nur zwei feste Seiten `P`/`E`) ist mit Schritt 2 er
   **Auffrischen** (#71), Daueraufträge und Unterhalt-Warnung (#72); Spielstand-Format 4.
 - **Taktik ausbauen:** Flanken- und Rückenbonus, Deckung in Städten, stärkeres Niederhalten, teurere schwere Einheiten,
   **Kommandolimit**, KI-Frontabschnitte mit Übermacht-Regel und Umfassung (#61–#66).
+- **Spieltiefe, Teil 1 – Eskalation (#44, 11. Nov.):** Hat ein Bündnis netto 12 Siegpunkte erobert, mobilisiert das
+  nächste neutrale Bündnis mit Vorwarnung gegen es (gilt für Spieler und KI); Schalter im Setup, Spielstand-Format 5.
+  Werte: `ESCALATION` in `js/data/units.js`, `escEvery` / `escWarn` / `escPow` in `DIFFICULTY`.
 - 10 Modelle im Referenzstil neu gezeichnet (5. Nov.): Bradley, Abrams, Apache, Reaper, Spezialkräfte (West) sowie
   T-90M, BMP-3, Ka-52M, Orion, Spetsnaz (Ost).
 
@@ -238,7 +241,7 @@ Vorschläge (bitte bei F3 auswählen):
 | # | Mechanik | Wirkung gegen Langeweile | Prio |
 |---|---|---|---|
 | 43 | **Technologiebaum** (z. B. 4 Zweige × 5 Stufen: Panzer, Luft, See, Raketen/Elektronik) | neue Einheiten und Stufen im späten Spiel, langfristige Ziele | P1 |
-| 44 | **Eskalation:** Weitere Länder treten nach Ereignissen in den Krieg ein (gegen den Stärksten) | Neue Gegner, wenn man zu stark wird | P1 |
+| 44 | **Eskalation:** Weitere Länder treten nach Ereignissen in den Krieg ein (gegen den Stärksten) – ✔ 11. Nov. (Beta 2): ab 12 netto eroberten Siegpunkten, mit Vorwarnung, Schalter im Setup | Neue Gegner, wenn man zu stark wird | P1 |
 | 45 | **Besatzung und Widerstand:** eroberte Provinzen bringen anfangs wenig, Aufstände/Partisanen, Garnison nötig | Erobern kostet etwas, schnelles Durchrollen wird gebremst | P1 |
 | 46 | **Nachschublinien:** Armeen weit weg von Depots/Häfen verlieren Munition und Kampfkraft | Planung statt Spam, Fronten statt Blobs | P2 |
 | 47 | **Kriegsmüdigkeit / Moral der Nation:** hohe Verluste senken Einkommen, Siege heben es | Verluste haben Folgen | P2 |
@@ -443,14 +446,14 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 | **Zuerst: Transport** (Notiz 5. Nov.) – ✔ auf Branch `beta2-transport` | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
 | Regiment-Steuerung – ✔ 6. Nov. auf Branch `beta2-transport` | Mehrere Armeen gemeinsam führen, Zusammenlegen, Soll-Bestand mit Anzeige der Lücken, Auffrischen, Daueraufträge, Unterhalt-Warnung | Notiz 5. Nov., #71, #72 |
 | Taktik ausbauen – ✔ 7. Nov. auf Branch `beta2-transport` | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung | #61–#66 |
-| Spieltiefe | **Eskalation** (aus Beta 1 verschoben), Technologiebaum, Besatzung und Widerstand, Nachschublinien, Kriegsmüdigkeit, Missionen, Ereignisse, Veteranen und Generäle, Automatisierung, Gegenoffensiven | #43–#51, #53 |
+| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Kriegsmüdigkeit (#47) und Veteranen (#50), Ereignisse (#49), Gegenoffensiven (#51), Missionen (#48), Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
 | Diplomatie & Spionage | Krieg/Frieden/Bündnis, Spionage deckt KI-Angriffsmuster auf, Geheimdienstzentrale | #54, #16, 3.2 |
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
 | Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
-| Mobil | Handy-Tests auf deinem Android, Android Studio einrichten, APK über Capacitor | 5.2, 6 |
 | Notiz 5. Nov. – begonnen | **Einheitenmodelle** realistischer, aber im WC4-Stil, nach Referenzbildern. ✔ 10 Modelle (5. Nov.): Bradley, Abrams, Apache, Reaper, Spezialkräfte, T-90M, BMP-3, Ka-52M, Orion, Spetsnaz; die übrigen Einheiten sind offen | aus Notiz 5. Nov., #32 |
 | Notiz 5. Nov. – Taktik | Gameplay taktischer: Einheiten müssen ihrer Beschreibung gerecht werden; klare Aufgabenverteilung und Trennung der Rollen | aus Notiz 5. Nov., ergänzt 2.9 |
 | Notiz 5. Nov. – Inhalt | Neue Einheiten + Gebäude | aus Notiz 5. Nov., Abschnitt 3 |
+| Mobil – **ans Ende gestellt** (Entscheidung 11. Nov.: Spieltiefe geht vor) | Handy-Tests auf deinem Android, Android Studio einrichten, APK über Capacitor, PNG-Symbole 192/512 px | 5.2, 6 |
 | Später (laut deinen Antworten) | Szenarien mit Briefing, neue Einheiten/Gebäude, mehr Wirtschaft, Gelände und Wetter, Folgen von Atomwaffen, KI-Regeln auf Schwer, Play Store | #6, Abschnitt 3, F8, F14–F16 |
 
 **Nachtrag 7. Nov. (Taktik ausbauen):** Werte in `js/data/units.js` (`FLANK`, `COVER`, `ARTY_SUP`, `CMD`) und `DIFFICULTY`

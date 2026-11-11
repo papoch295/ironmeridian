@@ -167,6 +167,14 @@ const PROVINCE_TYPES = {
 // VICTORY.hold seconds; the player loses once the own country keeps less than VICTORY.lose of its points as long.
 // World war (mode 'ffa'): the player's alliance has to hold VICTORY.world of all victory points on the map instead.
 const VICTORY = { win: 0.7, world: 0.25, lose: 0.3, hold: 60 };
+// Escalation (#44): a team at war that holds `gain` victory points more than its home countries are worth (plus `step`
+// for every alliance that already joined against it) makes the nearest neutral alliance within `reach` of its
+// conquests mobilise against it. The warning time and the pause between two escalations depend on the difficulty
+// (DIFFICULTY.escWarn / escEvery). If the lead shrinks below `cancel` of the threshold meanwhile, the neutral stands down.
+// pow: an alliance joins only if its military weight is at most this share of the leader's (DIFFICULTY.escPow when
+// the leader is the player's alliance). forces: size of the mobilised armies. cash: treasury cap (× starting funds)
+// of a joining country, because neutral countries save money all game long.
+const ESCALATION = { gain: 12, step: 10, reach: 25, cancel: 0.75, pow: 1.2, forces: 0.6, cash: 2 };
 
 const WEAPON_NAMES = {
   rifle: ['Sturmgewehre', 'Assault rifles'], carbine: ['Karabiner (schallgedämpft)', 'Suppressed carbines'], rpg: ['Panzerfaust', 'Rocket launcher'],

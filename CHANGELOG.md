@@ -2,6 +2,11 @@
 
 ## Beta 2 – in Arbeit (Branch `beta2-transport`)
 
+- **Eskalation (#44):** Hat ein Bündnis netto 12 Siegpunkte erobert, mobilisiert das nächste neutrale Bündnis gegen es –
+  mit Vorwarnung (Leicht 4, Normal 3, Schwer 2 Minuten) und Abbruch, wenn der Vorsprung wieder verloren geht. Gilt für
+  Spieler und KI gleich; jeder Eintritt hebt die Schwelle um 10. Schalter im Setup (Standard an), Stand im Ziele-Fenster.
+  Spielstand-Format 5 (ältere Stände laufen ohne Eskalation weiter), Selbsttest um einen Eskalations-Test erweitert.
+
 - **Mehrere Armeen führen:** „Gemeinsam führen“ im Seitenfenster, langes Drücken in der Armee-Leiste oder Umschalt+Klick;
   Großangriff, Vorrücken und Halten gelten für alle, die Armeen rücken nebeneinander vor. **Zusammenlegen** macht eine daraus.
 - **Soll-Bestand und Auffrischen (#71):** Jede Armee merkt sich ihre Sollstärke und zeigt, was fehlt. Verluste werden in der

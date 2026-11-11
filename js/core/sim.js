@@ -23,6 +23,7 @@ const Sim = {
     Game.productionStep(dt);
     if (Math.floor(S.t / 10) !== Math.floor((S.t - dt) / 10)) Game.economyTick(10 / 60);
     AI.update(dt);
+    if (Math.floor(S.t / 5) !== Math.floor((S.t - dt) / 5)) Game.escalation();
     if (Math.floor(S.t / 2) !== Math.floor((S.t - dt) / 2)) this.checkEnd();
     if (this.fxClean++ > 50) { this.fxClean = 0; Game.fx = Game.fx.filter((f) => S.t - f.t0 < (f.dur || 1) + 0.5); }
   },

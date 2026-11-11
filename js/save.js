@@ -40,7 +40,7 @@ const SaveDB = {
 };
 
 const Saves = {
-  VERSION: 4,      // save format; older saves are migrated in migrate()
+  VERSION: 5,      // save format; older saves are migrated in migrate()
   AUTO_KEEP: 3,     // rotating autosaves
   index: [],        // [{ id, name, auto, when, country, eBloc, t, diff, prov }], newest first
   useDB: true,
@@ -170,6 +170,8 @@ const Saves = {
       for (const id of a.ids) { const ty = typeOf.get(id); if (ty) a.plan[ty] = (a.plan[ty] || 0) + 1; }
     }
     if (S.cside) this.toFactions(S, keys);
+    // Format 4 → 5: escalation. Running games keep their rules, so it stays off in older saves.
+    S.esc = S.esc || { on: false, t: 0, n: {}, pend: null };
     S.v = this.VERSION;
     // Province layout changed since the save was made: map every current province onto the old one of the same
     // country closest to it. Without fingerprints (Alpha 0.1 saves) this is impossible.

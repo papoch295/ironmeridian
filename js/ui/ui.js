@@ -536,7 +536,18 @@ const UI = {
       <div class="stat-line"><span>${U.esc(t('objUnits'))}</span><b>${eu}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv(me)}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourUnits'))}</span><b>${Game.countUnits(me)}</b></div>
-      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>`;
+      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.escHtml()}`;
+  },
+
+  // Escalation in the objectives window: own net conquests against the threshold, and a pending entry into the war.
+  escHtml() {
+    const S = Game.state, E = S.esc;
+    if (!E || !E.on) return '';
+    const pt = Game.team(S.player), gain = Game.vpGain()[pt] || 0, need = Game.escNeed(pt);
+    const pend = E.pend ? `<p class="vp-hold ${E.pend.vs === pt ? 'lose' : Game.atWar(E.pend.vs, pt) ? '' : 'other'}">${U.esc(t('objEscPend', Panels.teamName(E.pend.k), Panels.teamName(E.pend.vs), this.clockStr(E.pend.t - S.t)))}</p>` : '';
+    return `<h3 class="obj-sub">${U.esc(t('escalation'))}</h3>${pend}
+      <div class="stat-line"><span>${U.esc(t('objEsc'))}</span><b class="${gain >= need ? 'neg' : ''}">${gain} / ${need}</b></div>
+      <p class="desc small">${U.esc(t('objEscD', need))}</p>`;
   },
 
   // ---------- Log & toasts ----------
@@ -632,8 +643,28 @@ const UI = {
       else if (Game.allied(side, me())) this.log(t('evAllyCaptured', pName(pid)), 'info', p.x, p.y);
       if (Render.selProv === pid) Panels.show();
     });
-    Game.on('war', ({ a, b, joined }) => {
+    // Escalation: a neutral alliance mobilises against the leading side, stands down or enters the war. Loud when
+    // it concerns the player's alliance (bad) or its enemies (good), a quiet log line for wars between others.
+    const escNote = (key, { k, vs, x, y }, arg) => {
+      const pt = Game.team(me()), kind = vs === pt ? 'bad' : Game.atWar(vs, pt) ? 'good' : 'info';
+      const msg = t(key, Panels.teamName(k), Panels.teamName(vs), arg);
+      this.log(msg, key === 'evEscOff' ? (kind === 'bad' ? 'good' : 'info') : kind, x, y);
+      if (kind === 'info') return;
+      this.toast(msg, key === 'evEscOff' ? (kind === 'bad' ? 'good' : 'warn') : kind);
+      if (key !== 'evEscOff') { Sfx.play('alert'); if (x !== undefined) Render.ping(x, y, kind === 'bad' ? 'attack' : 'move'); }
+    };
+    Game.on('escWarn', (e) => { escNote('evEscWarn', e, Math.round(e.t / 60)); this.renderObjectives(); });
+    Game.on('escOff', (e) => { escNote('evEscOff', e); this.renderObjectives(); });
+    Game.on('war', ({ a, b, joined, why, at }) => {
       Render.dirty = true; Render.dirtyMini = true;
+      if (why === 'esc') {
+        // Point at the same country as the warning did (the one closest to the leader's conquests).
+        const c = at ? { x: at[0], y: at[1] } : Game.capProv(Game.teamKeys(a)[0]);
+        escNote('evEscJoin', { k: a, vs: b, x: c.x, y: c.y });
+        if (Render.selProv !== null) Panels.show();
+        this.renderObjectives();
+        return;
+      }
       this.toast(t('evWar', Panels.teamName(a), Panels.teamName(b)), 'warn');
       this.log(t('evWar', Panels.teamName(a), Panels.teamName(b)), 'warn');
       for (const tm of joined) this.log(t('evJoinWar', Panels.teamName(tm)), 'bad');

@@ -5,7 +5,7 @@
 
 // The Beta 2 preview (…/beta2/) has its own cache family, so the two service workers never delete each other's cache.
 const CH = /\/beta2\//.test(location.pathname) ? 'beta2-' : '';
-const CACHE = 'ironmeridian-' + CH + 'v11';
+const CACHE = 'ironmeridian-' + CH + 'v12';
 const FAMILY = new RegExp('^ironmeridian-' + CH + 'v\\d+$');
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'css/style.css',

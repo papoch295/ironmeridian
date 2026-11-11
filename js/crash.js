@@ -157,6 +157,68 @@ const SelfTest = {
     } catch (e) { return (e && e.stack) || String(e); }
   },
 
+  // Escalation: conquests beyond the threshold make a neutral alliance mobilise (warning), it enters the war after
+  // the warning time, stands down when the lead is lost, and nothing happens with the switch off or in old saves.
+  escTest() {
+    try {
+      const country = 'DE', own = Screens.ownTeam(country), foe = BLOCS.find((b) => b.id === 'EU');
+      const setup = (escalation) => { Game.newGame({ country, mode: 'bloc', enemyBloc: foe.id, difficulty: 'normal', seed: 7, escalation }); Game.state.paused = true; return Game.state; };
+      const pt = own.id, vpOf = (i) => PROVINCE_TYPES[Geo.provinces[i].type].vp;
+      // Hand enemy provinces closest to the player to the player until the threshold is passed.
+      const conquer = (S) => {
+        const c = Game.capProv(country), moved = [];
+        const ids = S.prov.map((p, i) => i).filter((i) => Game.hostile(S.prov[i].o, country))
+          .sort((a, b) => U.dist(c.x, c.y, Geo.provinces[a].x, Geo.provinces[a].y) - U.dist(c.x, c.y, Geo.provinces[b].x, Geo.provinces[b].y));
+        for (const i of ids) { if ((Game.vpGain()[pt] || 0) >= Game.escNeed(pt) + 2) break; moved.push([i, S.prov[i].o]); S.prov[i].o = country; }
+        return moved;
+      };
+      let S = setup(true);
+      if (Game.vpGain()[pt]) return 'Vorsprung schon zu Beginn';
+      let moved = conquer(S);
+      Game.escalation();
+      if (S.esc.pend) return 'Eskalation vor Ablauf der Schonfrist';
+      S.t = S.esc.t; Game.escalation();
+      const P = S.esc.pend;
+      if (!P || P.vs !== pt) return 'keine Vorwarnung (Vorsprung ' + (Game.vpGain()[pt] || 0) + ' / ' + Game.escNeed(pt) + ')';
+      if (Game.atWar(P.k, pt)) return 'Kriegseintritt ohne Vorwarnzeit';
+      if (JSON.stringify(JSON.parse(JSON.stringify(S.esc))) !== JSON.stringify(S.esc)) return 'Zustand nicht speicherbar';
+      // After the warning time the alliance is at war with the leader only and has an army.
+      // An allied country without units must not be handed a new army when somebody turns against the alliance.
+      const ally = own.members.find((c) => c !== country && Game.countProv(c));
+      if (ally) for (const u of S.units.filter((x) => x.s === ally)) Game.removeUnit ? Game.removeUnit(u) : (S.units.splice(S.units.indexOf(u), 1), Game.byId.delete(u.id));
+      const k = P.k, units0 = S.units.length;
+      S.t = P.t; Game.escalation();
+      if (ally && Game.countUnits(ally)) return 'führende Seite bekommt bei der Eskalation neue Armeen';
+      if (!Game.atWar(k, pt) || S.esc.pend) return 'kein Kriegseintritt nach der Vorwarnzeit';
+      if (Game.atWar(k, foe.id)) return 'Beigetretene kämpfen auch gegen den Feind';
+      if (S.units.length <= units0 || !Game.teamKeys(k).some((c) => Game.isFoe(c) && Game.countUnits(c))) return 'keine Mobilmachung';
+      if (Game.escNeed(pt) !== ESCALATION.gain + ESCALATION.step || S.esc.t <= S.t) return 'Schwelle oder Pause nicht erhöht';
+      // Losing the lead during the warning time cancels the entry.
+      S = setup(true); moved = conquer(S);
+      S.t = S.esc.t; Game.escalation();
+      if (!S.esc.pend) return 'keine Vorwarnung (Abbruch-Test)';
+      const k2 = S.esc.pend.k;
+      for (const [i, o] of moved) S.prov[i].o = o;
+      Game.escalation();
+      if (S.esc.pend || Game.atWar(k2, pt)) return 'Mobilmachung wird nicht abgebrochen';
+      // The player declares war on the warned alliance: the warning is void and counts as the escalation.
+      S = setup(true); conquer(S);
+      S.t = S.esc.t; Game.escalation();
+      if (!S.esc.pend) return 'keine Vorwarnung (Kriegserklärungs-Test)';
+      Game.declareWar(pt, S.esc.pend.k, false);
+      Game.escalation();
+      if (S.esc.pend || !S.esc.n[pt] || S.esc.t <= S.t) return 'Vorwarnung bleibt trotz Kriegserklärung bestehen';
+      // Switch off: nothing happens. Old saves come back with escalation off.
+      S = setup(false); conquer(S);
+      S.t = 5000; Game.escalation();
+      if (S.esc.pend || Object.keys(S.war).length !== 1) return 'Eskalation trotz Schalter aus';
+      const old = JSON.parse(JSON.stringify(S)); delete old.esc; old.v = 4;
+      const mig = Saves.migrate({ state: old, keys: Saves.provKeys() });
+      if (!mig || !mig.esc || mig.esc.on || mig.v !== Saves.VERSION) return 'alter Spielstand ohne Eskalations-Zustand';
+      return null;
+    } catch (e) { return (e && e.stack) || String(e); }
+  },
+
   // Army control: target strength, refill, leading several armies, merging, standing orders, old saves.
   armyTest() {
     try {
@@ -306,6 +368,9 @@ const SelfTest = {
     const army = this.armyTest();
     this.log(army ? 'FEHL Armee-Führung: ' + army : 'OK   Soll-Bestand, Auffrischen, gemeinsame Führung, Zusammenlegen, Daueraufträge');
     allOk = allOk && !army;
+    const esc = this.escTest();
+    this.log(esc ? 'FEHL Eskalation: ' + esc : 'OK   Eskalation: Vorwarnung, Kriegseintritt, Abbruch, Schalter, alter Spielstand');
+    allOk = allOk && !esc;
     this.active = false;
     window.SELFTEST = { ok: allOk, results: this.results };
     this.log(allOk ? 'ERGEBNIS: alles in Ordnung' : 'ERGEBNIS: Probleme gefunden');

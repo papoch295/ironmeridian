@@ -44,4 +44,5 @@ Dieses Projekt ist ausschließlich das Spiel **IRON MERIDIAN – Globaler Konfli
 - Roadmap und Beta-Plan: `ROADMAP.md`. Git-Repository: github.com/papoch295/ironmeridian (Branch `main`), Web-Version
   über GitHub Pages: https://papoch295.github.io/ironmeridian/ (aktualisiert sich bei jedem Push).
 - Beta 1 (Stand `v1.2-beta`, nur als Web-App) ist seit 7. Nov. abgegeben. Gearbeitet wird jetzt nur noch an **Beta 2**
-  (Branch `beta2-transport`, Plan in ROADMAP.md Abschnitt 9); APK über Capacitor gehört zu Beta 2.
+  (Branch `beta2-transport`, Plan in ROADMAP.md Abschnitt 9). Seit 11. Nov. hat der Block **Spieltiefe** Vorrang (zuerst Eskalation); die APK über Capacitor
+  gehört weiter zu Beta 2, steht aber am Ende.

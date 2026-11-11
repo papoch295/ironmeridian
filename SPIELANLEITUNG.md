@@ -41,6 +41,20 @@ Jede Provinz bringt **Siegpunkte**: Hauptstadt 5, Stadt, Hafen, Industriegebiet 
 
 Den Stand zeigt das **Ziel-Symbol** oben rechts. Läuft ein Countdown, erscheint ein Banner unter der oberen Leiste.
 
+### Eskalation
+
+Wer zu viel erobert, bekommt neue Gegner. Das Spiel zählt für jedes Bündnis die **netto eroberten Siegpunkte**
+(erobert minus verloren). Ab **12** mobilisiert das nächstgelegene neutrale Bündnis gegen diese Seite:
+
+- Zuerst kommt eine **Vorwarnung** mit Countdown (Leicht 4, Normal 3, Schwer 2 Spielminuten). Ein Klick auf die Meldung
+  springt zum Land.
+- Verliert die führende Seite in dieser Zeit ihren Vorsprung wieder, bricht das Land die Mobilmachung ab.
+- Sonst tritt es in den Krieg ein, aber **nur gegen die führende Seite**. Es wird kein Verbündeter der anderen.
+- Jeder Kriegseintritt hebt die Schwelle um 10 Siegpunkte, und bis zur nächsten Eskalation vergeht eine Pause.
+
+Das gilt **genauso für den Feind**: Überrennt er dich, greifen Neutrale gegen ihn ein. Den eigenen Stand zeigt das
+Ziele-Fenster unter „Eskalation“. Beim Spielstart lässt sich die Eskalation **ausschalten**.
+
 ## 3. Der Bildschirm
 
 ![Armee mit Befehlsleiste](docs/screenshots/03-armee-befehle.png)

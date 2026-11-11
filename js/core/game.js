@@ -8,9 +8,11 @@ const DIFFICULTY = {
   // seconds of a war count as mobilisation (recruitment at half pace). probe: seconds between two scouting raids.
   // cmd: command limit factor (CMD) of AI factions hostile to the player. sup: local superiority (own strength / enemy
   // strength at the target) an AI offensive needs before it attacks. flank: chance that an offensive tries an envelopment.
-  easy:   { inc: 0.45, forces: 0.55, aiTick: 5,   aggr: 2.4, build: 0.6,  cap: 38,  grace: 480, pBonus: 1.6, missiles: 0,   air: 0.25, eDmg: 0.6, offEvery: 600, gather: 150, recGap: 45, mob: 240, probe: 150, cmd: 0.85, sup: 1.6, flank: 0.2 },
-  normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 60,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75, offEvery: 450, gather: 120, recGap: 30, mob: 180, probe: 100, cmd: 1, sup: 1.35, flank: 0.5 },
-  hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 128, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1, offEvery: 300, gather: 75, recGap: 12, mob: 90, probe: 60, cmd: 1.3, sup: 1.15, flank: 0.8 },
+  // escEvery: seconds before the first and between two escalations (ESCALATION); escWarn: warning time before a neutral
+  // alliance enters the war; escPow: how strong (relative to the player's alliance) an alliance joining against it may be.
+  easy:   { inc: 0.45, forces: 0.55, aiTick: 5,   aggr: 2.4, build: 0.6,  cap: 38,  grace: 480, pBonus: 1.6, missiles: 0,   air: 0.25, eDmg: 0.6, offEvery: 600, gather: 150, recGap: 45, mob: 240, probe: 150, cmd: 0.85, sup: 1.6, flank: 0.2, escEvery: 900, escWarn: 240, escPow: 0.8 },
+  normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 60,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75, offEvery: 450, gather: 120, recGap: 30, mob: 180, probe: 100, cmd: 1, sup: 1.35, flank: 0.5, escEvery: 600, escWarn: 180, escPow: 1.2 },
+  hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 128, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1, offEvery: 300, gather: 75, recGap: 12, mob: 90, probe: 60, cmd: 1.3, sup: 1.15, flank: 0.8, escEvery: 420, escWarn: 120, escPow: 2 },
 };
 const START_DATE = Date.UTC(2026, 2, 1, 6, 0);
 const blocOf = (k) => BLOCS.find((b) => b.members.includes(k)) || null;
@@ -30,12 +32,14 @@ const Game = {
   // Every country is its own faction (owner key = country code) with its own economy and AI. Alliances (blocs)
   // form teams; wars are fought between teams. mode 'bloc': the player's bloc against one enemy bloc, everybody
   // else neutral. mode 'ffa': all blocs at war with each other (countries outside a bloc stay neutral).
-  newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed }) {
+  newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed, escalation = true }) {
     const pBloc = blocOf(country);
     const S = {
-      v: 4 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
+      v: 5 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
       mode, player: country, pBloc: pBloc ? pBloc.id : null, eBloc: mode === 'bloc' ? enemyBloc : null, nid: 1,
       side: {}, team: {}, war: {}, prov: [], units: [], shots: [], missiles: [], fallout: [], ai: {}, over: null, vp: null,
+      // Escalation: on/off, earliest time of the next one, joins so far per leading team, pending entry { k, vs, t, need, x, y }.
+      esc: { on: !!escalation, t: DIFFICULTY[difficulty].escEvery, n: {}, pend: null },
     };
     for (const c of Geo.countries) {
       if (!c.provinces.length) continue;
@@ -111,7 +115,8 @@ const Game = {
   },
 
   // Declare war between two teams. The defending side mobilises; neighbours of the defender may join it.
-  declareWar(ta, tb, neighbours = true) {
+  // why 'esc' = escalation (see below), at = [x, y] where the UI should point.
+  declareWar(ta, tb, neighbours = true, why = null, at = null) {
     const S = this.state;
     if (ta === tb || this.atWar(ta, tb)) return false;
     S.war[this.warKey(ta, tb)] = 1;
@@ -119,7 +124,7 @@ const Game = {
     if (neighbours) {
       // Only land neighbours near the defender's capital react (no overseas territories, no micro-states).
       const nb = Geo.neighbors(), def = Object.keys(S.team).filter((k) => S.team[k] === tb);
-      const capOf = (k) => Geo.provinces[Geo.byKey[k].provinces.find((pid) => Geo.provinces[pid].type === 'capital') ?? Geo.byKey[k].provinces[0]];
+      const capOf = (k) => this.capProv(k);
       const cand = new Set();
       for (const k of def) {
         const ck = capOf(k);
@@ -134,19 +139,107 @@ const Game = {
       for (const tc of cand) if (!this.atWar(tc, ta) && rnd() < 0.35) { S.war[this.warKey(tc, ta)] = 1; joined.push(tc); }
     }
     this.rebuild(true);
-    for (const tm of [ta, tb, ...joined]) this.mobilize(tm);
+    // An escalation mobilises only the alliance that enters: the leader is at war already and must not get fresh armies.
+    if (why === 'esc') this.mobilize(ta, this.escForces(ta));
+    else for (const tm of [ta, tb, ...joined]) this.mobilize(tm);
     Render.dirty = true; Render.dirtyMini = true;
-    this.emit('war', { a: ta, b: tb, joined });
+    this.emit('war', { a: ta, b: tb, joined, why, at });
     return true;
   },
+  capProv(k) { const c = Geo.byKey[k]; return Geo.provinces[c.provinces.find((pid) => Geo.provinces[pid].type === 'capital') ?? c.provinces[0]]; },
+  teamKeys(tm) { return Object.keys(this.state.team).filter((k) => this.state.team[k] === tm); },
+  teamPower(tm) { return this.teamKeys(tm).reduce((s, k) => s + Geo.byKey[k].power, 0); },
 
   // Countries of a team that have no army yet raise one (smaller than a prepared starting force).
-  mobilize(tm) {
+  mobilize(tm, scale = 0.6) {
     const S = this.state, rnd = U.rng((S.seed + S.nid) >>> 0);
     for (const k in S.team) {
       if (S.team[k] !== tm || k === S.player || !this.countProv(k) || S.units.some((u) => u.s === k)) continue;
-      this.spawnStartingForces(Geo.byKey[k], k, 0.6, this.foeCenter(k), rnd);
+      this.spawnStartingForces(Geo.byKey[k], k, scale, this.foeCenter(k), rnd);
     }
+  },
+
+  // ---------- Escalation (ESCALATION in units.js) ----------
+  // Victory points every team holds beyond (negative: below) those of its home countries.
+  vpGain() {
+    const S = this.state, g = {};
+    for (let i = 0; i < S.prov.length; i++) {
+      const P = Geo.provinces[i], o = S.prov[i].o, th = S.team[Geo.countries[P.country].k], to = o ? S.team[o] : null;
+      if (th === to) continue;
+      const v = PROVINCE_TYPES[P.type].vp;
+      if (th) g[th] = (g[th] || 0) - v;
+      if (to) g[to] = (g[to] || 0) + v;
+    }
+    return g;
+  },
+  // Net conquests a team needs before the next neutral alliance turns against it.
+  escNeed(tm) { return ESCALATION.gain + ESCALATION.step * (this.state.esc.n[tm] || 0); },
+  // Mobilised armies are scaled like starting forces (large alliances field fewer troops per country, difficulty).
+  escForces(tm) {
+    const k = this.teamKeys(tm)[0];
+    return ESCALATION.forces * Math.min(1, 34 / this.teamPower(tm)) * (k && this.isFoe(k) ? DIFFICULTY[this.state.diff].forces : 1);
+  },
+  // The neutral alliance closest to the leader's conquests (where the war is actually being decided) that is not
+  // too strong for the difficulty.
+  escCandidate(lead) {
+    const S = this.state, pt = S.team[S.player];
+    const held = [];
+    S.prov.forEach((pr, i) => {
+      if (pr.o && S.team[pr.o] === lead && S.team[Geo.countries[Geo.provinces[i].country].k] !== lead) held.push(Geo.provinces[i]);
+    });
+    const maxPow = this.teamPower(lead) * (lead === pt ? DIFFICULTY[S.diff].escPow : ESCALATION.pow);
+    const own = {};
+    for (const pr of S.prov) if (pr.o) own[pr.o] = 1;
+    let best = null;
+    for (const k in S.team) {
+      const tm = S.team[k];
+      if (tm === lead || tm === pt || this.act[k] || !own[k] || !Geo.playable(Geo.byKey[k])) continue;
+      if (this.teamKeys(tm).some((c) => this.act[c]) || this.teamPower(tm) > maxPow) continue;
+      const c = this.capProv(k);
+      let d = 1e9;
+      for (const p of held) { const dd = U.dist(c.x, c.y, p.x, p.y); if (dd < d) d = dd; }
+      if (d < ESCALATION.reach && (!best || d < best.d)) best = { tm, d, x: c.x, y: c.y };
+    }
+    return best;
+  },
+  // Called every few seconds: warn first (S.esc.pend), then the neutral alliance enters the war against the leader.
+  escalation() {
+    const S = this.state, E = S.esc;
+    if (!E || !E.on || S.over) return;
+    const D = DIFFICULTY[S.diff], gain = this.vpGain();
+    if (E.pend) {
+      const { k, vs, need, x, y } = E.pend;
+      const keys = this.teamKeys(k);
+      // The alliance got into a war by other means meanwhile (declared on, joined as a neighbour): the warning is
+      // void. Against the leader that counts as the escalation; against somebody else the leader gets half a pause.
+      if (keys.some((c) => this.act[c]) || !keys.some((c) => this.countProv(c))) {
+        E.pend = null;
+        if (this.atWar(k, vs)) { E.n[vs] = (E.n[vs] || 0) + 1; E.t = S.t + D.escEvery; } else E.t = S.t + D.escEvery / 2;
+        return;
+      }
+      if ((gain[vs] || 0) < need * ESCALATION.cancel) {
+        E.pend = null; E.t = S.t + D.escEvery / 2;
+        this.emit('escOff', { k, vs, x, y });
+      } else if (S.t >= E.pend.t) {
+        E.pend = null; E.n[vs] = (E.n[vs] || 0) + 1; E.t = S.t + D.escEvery;
+        for (const c of keys) {
+          const s = S.side[c], pw = Geo.byKey[c].power, cap = ESCALATION.cash;
+          s.m = Math.min(s.m, cap * (1500 + 300 * pw)); s.i = Math.min(s.i, cap * (700 + 140 * pw)); s.o = Math.min(s.o, cap * (350 + 80 * pw));
+        }
+        this.declareWar(k, vs, false, 'esc', [x, y]);
+      }
+      return;
+    }
+    if (S.t < E.t) return;
+    // The leader: the team at war that exceeds its threshold by the widest margin. If no neutral alliance is in
+    // reach of it, the next one in line is tried.
+    const over = (tm) => gain[tm] - this.escNeed(tm);
+    const leaders = Object.keys(gain).filter((tm) => over(tm) >= 0 && this.teamKeys(tm).some((c) => this.act[c])).sort((a, b) => over(b) - over(a));
+    let lead = null, cand = null;
+    for (const tm of leaders) { cand = this.escCandidate(tm); if (cand) { lead = tm; break; } }
+    if (!cand) { if (leaders.length) E.t = S.t + 60; return; }
+    E.pend = { k: cand.tm, vs: lead, t: S.t + D.escWarn, need: this.escNeed(lead), x: cand.x, y: cand.y };
+    this.emit('escWarn', { k: cand.tm, vs: lead, x: cand.x, y: cand.y, t: D.escWarn });
   },
 
   newProv(p, side, rnd) {
