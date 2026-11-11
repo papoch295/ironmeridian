@@ -1,5 +1,6 @@
 // Helicopter and fixed-wing models for both factions. Drawn with the helpers in models.js.
-// Aircraft are not camouflaged like ground vehicles: they use the faction air grey (C.jet) or white (Tu-160).
+// Aircraft are not camouflaged like ground vehicles: they use the air grey (C.jet), army aviation paint (C.heli)
+// or white (Tu-160), with low-visibility markings.
 // Fixed-wing aircraft are seen slightly from above: the far wing peeks out above the fuselage, the near wing
 // hangs below it, so the planform reads even at 30 px.
 'use strict';
@@ -99,7 +100,7 @@ Object.assign(Models.m, {
   // UH-60M Black Hawk (15.3 m fuselage, 16.4 m rotor, 5.1 m high): long low cabin with sliding door, engine/gearbox
   // hump, tall rearward-leaning tail pylon with canted tail rotor on the right, large stabilator, fixed tail wheel.
   thelo(ctx, C) {
-    const B = Col.adj(C.jet, -14), D = Col.adj(B, -10);
+    const B = C.heli, D = Col.adj(B, -8);
     this.P(ctx, [[-0.74, -0.08], [-0.85, -0.4], [-0.93, -0.45], [-0.99, -0.41], [-0.92, -0.06]], B);
     this.S(ctx, [[0.98, 0.06], [0.995, -0.02], [0.94, -0.11], [0.82, -0.19], [0.66, -0.23], [0.3, -0.235], [-0.25, -0.225], [-0.4, -0.16], [-0.6, -0.115], [-0.85, -0.095], [-0.95, -0.085], [-0.95, -0.02], [-0.85, -0.02], [-0.6, 0.0], [-0.42, 0.06], [-0.3, 0.15], [0.0, 0.17], [0.7, 0.17], [0.88, 0.15], [0.96, 0.11]], B);
     // Engine and gearbox hump with exhaust, mast.
@@ -115,6 +116,11 @@ Object.assign(Models.m, {
     this.glint(ctx, 0.84, -0.13); this.glint(ctx, 0.2, -0.14, 0.014);
     this.ln(ctx, 0.37, -0.2, 0.37, 0.15, 'rgba(0,0,0,0.5)'); this.ln(ctx, 0.0, -0.2, 0.0, 0.15, 'rgba(0,0,0,0.5)');
     this.ln(ctx, -0.42, -0.14, -0.9, -0.07); this.ln(ctx, 0.66, 0.15, -0.2, 0.15, 'rgba(255,255,255,0.15)');
+    // Sliding-door rails, access panels on the engine cowling and tail boom, exhaust stain.
+    this.ln(ctx, 0.0, -0.2, 0.52, -0.2, 'rgba(0,0,0,0.45)'); this.ln(ctx, 0.0, 0.11, 0.37, 0.11, 'rgba(0,0,0,0.4)');
+    this.ln(ctx, 0.3, -0.33, 0.3, -0.24); this.ln(ctx, 0.12, -0.33, 0.12, -0.24); this.ln(ctx, -0.6, -0.11, -0.6, -0.01); this.ln(ctx, -0.78, -0.095, -0.78, -0.025);
+    this.exhaust(ctx, -0.3, -0.27, 0.07, 0.035);
+    this.bolts(ctx, 0.05, 0.33, 0.135, 6);
     // Stabilator, gear.
     this.P(ctx, [[-0.8, -0.1], [-1.05, -0.12], [-1.07, -0.075], [-0.82, -0.06]], Col.adj(B, 4));
     this.L(ctx, 0.43, 0.12, 0.45, 0.24, C.dark, 0.026); this.wheel(ctx, 0.45, 0.25, 0.05);
@@ -126,7 +132,7 @@ Object.assign(Models.m, {
   // gunner), TADS/PNVS nose turret, Longbow radome above the rotor, high engine nacelles, stub wings with Hellfire
   // racks, M230 chain gun under the nose, tailwheel, stabilator at the fin root, X-shaped tail rotor on the left.
   ahelo(ctx, C) {
-    const B = Col.adj(C.jet, -22), D = Col.adj(B, -8);
+    const B = Col.adj(C.heli, -3), D = Col.adj(B, -7);
     this.P(ctx, [[-0.72, -0.06], [-0.86, -0.37], [-0.95, -0.385], [-0.98, -0.31], [-0.92, -0.04]], B);
     this.S(ctx, [[0.88, 0.09], [0.9, -0.02], [0.8, -0.06], [0.6, -0.1], [0.35, -0.16], [0.1, -0.2], [-0.12, -0.19], [-0.3, -0.12], [-0.5, -0.08], [-0.85, -0.06], [-0.96, -0.06], [-0.96, 0.0], [-0.82, 0.01], [-0.5, 0.03], [-0.3, 0.07], [-0.1, 0.13], [0.2, 0.15], [0.6, 0.13], [0.8, 0.12]], B);
     // Stepped canopy frame and glass.
@@ -181,6 +187,10 @@ Object.assign(Models.m, {
     this.P(ctx, [[0.36, -0.155], [0.28, -0.195], [-0.15, -0.19], [-0.25, -0.155]], B);
     this.P(ctx, [[0.975, -0.06], [0.935, -0.1], [0.87, -0.13], [0.84, -0.11], [0.885, -0.065]], GLASS);
     this.ln(ctx, -0.36, 0.14, -0.78, 0.02, 'rgba(0,0,0,0.5)'); this.ln(ctx, 0.78, -0.1, 0.78, 0.1);
+    // Frame lines, crew door, paratroop door and radome seam.
+    for (const x of [0.62, 0.46, -0.32, -0.5]) this.ln(ctx, x, -0.155, x, 0.13, 'rgba(0,0,0,0.22)');
+    this.R(ctx, 0.66, -0.04, 0.05, 0.1, Col.adj(B, -3), null, 0.01); this.R(ctx, -0.46, -0.05, 0.07, 0.11, Col.adj(B, -3), null, 0.01);
+    this.ln(ctx, 0.93, -0.085, 0.93, 0.1, 'rgba(0,0,0,0.4)');
     // Near wing with winglet and its two engines.
     this.airWing(ctx, [[0.36, -0.15], [-0.16, 0.09], [-0.3, 0.09], [-0.14, -0.14]], B);
     this.P(ctx, [[-0.19, 0.09], [-0.25, 0.0], [-0.3, 0.0], [-0.31, 0.09]], Col.adj(B, 2));
@@ -202,8 +212,8 @@ Object.assign(Models.m, {
     this.P(ctx, [[0.38, -0.085], [0.42, 0.045], [0.22, 0.055], [0.2, -0.085]], '#1b1f22');
     this.E(ctx, 0.39, -0.02, 0.05, 0.04, B);
     // Canopy.
-    this.S(ctx, [[0.72, -0.07], [0.6, -0.15], [0.44, -0.185], [0.3, -0.175], [0.22, -0.12], [0.3, -0.105], [0.55, -0.09]], '#3b3220');
-    if (this.pass === 'fill') { const p = this.airPath([[0.72, -0.07], [0.6, -0.15], [0.44, -0.185], [0.3, -0.175], [0.22, -0.12], [0.3, -0.105], [0.55, -0.09]], true); const g = ctx.createLinearGradient(0.3, -0.18, 0.6, -0.07); g.addColorStop(0, 'rgba(255,220,140,0.55)'); g.addColorStop(1, 'rgba(255,220,140,0)'); ctx.fillStyle = g; ctx.fill(p); }
+    this.S(ctx, [[0.72, -0.07], [0.6, -0.15], [0.44, -0.185], [0.3, -0.175], [0.22, -0.12], [0.3, -0.105], [0.55, -0.09]], GLASS);
+    if (this.pass === 'fill') { const p = this.airPath([[0.72, -0.07], [0.6, -0.15], [0.44, -0.185], [0.3, -0.175], [0.22, -0.12], [0.3, -0.105], [0.55, -0.09]], true); const g = ctx.createLinearGradient(0.3, -0.18, 0.6, -0.07); g.addColorStop(0, 'rgba(214,176,96,0.34)'); g.addColorStop(1, 'rgba(214,176,96,0)'); ctx.fillStyle = g; ctx.fill(p); }
     this.glint(ctx, 0.44, -0.155);
     // Near wing, tailplane and fin.
     this.airWing(ctx, [[0.3, 0.02], [-0.22, 0.21], [-0.42, 0.21], [-0.46, 0.02]], B);
@@ -212,7 +222,10 @@ Object.assign(Models.m, {
     this.band(ctx, C, -0.81, -0.3, 0.13, 0.05);
     this.P(ctx, [[-0.9, -0.06], [-1.0, -0.045], [-1.0, 0.045], [-0.9, 0.055]], '#3c3833');
     this.roundel(ctx, C, -0.2, -0.04, 0.045);
-    if (this.pass === 'fill') { const g = ctx.createRadialGradient(-1.01, 0, 0, -1.01, 0, 0.09); g.addColorStop(0, 'rgba(255,200,110,0.85)'); g.addColorStop(1, 'rgba(255,120,40,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(-1.01, 0, 0.09, 0, Math.PI * 2); ctx.fill(); }
+    // Panel breaks: radome, weapon-bay door, engine access, sawtooth fin root; faint heat shimmer at the nozzle.
+    this.ln(ctx, 0.86, -0.045, 0.86, 0.04, 'rgba(0,0,0,0.45)'); this.ln(ctx, 0.16, 0.06, -0.3, 0.075, 'rgba(0,0,0,0.4)');
+    this.ln(ctx, -0.3, -0.105, -0.3, 0.105); this.ln(ctx, -0.62, -0.085, -0.62, 0.075); this.ln(ctx, 0.1, -0.125, 0.1, -0.02);
+    if (this.pass === 'fill') { const g = ctx.createRadialGradient(-1.01, 0, 0, -1.01, 0, 0.06); g.addColorStop(0, 'rgba(255,190,120,0.4)'); g.addColorStop(1, 'rgba(255,150,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(-1.01, 0, 0.06, 0, Math.PI * 2); ctx.fill(); }
   },
   // B-21 Raider (approx. 19 m long, 46 m span): tailless flying wing, straight swept leading edges, sawtooth
   // trailing edge, raised centre body with seamless cockpit windows and flush dorsal intakes. Drawn as a 3/4 view
@@ -239,11 +252,15 @@ Object.assign(Models.m, {
     this.glint(ctx, ...pr(6.4, 0.9, 1.8), 0.015);
     // Faction markings on the near wing.
     if (this.pass === 'fill') {
-      ctx.fillStyle = C.accent;
+      ctx.fillStyle = C.accentD; ctx.globalAlpha *= 0.8;
       ctx.beginPath(); [pr(-2.2, 17, 0), pr(-3.4, 19.6, 0), pr(-5.0, 19.2, 0), pr(-3.8, 16.6, 0)].forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.fill();
       const [rx, ry] = pr(1, 10, 0);
-      ctx.fillStyle = '#eef1f2'; ctx.beginPath(); ctx.ellipse(rx, ry, 0.05, 0.03, -0.15, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = C.accent; ctx.beginPath(); ctx.ellipse(rx, ry, 0.031, 0.019, -0.15, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha /= 0.8;
+      ctx.fillStyle = '#c3c8ca'; ctx.beginPath(); ctx.ellipse(rx, ry, 0.04, 0.024, -0.15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.accentD; ctx.beginPath(); ctx.ellipse(rx, ry, 0.025, 0.015, -0.15, 0, Math.PI * 2); ctx.fill();
+      // Panel seams across the planform.
+      this.ln(ctx, ...pr(-4.8, 11.5), ...pr(2, 10.5), 'rgba(0,0,0,0.3)'); this.ln(ctx, ...pr(-4.8, -11.5), ...pr(2, -10.5), 'rgba(0,0,0,0.25)');
+      this.ln(ctx, ...pr(-8.4, 0), ...pr(-6.5, 5), 'rgba(0,0,0,0.3)');
     }
   },
 });
@@ -261,7 +278,7 @@ Object.assign(Models.mE, {
   // dust-protected intakes and IR exhaust screens on top, external fuel tank, outrigger pylons with rocket pods,
   // fixed tricycle gear, long boom with the tail rotor on the left.
   thelo(ctx, C) {
-    const B = Col.adj(C.jet, -18), D = Col.adj(B, -10);
+    const B = C.heli, D = Col.adj(B, -9);
     this.P(ctx, [[-0.84, -0.08], [-0.95, -0.38], [-1.03, -0.4], [-1.04, -0.33], [-0.98, -0.06]], B);
     this.S(ctx, [[0.94, 0.09], [0.995, 0.0], [0.98, -0.09], [0.92, -0.17], [0.8, -0.215], [0.6, -0.225], [0.0, -0.225], [-0.35, -0.205], [-0.5, -0.145], [-0.85, -0.115], [-0.99, -0.105], [-0.99, -0.045], [-0.85, -0.045], [-0.55, -0.015], [-0.42, 0.1], [-0.35, 0.16], [0.0, 0.17], [0.7, 0.17], [0.86, 0.15]], B);
     // Engine deck: dust-protector intakes, exhaust screens, mast.
@@ -299,7 +316,7 @@ Object.assign(Models.mE, {
   // side-by-side cockpit, GOES-451 sight ball, tall coaxial mast, stub wings with Vitebsk wingtip pods, Ataka tubes
   // and rocket pods, twin endplate fins on the tailplane plus central fin, gun on the right side.
   ahelo(ctx, C) {
-    const B = Col.adj(C.jet, -24), D = Col.adj(B, -8);
+    const B = Col.adj(C.heli, -5), D = Col.adj(B, -8);
     this.P(ctx, [[-0.66, -0.08], [-0.8, -0.38], [-0.9, -0.39], [-0.91, -0.31], [-0.86, -0.06]], B);
     this.P(ctx, [[-0.79, 0.05], [-0.8, -0.18], [-0.88, -0.2], [-0.93, 0.06]], D);
     this.S(ctx, [[0.95, 0.06], [0.985, -0.02], [0.93, -0.085], [0.78, -0.125], [0.6, -0.225], [0.4, -0.275], [0.15, -0.275], [-0.1, -0.245], [-0.3, -0.145], [-0.6, -0.095], [-0.88, -0.075], [-0.88, 0.0], [-0.6, 0.02], [-0.3, 0.08], [-0.05, 0.155], [0.3, 0.165], [0.7, 0.145], [0.88, 0.11]], B);
@@ -378,6 +395,8 @@ Object.assign(Models.mE, {
     this.ln(ctx, -0.06, 0.12, -0.06, 0.185);
     this.P(ctx, [[0.33, -0.155], [0.26, -0.19], [-0.16, -0.185], [-0.26, -0.155]], B);
     this.ln(ctx, -0.36, 0.14, -0.78, 0.02, 'rgba(0,0,0,0.5)');
+    for (const x of [0.6, 0.44, -0.34, -0.52]) this.ln(ctx, x, -0.155, x, 0.13, 'rgba(0,0,0,0.22)');
+    this.R(ctx, 0.62, -0.04, 0.05, 0.1, Col.adj(B, -3), null, 0.01); this.R(ctx, -0.47, -0.05, 0.07, 0.11, Col.adj(B, -3), null, 0.01);
     // Near wing (anhedral: tip lower) with two engines.
     this.airWing(ctx, [[0.35, -0.15], [-0.17, 0.12], [-0.29, 0.12], [-0.14, -0.14]], B);
     this.airPod(ctx, Col.adj(B, -3), 0.31, 0.05, 0.01, 0.062, -0.075);
@@ -427,6 +446,8 @@ Object.assign(Models.mE, {
     this.L(ctx, 0.88, -0.035, 1.05, -0.03, '#3a3d3b', 0.012);
     this.S(ctx, [[1.0, 0.0], [0.94, -0.02], [0.82, -0.045], [0.66, -0.065], [0.56, -0.08], [0.4, -0.085], [0.0, -0.075], [-0.5, -0.06], [-0.85, -0.05], [-1.02, -0.035], [-1.02, -0.01], [-0.85, 0.0], [-0.4, 0.02], [0.2, 0.035], [0.6, 0.03], [0.85, 0.02], [0.95, 0.01]], B);
     this.ln(ctx, 0.9, -0.03, 0.9, 0.012, 'rgba(0,0,0,0.4)');
+    for (const x of [0.46, 0.2, -0.3, -0.62]) this.ln(ctx, x, -0.08, x, 0.03, 'rgba(0,0,0,0.2)');
+    this.ln(ctx, 0.9, -0.01, -0.95, -0.02, 'rgba(0,0,0,0.16)');
     this.P(ctx, [[0.68, -0.06], [0.64, -0.08], [0.56, -0.085], [0.56, -0.065]], GLASS);
     // Near wing (swept) behind the nacelle pair, wing glove.
     this.airWing(ctx, [[0.06, 0.02], [-0.7, 0.21], [-0.79, 0.21], [-0.2, 0.03]], Col.adj(B, -10), 0.018);

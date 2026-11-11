@@ -1,6 +1,7 @@
-// Unit models in a comic / cel-shaded look: side-view figures on a hexagonal faction base, facing their direction of
-// travel. Sprites are drawn in unit space (ground at y = 0.3, front towards +x, y up is negative), shaded automatically
-// (hard light band, hard shadow, ink lines, heavy outer outline) and cached per type/side/facing/size as bitmaps.
+// Unit models as realistic side-view profiles (technical-illustration look) over a flat faction marker, facing their
+// direction of travel. Sprites are drawn in unit space (ground at y = 0.3, front towards +x, y up is negative), shaded
+// automatically (soft top light, shadowed underside, fine panel lines, thin dark contour) and cached per
+// type/side/facing/size as bitmaps.
 'use strict';
 
 // ---------- Color helpers ----------
@@ -20,26 +21,26 @@ const Col = {
     }
     return [hu, s * 100, l * 100];
   },
-  // Lightness shift in percent points; shadows drift towards blue and gain a little saturation.
+  // Lightness shift in percent points; hue stays put, shaded and lit paint both lose a little saturation.
   adj(hex, dl) {
     if (hex[0] !== '#') return hex;
     const k = hex + dl;
     let v = this.memo.get(k);
     if (v) return v;
     const [h, s, l] = this.hsl(hex);
-    const hh = dl < 0 ? h + (h > 50 && h < 230 ? 1 : -1) * Math.min(10, -dl * 0.4) + (h < 50 || h > 230 ? 0 : 0) : h;
-    v = `hsl(${(hh + 360) % 360},${Math.min(100, s + (dl < 0 ? 5 : 0)).toFixed(1)}%,${Math.max(0, Math.min(100, l + dl)).toFixed(1)}%)`;
+    v = `hsl(${h.toFixed(1)},${Math.max(0, s - Math.abs(dl) * 0.25).toFixed(1)}%,${Math.max(0, Math.min(100, l + dl)).toFixed(1)}%)`;
     this.memo.set(k, v);
     return v;
   },
 };
 
 // Model palettes = equipment doctrine (paint, uniforms, models) + relation to the player (plinth, pennants, bands).
-// Doctrine W: CARC desert tan, Western equipment. Doctrine E: Russian protective green, Eastern equipment (Models.mE).
-// camo: uniform / helmet patterns (see Models.camoPaint, used for figures only); jet/ship/sub are air and naval greys.
+// Doctrine W: CARC tan 686A, Western equipment. Doctrine E: Russian protective green (4BO), Eastern equipment (Models.mE).
+// camo: uniform / helmet patterns (see Models.camoPaint, used for figures only); jet/ship/sub are air and naval greys,
+// heli is the army aviation paint (US aircraft green, Russian grey-green).
 const DOC_COL = {
-  W: { east: false, body: '#b39b74', light: '#cdb892', dark: '#5f5240', cloth: '#7a7556', gear: '#4f5038', camo: ['#3c4630', '#5e4c34', '#1f211b'], skin2: '#b5a57c', ship: '#8a959c', sub: '#2f3438', jet: '#7f878d' },
-  E: { east: true, body: '#55633b', light: '#7a8656', dark: '#2a301c', cloth: '#5f6646', gear: '#3e4330', camo: ['#9a8b5c', '#2a2c20', '#3f4a2a'], skin2: '#8d8f68', ship: '#7f8c92', sub: '#2a2e31', jet: '#8fa3b2' },
+  W: { east: false, body: '#a3957a', light: '#b9ad94', dark: '#564f42', cloth: '#787458', gear: '#55533f', camo: ['#4a4f38', '#6a5a42', '#8e8667'], skin2: '#8f8a6c', ship: '#8a9399', sub: '#2c3135', jet: '#7b8389', heli: '#4b4f42' },
+  E: { east: true, body: '#515b3d', light: '#6e7857', dark: '#2a2f20', cloth: '#5d644a', gear: '#40442f', camo: ['#8a7f5c', '#33372a', '#454e33'], skin2: '#5d644a', ship: '#7c878d', sub: '#272b2e', jet: '#8a99a5', heli: '#59625a' },
 };
 const REL_COL = {
   P: { flag: '#3d8bff', accent: '#3d8bff', accentD: '#1d4fa8', baseA: '#3a7ce6', baseB: '#173a80', rim: '#9fcaff', outline: '#0a121c', plate: '#0d1b2b' },
@@ -52,7 +53,7 @@ const MODEL_COL = {};
 for (const r in REL_COL) for (const d in DOC_COL) MODEL_COL[r + d] = { ...DOC_COL[d], ...REL_COL[r] };
 MODEL_COL.P = MODEL_COL.PW;
 MODEL_COL.E = MODEL_COL.EE;
-const TRACK = '#2a2d29', WHEEL = '#4a4f48', METAL = '#c9d0d4', GUN = '#2c302c', GLASS = '#13232f', SKIN = '#d9b08a', HULL_GREY = '#7d8a93', DECK = '#59636b';
+const TRACK = '#2a2d29', WHEEL = '#4a4f48', METAL = '#c9d0d4', GUN = '#2c302c', GLASS = '#13232f', SKIN = '#c49a78', HULL_GREY = '#7d8a93', DECK = '#59636b';
 
 const Models = {
   lw: 0.04,        // inner line width in unit space (set per draw)
@@ -88,13 +89,16 @@ const Models = {
     ctx.restore();
   },
 
-  // Hard hexagonal ground shadow beneath flying units, edged in the faction colour (aircraft wear neutral greys).
+  // Soft ground shadow beneath flying units, ringed in the faction colour (aircraft wear neutral greys).
   airShadow(ctx, x, y, s, C) {
-    ctx.beginPath();
-    for (let k = 0; k < 6; k++) { const a = x + Math.cos(k * Math.PI / 3) * s * 0.5, b = y + s * 0.75 + Math.sin(k * Math.PI / 3) * s * 0.13; k ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
-    ctx.strokeStyle = C.accent; ctx.globalAlpha *= 0.85; ctx.lineWidth = Math.max(1.4, s * 0.045); ctx.lineJoin = 'round'; ctx.stroke(); ctx.globalAlpha /= 0.85;
+    const cy = y + s * 0.75, rx = s * 0.5, ry = s * 0.11;
+    ctx.save(); ctx.translate(x, cy); ctx.scale(1, ry / rx);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0, 'rgba(0,0,0,0.4)'); g.addColorStop(0.7, 'rgba(0,0,0,0.24)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); ctx.ellipse(x, cy, rx * 0.92, ry * 0.92, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = C.accent; ctx.globalAlpha *= 0.85; ctx.lineWidth = Math.max(1.1, s * 0.028); ctx.stroke(); ctx.globalAlpha /= 0.85;
   },
 
   // Cached sprite for (type, side, facing, size bucket). Sizes snap to 6-px steps so zooming reuses bitmaps.
@@ -123,16 +127,13 @@ const Models = {
     ctx.scale(s * face, s);
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     if (air) ctx.translate(0, -0.25);
-    // Figures are scaled up so they fill the base; ground vehicles get a slight vertical exaggeration for readability.
-    if (!air && !sea) {
-      const k = T.cls === 'soft' && t !== 'recon' ? [1.3, 1.3] : [1, 1.12];
-      ctx.translate(0, 0.3); ctx.scale(k[0], k[1]); ctx.translate(0, -0.3);
-    }
-    this.face = face;
-    // Comic look: heavy ink outline around the whole silhouette.
-    const o = s < 30 ? 1.4 : s < 60 ? 1.6 : 1.8;
-    this.out = o / s; this.lw = (s < 30 ? 0.6 : 0.8) / s; this.small = s < 26;
-    this.outCol = C.outline;
+    // Infantry is drawn larger than scale so squads stay readable next to vehicles; vehicles keep true proportions.
+    if (!air && !sea && T.cls === 'soft' && t !== 'recon') { ctx.translate(0, 0.3); ctx.scale(1.38, 1.38); ctx.translate(0, -0.3); }
+    this.face = face; this.air = air;
+    // Thin dark contour around the whole silhouette keeps the model readable on any terrain.
+    const o = s < 30 ? 0.8 : s < 60 ? 0.9 : 1.0;
+    this.out = o / s; this.lw = (s < 30 ? 0.5 : 0.65) / s; this.small = s < 26;
+    this.outCol = '#14171a';
     this.camoBase = C.body; this.camoCols = C.camo; this.camoSide = C.east ? 'E' : 'P';
     this.pass = 'out'; fn.call(this, ctx, C);
     this.pass = 'fill'; fn.call(this, ctx, C);
@@ -144,6 +145,15 @@ const Models = {
       ctx.globalCompositeOperation = 'source-over';
       ctx.strokeStyle = 'rgba(230,245,255,0.6)'; ctx.lineWidth = 1.2 / s;
       ctx.beginPath(); ctx.moveTo(-1.02, 0.065); ctx.lineTo(1.02, 0.065); ctx.stroke();
+      if (!this.small) {
+        // Bow wave curling off the stem and a short foam trail at the stern.
+        const subm = t === 'sub' || t === 'ssbn';
+        ctx.fillStyle = subm ? 'rgba(232,244,252,0.3)' : 'rgba(236,246,253,0.6)';
+        ctx.beginPath(); ctx.moveTo(1.0, 0.07); ctx.quadraticCurveTo(0.93, 0.025, 0.8, 0.058); ctx.lineTo(0.66, 0.072); ctx.quadraticCurveTo(0.86, 0.095, 1.0, 0.07); ctx.fill();
+        const wk = ctx.createLinearGradient(-0.86, 0, -1.2, 0);
+        wk.addColorStop(0, subm ? 'rgba(232,244,252,0.3)' : 'rgba(236,246,253,0.55)'); wk.addColorStop(1, 'rgba(236,246,253,0)');
+        ctx.fillStyle = wk; ctx.beginPath(); ctx.moveTo(-0.86, 0.056); ctx.lineTo(-1.2, 0.064); ctx.lineTo(-1.2, 0.082); ctx.lineTo(-0.86, 0.082); ctx.fill();
+      }
     }
     ctx.restore();
     if (sea) {
@@ -156,28 +166,21 @@ const Models = {
     }
   },
 
-  // Hexagonal comic plinth: hard drop shadow, faceted side wall, faction-coloured top with a dark inner field.
+  // Flat faction marker on the ground: soft contact shadow, faint tinted disc and a thin ring in the relation colour.
   base(ctx, C, s) {
-    const gy = s * 0.3, rx = s * 0.86, ry = s * 0.22, wall = s * 0.08, lw = Math.max(1.2, s * 0.045);
-    const pt = (k, kx, ky, dy) => [Math.cos(k * Math.PI / 3) * rx * kx, gy + dy + Math.sin(k * Math.PI / 3) * ry * ky];
-    const hex = (kx, ky, dy) => { ctx.beginPath(); for (let k = 0; k < 6; k++) { const [a, b] = pt(k, kx, ky, dy); k ? ctx.lineTo(a, b) : ctx.moveTo(a, b); } ctx.closePath(); };
-    const quad = (ps) => { ctx.beginPath(); ps.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath(); };
-    hex(1.04, 1.1, wall + s * 0.05); ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fill();
-    // Side wall: three visible facets (right, front, left), the front one lit.
-    const wallCol = [Col.adj(C.baseB, -8), C.baseB, Col.adj(C.baseB, -14)];
-    for (let k = 0; k < 3; k++) {
-      const a = pt(k, 1, 1, 0), b = pt(k + 1, 1, 1, 0);
-      quad([a, b, [b[0], b[1] + wall], [a[0], a[1] + wall]]);
-      ctx.fillStyle = wallCol[k]; ctx.fill();
-    }
-    ctx.beginPath(); for (let k = 0; k <= 3; k++) { const [a, b] = pt(k, 1, 1, wall); k ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }
-    for (let k = 3; k >= 0; k--) { const [a, b] = pt(k, 1, 1, 0); ctx.lineTo(a, b); }
-    ctx.closePath(); ctx.strokeStyle = C.outline; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke();
-    // Top face: faction colour rim, dark inner field, hard light edge along the far side.
-    hex(1, 1, 0); ctx.fillStyle = C.baseA; ctx.fill(); ctx.stroke();
-    hex(0.86, 0.8, 0); ctx.fillStyle = C.plate; ctx.fill();
-    ctx.beginPath(); ctx.moveTo(...pt(3, 0.97, 0.9, 0)); ctx.lineTo(...pt(4, 0.97, 0.9, 0)); ctx.lineTo(...pt(5, 0.97, 0.9, 0));
-    ctx.strokeStyle = C.rim; ctx.lineWidth = Math.max(1, s * 0.03); ctx.stroke();
+    const gy = s * 0.3, rx = s * 1.06, ry = s * 0.21;
+    ctx.save(); ctx.translate(0, gy); ctx.scale(1, ry / rx);
+    const g = ctx.createRadialGradient(0, 0, rx * 0.2, 0, 0, rx);
+    g.addColorStop(0, 'rgba(0,0,0,0.42)'); g.addColorStop(0.75, 'rgba(0,0,0,0.26)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); ctx.ellipse(0, gy, rx * 0.9, ry * 0.9, 0, 0, Math.PI * 2);
+    ctx.fillStyle = C.accent; ctx.globalAlpha = 0.14; ctx.fill();
+    ctx.globalAlpha = 0.9; ctx.strokeStyle = C.accent; ctx.lineWidth = Math.max(1.1, s * 0.028); ctx.stroke();
+    // Brighter arc along the near edge so the ring reads as lying flat.
+    ctx.beginPath(); ctx.ellipse(0, gy, rx * 0.9, ry * 0.9, 0, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.strokeStyle = C.rim; ctx.globalAlpha = 0.55; ctx.lineWidth = Math.max(0.8, s * 0.014); ctx.stroke();
+    ctx.globalAlpha = 1;
   },
 
   // Water patch and foam line for ships (the faction ring is added at the end of render).
@@ -202,18 +205,23 @@ const Models = {
     if (!col) return;
     const [x0, y0, x1, y1] = bb, h = Math.max(0.02, y1 - y0);
     if (col === GLASS) {
-      // Dark pane with a hard diagonal reflection.
-      ctx.fillStyle = GLASS; ctx.fill(path);
+      // Tinted armoured glass: dark pane reflecting the sky in its upper half, thin frame line.
+      const gg = ctx.createLinearGradient(0, y0, 0, y1);
+      gg.addColorStop(0, '#5f7f93'); gg.addColorStop(0.45, '#263b49'); gg.addColorStop(1, '#101c25');
+      ctx.fillStyle = gg; ctx.fill(path);
       ctx.save(); ctx.clip(path);
-      ctx.fillStyle = 'rgba(160,215,245,0.5)';
-      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + (x1 - x0) * 0.7, y0); ctx.lineTo(x0 + (x1 - x0) * 0.35, y1); ctx.lineTo(x0, y1); ctx.fill();
+      ctx.fillStyle = 'rgba(210,235,250,0.16)';
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + (x1 - x0) * 0.55, y0); ctx.lineTo(x0 + (x1 - x0) * 0.3, y1); ctx.lineTo(x0, y1); ctx.fill();
       ctx.restore();
+      ctx.strokeStyle = 'rgba(8,12,15,0.8)'; ctx.lineWidth = this.lw; ctx.stroke(path);
       return;
     }
     if (col[0] !== '#' || opt.flat) { ctx.fillStyle = col; ctx.fill(path); return; }
-    // Painted-miniature gradient carries the volume; faint cel bands on top keep the stylised edge.
+    // Light from above: lit upper edge, local colour across the middle, shadowed underside.
     const g = ctx.createLinearGradient(0, y0, 0, y1);
-    g.addColorStop(0, Col.adj(col, 14)); g.addColorStop(0.45, col); g.addColorStop(1, Col.adj(col, -17));
+    // Airframes are rounded bodies seen against the sky: brighter back, darker belly than slab-sided vehicles.
+    if (this.air) { g.addColorStop(0, Col.adj(col, 13)); g.addColorStop(0.3, Col.adj(col, 4)); g.addColorStop(0.62, Col.adj(col, -6)); g.addColorStop(1, Col.adj(col, -24)); }
+    else { g.addColorStop(0, Col.adj(col, 9)); g.addColorStop(0.35, col); g.addColorStop(0.8, Col.adj(col, -9)); g.addColorStop(1, Col.adj(col, -18)); }
     ctx.fillStyle = g; ctx.fill(path);
     // Vehicles wear a single factory colour (grime only); camouflage patterns are reserved for uniforms and gear.
     if (!this.small) {
@@ -221,16 +229,16 @@ const Models = {
       if (opt.camo || (col === this.camoBase && opt.camo !== false)) this.dirt(ctx, path, y0, h);
     }
     this.cel(ctx, path, y0, h);
-    // Inner line: crisp dark ink line in the local colour (technical-illustration look).
-    if (!opt.noLine) { ctx.strokeStyle = Col.adj(col, -38); ctx.globalAlpha *= 0.9; ctx.lineWidth = this.lw; ctx.stroke(path); ctx.globalAlpha /= 0.9; }
+    // Inner line: fine panel line in a darker tone of the local colour.
+    if (!opt.noLine) { ctx.strokeStyle = Col.adj(col, -30); ctx.globalAlpha *= 0.8; ctx.lineWidth = this.lw; ctx.stroke(path); ctx.globalAlpha /= 0.8; }
   },
-  // Soft light band along the top edge of a fill (the gradient in paint() does the rest of the volume).
+  // Thin sheen along the top edge of a fill (the gradient in paint() does the rest of the volume).
   cel(ctx, path, y0, h) {
     ctx.save(); ctx.clip(path);
     if (!this.small || h > 0.08) {
-      const t = Math.max(this.lw * 1.5, h * 0.22);
+      const t = Math.max(this.lw * 1.5, h * 0.14);
       const e = ctx.createLinearGradient(0, y0, 0, y0 + t);
-      e.addColorStop(0, 'rgba(255,252,232,0.22)'); e.addColorStop(1, 'rgba(255,252,232,0)');
+      e.addColorStop(0, 'rgba(255,252,236,0.16)'); e.addColorStop(1, 'rgba(255,252,232,0)');
       ctx.fillStyle = e; ctx.fillRect(-3, y0 - 0.01, 6, t + 0.01);
     }
     ctx.restore();
@@ -335,11 +343,10 @@ const Models = {
     if (opt.evac) { const k = opt.evac; this.L(ctx, x0 + dx * k - dx * 0.06, y0 + dy * k - dy * 0.06, x0 + dx * k + dx * 0.06, y0 + dy * k + dy * 0.06, GUN, w * 1.45); }
     if (opt.brake) this.L(ctx, x1 - dx * 0.07, y1 - dy * 0.07, x1, y1, GUN, w * 1.6);
   },
-  // Small specular glint dots on optics / glass.
+  // Small specular glint on optics / glass.
   glint(ctx, x, y, r = 0.02) {
     if (this.pass === 'out' || this.small) return;
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(x + r * 2.2, y + r * 1.2, r * 0.7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(225,240,250,0.6)'; ctx.beginPath(); ctx.arc(x, y, r * 0.7, 0, Math.PI * 2); ctx.fill();
   },
   // Ambient occlusion band under a joint (e.g. turret ring on hull).
   ao(ctx, x0, x1, y, h = 0.05) {
@@ -510,10 +517,10 @@ const Models = {
     this.L(ctx, x0, y0, x1, y0, C.dark, 0.012); this.L(ctx, x0, y1, x1, y1, C.dark, 0.012);
     for (let i = 0; i <= n; i++) this.L(ctx, x0 + (x1 - x0) * i / n, y0, x0 + (x1 - x0) * i / n, y1, C.dark, 0.008);
   },
-  // Faction pennant on a whip antenna.
+  // Small faction flag on a thin whip antenna.
   pennant(ctx, C, x, y, h = 0.42) {
-    this.L(ctx, x, y, x, y - h, '#1b1d1a', 0.02);
-    this.P(ctx, [[x, y - h], [x + 0.24, y - h + 0.06], [x, y - h + 0.13]], C.accent, null, { hi: true });
+    this.L(ctx, x, y, x, y - h, '#22251f', 0.012, { noOut: true });
+    this.P(ctx, [[x, y - h], [x + 0.115, y - h + 0.008], [x + 0.115, y - h + 0.066], [x, y - h + 0.074]], C.accent, null, { noLine: true });
   },
   // Thin panel line / seam (fill pass only).
   ln(ctx, x0, y0, x1, y1, col = 'rgba(0,0,0,0.38)', w = 1) {
@@ -555,7 +562,29 @@ const Models = {
     const p = new Path2D(); pts.forEach(([a, b], i) => (i ? p.lineTo(a, b) : p.moveTo(a, b))); p.closePath();
     this.paint(ctx, p, col, this.bbox(pts));
     if (this.pass === 'out') return;
+    const [x0, y0, x1] = this.bbox(pts);
     ctx.save(); ctx.clip(p);
+    if (!this.small) {
+      // Shell plating seams, flare shadow under the deck edge, weathering streaks below scuppers.
+      ctx.strokeStyle = 'rgba(0,0,0,0.13)'; ctx.lineWidth = this.lw; ctx.beginPath();
+      for (let x = x0 + 0.11; x < x1 - 0.06; x += 0.17) { ctx.moveTo(x, y0); ctx.lineTo(x, 0.045); }
+      ctx.stroke();
+      const sh = ctx.createLinearGradient(0, -0.04, 0, 0.05);
+      sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.2)');
+      ctx.fillStyle = sh; ctx.fillRect(-2, -0.04, 4, 0.09);
+      for (let i = 0, x = x0 + 0.19; x < x1 - 0.25; x += 0.23, i++) {
+        const st = ctx.createLinearGradient(0, -0.06, 0, 0.045);
+        st.addColorStop(0, 'rgba(70,52,38,0.3)'); st.addColorStop(1, 'rgba(70,52,38,0)');
+        ctx.fillStyle = st; ctx.fillRect(x + (i % 2) * 0.03, -0.06, 0.009, 0.105);
+      }
+      // Anchor in its hawse pocket near the bow.
+      const ax = x1 - 0.13, ay = Math.min(-0.035, y0 + 0.075);
+      ctx.fillStyle = '#23272a'; ctx.beginPath(); ctx.arc(ax, ay, 0.013, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(ax - 0.014, ay + 0.03); ctx.lineTo(ax, ay + 0.008); ctx.lineTo(ax + 0.014, ay + 0.03); ctx.lineTo(ax, ay + 0.022); ctx.closePath(); ctx.fill();
+      const rs = ctx.createLinearGradient(0, ay + 0.02, 0, 0.045);
+      rs.addColorStop(0, 'rgba(96,58,36,0.38)'); rs.addColorStop(1, 'rgba(96,58,36,0)');
+      ctx.fillStyle = rs; ctx.fillRect(ax - 0.007, ay + 0.02, 0.014, 0.06);
+    }
     ctx.fillStyle = '#5b2a24'; ctx.fillRect(-2, 0.06, 4, 1);
     ctx.fillStyle = '#1c1f22'; ctx.fillRect(-2, 0.045, 4, 0.016);
     ctx.restore();
@@ -581,13 +610,14 @@ const Models = {
   },
 
   // Faction band painted across a body part (turret band, funnel band).
-  band(ctx, C, x, y, w, h) { this.R(ctx, x, y, w, h, C.accent, null, 0.01, { noLine: true }); },
+  band(ctx, C, x, y, w, h) { this.R(ctx, x, y, w, h, C.accentD, null, 0.01, { noLine: true, flat: true }); },
   roundel(ctx, C, x, y, r = 0.08) {
-    this.O(ctx, x, y, r, '#eef1f2', null, { noLine: true });
-    this.O(ctx, x, y, r * 0.62, C.accent, null, { noLine: true });
+    // Low-visibility national marking: muted ring and centre in the faction colour.
+    this.O(ctx, x, y, r * 0.8, '#c3c8ca', null, { noLine: true, flat: true });
+    this.O(ctx, x, y, r * 0.5, C.accentD, null, { noLine: true, flat: true });
   },
 
-  // ---------- Infantry figure (toy proportions, ~0.6 units tall, feet on y = 0.3) ----------
+  // ---------- Infantry figure (natural proportions, about 7.5 heads / 0.63 units tall, feet on y = 0.3) ----------
   // West (P), US Army / Bundeswehr 2025: ECH/ACH-type helmet with tan cover, ear-cup headset and NVG shroud, plate
   // carrier with mag pouches, Multicam/Flecktarn-like uniform, coyote boots, M4/HK416-type carbine with optic.
   // East (E), Ratnik kit: 6B47 helmet with Digital-Flora cover (deeper and rounder, no ear cut-out), 6B45 vest with
@@ -604,7 +634,7 @@ const Models = {
     const helm = dark ? '#272b2d' : east ? C.cloth : C.skin2;
     const boot = east || dark ? '#1c1c19' : '#5e4c34', glove = dark || east ? '#24261f' : '#6e5f45';
     const G = '#1b1d1a', G2 = '#30332d', cam = dark ? {} : { camo: true };
-    const kneel = opt.pose === 'kneel', prone = opt.pose === 'prone', dy = kneel ? 0.08 : 0;
+    const kneel = opt.pose === 'kneel', prone = opt.pose === 'prone', dy = kneel ? 0.08 : 0, up = kneel ? 0.08 : -0.045;
     const pack = opt.pack === false ? null : opt.pack || Col.adj(gear, -5);
     const smooth = (pts) => {
       const p = new Path2D(), n = pts.length, mid = (i) => [(pts[i % n][0] + pts[(i + 1) % n][0]) / 2, (pts[i % n][1] + pts[(i + 1) % n][1]) / 2];
@@ -613,14 +643,14 @@ const Models = {
       p.closePath(); return p;
     };
     // Two-segment arm from shoulder (sx, sy) to hand target (tx, ty), elbow bent downwards; armband on the upper arm.
-    const arm = (sx, sy, tx, ty, w = 0.05) => {
+    const arm = (sx, sy, tx, ty, w = 0.044) => {
       const L = 0.135, d = Math.min(Math.hypot(tx - sx, ty - sy), 2 * L - 0.001), th = Math.atan2(ty - sy, tx - sx), a = Math.acos(d / (2 * L));
       const ex = sx + Math.cos(th + a) * L, ey = sy + Math.sin(th + a) * L;
       this.L(ctx, sx, sy, ex, ey, cloth, w);
       this.L(ctx, ex, ey, tx, ty, cloth, w * 0.92);
       if (opt.cross || dark) {
-        const bx = sx + (ex - sx) * 0.62, by = sy + (ey - sy) * 0.62;
-        this.L(ctx, sx + (ex - sx) * 0.3, sy + (ey - sy) * 0.3, bx, by, opt.cross ? '#eef1f2' : C.accent, w * 1.04, { noOut: true });
+        const k1 = opt.cross ? 0.62 : 0.42, bx = sx + (ex - sx) * k1, by = sy + (ey - sy) * k1;
+        this.L(ctx, sx + (ex - sx) * 0.3, sy + (ey - sy) * 0.3, bx, by, opt.cross ? '#e4e6e2' : C.accentD, w * 1.04, { noOut: true });
         if (opt.cross && fill && !this.small) {
           const cx = sx + (ex - sx) * 0.46, cy = sy + (ey - sy) * 0.46, r = w * 0.36;
           ctx.strokeStyle = '#d33a2c'; ctx.lineWidth = w * 0.22; ctx.lineCap = 'butt';
@@ -661,10 +691,10 @@ const Models = {
       }
       this.P(ctx, [[-0.082, 0.004], [-0.055, 0.004], [-0.064, 0.048], [-0.09, 0.044]], G);
     };
-    // Helmet / headgear around a head at (hx, hy); faction band clipped to the helmet shell. Heads are drawn
-    // 4 % oversized (just enough to read at map size) around the neck point.
-    const head = (hx, hy) => {
-      ctx.save(); ctx.translate(hx, hy + 0.05); ctx.scale(1.04, 1.04); ctx.translate(-hx, -hy - 0.05);
+    // Helmet / headgear around a head at (hx, hy). head0 is laid out on a
+    // larger grid and scaled down around the neck point (px, py) to a natural head size (about 1/7.5 of body height).
+    const head = (hx, hy, px = hx - 0.01, py = hy + 0.055) => {
+      ctx.save(); ctx.translate(px, py); ctx.scale(0.72, 0.72); ctx.translate(-px, -py);
       head0(hx, hy);
       ctx.restore();
     };
@@ -676,13 +706,11 @@ const Models = {
       if (opt.hat === 'boonie') {
         this.S(ctx, [[hx - 0.06, hy - 0.025], [hx - 0.05, hy - 0.08], [hx + 0.04, hy - 0.085], [hx + 0.06, hy - 0.025]], helm, cam);
         this.E(ctx, hx, hy - 0.025, 0.1, 0.018, helm, cam);
-        if (fill) { ctx.fillStyle = C.accent; ctx.fillRect(hx - 0.055, hy - 0.05, 0.11, 0.016); }
         return;
       }
       if (opt.hat === 'ghillie') {
         const hood = smooth([[hx - 0.09, hy + 0.04], [hx - 0.1, hy - 0.06], [hx - 0.01, hy - 0.11], [hx + 0.07, hy - 0.08], [hx + 0.08, hy - 0.02], [hx + 0.02, hy - 0.03], [hx - 0.02, hy + 0.06]]);
         this.paint(ctx, hood, Col.adj(cloth, -4), [hx - 0.1, hy - 0.11, hx + 0.08, hy + 0.06], { camo: true });
-        if (fill) { ctx.fillStyle = C.accent; ctx.fillRect(hx - 0.03, hy - 0.1, 0.06, 0.016); }
         return;
       }
       // West: high ear cut and short brim. East 6B47: deeper shell that comes down over the ears and neck.
@@ -691,7 +719,8 @@ const Models = {
         : [[hx - 0.082, hy + 0.022], [hx - 0.09, hy - 0.06], [hx - 0.008, hy - 0.115], [hx + 0.08, hy - 0.088], [hx + 0.098, hy - 0.02], [hx + 0.088, hy - 0.006], [hx + 0.01, hy - 0.016], [hx - 0.022, hy + 0.004]];
       const hp = smooth(pts);
       this.paint(ctx, hp, helm, [hx - 0.09, hy - 0.12, hx + 0.1, hy + 0.04], dark ? {} : { camo: true });
-      if (fill) { ctx.save(); ctx.clip(hp); ctx.fillStyle = C.accent; ctx.fillRect(hx - 0.12, hy - 0.06, 0.24, 0.024); ctx.restore(); }
+      // Helmet cover seam and strap instead of a coloured band (the faction shows in the ground ring and the flag).
+      if (fill && !this.small) { ctx.save(); ctx.clip(hp); ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.fillRect(hx - 0.12, hy - 0.035, 0.24, 0.012); ctx.restore(); }
       if (opt.nvg) {
         // Comms headset with a big ear cup and boom mic, quad-tube panoramic NVG (GPNVG-type) flipped down on its mount:
         // the near pair of tubes is visible in profile, the far pair shows as a second lens just above.
@@ -729,8 +758,8 @@ const Models = {
         this.L(ctx, 0.43, 0.0, 0.47, 0.058, G, 0.014); this.L(ctx, 0.43, 0.0, 0.39, 0.058, G, 0.014);
       }
       ctx.restore();
-      head(0.13, -0.105);
-      if (wpn !== 'none') arm(0.03, -0.085, 0.27, -0.075, 0.045);
+      head(0.13, -0.105, 0.085, -0.085);
+      if (wpn !== 'none') arm(0.03, -0.085, 0.27, -0.075, 0.04);
       ctx.restore();
       return;
     }
@@ -743,43 +772,46 @@ const Models = {
       this.O(ctx, 0.118, -0.16, 0.03, gearD, null, { noLine: true });
       this.P(ctx, [[0.075, -0.042], [0.142, -0.042], [0.178, -0.016], [0.178, 0], [0.075, 0]], boot);
     } else {
-      this.P(ctx, [[-0.045, -0.26], [0.02, -0.26], [-0.005, -0.13], [-0.02, -0.035], [-0.075, -0.035], [-0.062, -0.13]], clothD);
-      this.P(ctx, [[-0.098, -0.042], [-0.025, -0.042], [0.005, -0.016], [0.005, 0], [-0.098, 0]], boot);
-      this.P(ctx, [[-0.022, -0.26], [0.05, -0.26], [0.066, -0.13], [0.06, -0.035], [0.006, -0.035], [0.004, -0.13]], cloth, null, cam);
-      this.O(ctx, 0.04, -0.13, 0.028, gearD, null, { noLine: true });
-      this.P(ctx, [[0.0, -0.042], [0.064, -0.042], [0.096, -0.016], [0.096, 0], [0.0, 0]], boot);
+      // Standing: natural leg length (hip at about 0.48 of body height), slight stride, knee pad on the near leg.
+      this.P(ctx, [[-0.04, -0.305], [0.018, -0.305], [-0.008, -0.16], [-0.026, -0.045], [-0.074, -0.045], [-0.06, -0.16]], clothD);
+      this.P(ctx, [[-0.092, -0.05], [-0.028, -0.05], [-0.002, -0.018], [-0.002, 0], [-0.092, 0]], boot);
+      this.P(ctx, [[-0.02, -0.305], [0.046, -0.305], [0.062, -0.16], [0.056, -0.045], [0.008, -0.045], [0.006, -0.16]], cloth, null, cam);
+      this.R(ctx, 0.018, -0.178, 0.046, 0.042, gearD, null, 0.014, { noLine: true });
+      this.P(ctx, [[0.004, -0.05], [0.06, -0.05], [0.09, -0.018], [0.09, 0], [0.004, 0]], boot);
     }
-    ctx.translate(0, dy);
+    ctx.translate(0, up);
     // Backpack (radio antenna on dark teams), torso, vest with pouches, belt.
     if (pack) {
-      this.R(ctx, -0.158, -0.445, 0.09, 0.165, pack, null, 0.03, opt.cross ? {} : cam);
-      if (east && !dark) this.R(ctx, -0.17, -0.475, 0.08, 0.04, Col.adj(pack, -8), null, 0.018);
-      if (opt.cross && fill && !this.small) { ctx.fillStyle = '#d33a2c'; ctx.fillRect(-0.125, -0.405, 0.024, 0.07); ctx.fillRect(-0.148, -0.382, 0.07, 0.024); }
-      if (dark) this.L(ctx, -0.14, -0.44, -0.18, -0.68, '#151716', 0.008, { noOut: true });
+      this.R(ctx, -0.142, -0.45, 0.082, 0.17, pack, null, 0.026, opt.cross ? {} : cam);
+      if (east && !dark) this.R(ctx, -0.152, -0.478, 0.076, 0.036, Col.adj(pack, -8), null, 0.016);
+      if (opt.cross && fill && !this.small) { ctx.fillStyle = '#b8382c'; ctx.fillRect(-0.112, -0.405, 0.02, 0.064); ctx.fillRect(-0.134, -0.383, 0.064, 0.02); }
+      if (dark) this.L(ctx, -0.13, -0.445, -0.165, -0.66, '#151716', 0.007, { noOut: true });
     }
-    this.R(ctx, -0.08, -0.465, 0.16, 0.225, cloth, null, 0.045, cam);
-    this.R(ctx, -0.092, -0.44, 0.185, 0.155, gear, null, 0.026);
+    this.R(ctx, -0.066, -0.47, 0.136, 0.23, cloth, null, 0.04, cam);
+    this.R(ctx, -0.076, -0.448, 0.156, 0.162, gear, null, 0.022);
     if (east) {
-      this.P(ctx, [[-0.07, -0.475], [0.03, -0.478], [0.062, -0.432], [-0.08, -0.43]], gear);
-      this.P(ctx, [[0.025, -0.292], [0.09, -0.292], [0.08, -0.215], [0.035, -0.215]], gear);
+      this.P(ctx, [[-0.058, -0.478], [0.028, -0.48], [0.056, -0.438], [-0.066, -0.435]], gear);
+      this.P(ctx, [[0.018, -0.292], [0.076, -0.292], [0.068, -0.225], [0.028, -0.225]], gear);
     }
-    this.R(ctx, 0.055, -0.4, 0.05, 0.085, gearD, null, 0.012);
-    this.R(ctx, -0.04, -0.38, 0.07, 0.06, gearD, null, 0.012);
-    this.ln(ctx, -0.085, -0.41, 0.05, -0.41, 'rgba(0,0,0,0.3)');
-    this.R(ctx, -0.086, -0.295, 0.182, 0.032, gearD, null, 0.01);
+    this.R(ctx, 0.042, -0.4, 0.044, 0.08, gearD, null, 0.01);
+    this.R(ctx, -0.034, -0.386, 0.064, 0.06, gearD, null, 0.01);
+    this.ln(ctx, -0.07, -0.415, 0.042, -0.415, 'rgba(0,0,0,0.3)');
+    this.R(ctx, -0.072, -0.298, 0.152, 0.03, gearD, null, 0.009);
     if (opt.stripes && fill) {
       ctx.fillStyle = '#eef1f2'; ctx.fillRect(0.03, -0.482, 0.04, 0.03);
       if (!this.small) { ctx.fillStyle = '#2f5fae'; ctx.fillRect(0.03, -0.474, 0.04, 0.007); ctx.fillRect(0.03, -0.461, 0.04, 0.007); }
     }
-    head(0.025, -0.52);
+    this.R(ctx, -0.006, -0.5, 0.042, 0.045, opt.mask ? '#4b5046' : Col.adj(SKIN, -6), null, 0.01, { noLine: true });
+    head(0.022, -0.54);
     // Weapon and arms (the trigger hand is on the far side of the gun, the support hand is the near arm).
-    const sh = [0.005, -0.425];
+    const sh = [0.004, -0.43];
     const frame = (ox, oy, a, fx, fy) => [ox + fx * Math.cos(a) - fy * Math.sin(a), oy + fx * Math.sin(a) + fy * Math.cos(a)];
     if (wpn === 'rifle' || wpn === 'carbine' || wpn === 'long') {
       const a = -0.1, ox = 0.02, oy = -0.372;
       this.O(ctx, ox - 0.07, oy + 0.02, 0.024, glove, null, { noLine: true });
-      ctx.save(); ctx.translate(ox, oy); ctx.rotate(a); rifle(wpn); ctx.restore();
-      const t = frame(ox, oy, a, wpn === 'carbine' ? 0.085 : 0.12, -0.004);
+      // Weapons are laid out on a larger grid; 0.92 brings a carbine to about half the body height.
+      ctx.save(); ctx.translate(ox, oy); ctx.rotate(a); ctx.scale(0.92, 0.92); rifle(wpn); ctx.restore();
+      const t = frame(ox, oy, a, wpn === 'carbine' ? 0.078 : 0.11, -0.004);
       arm(sh[0], sh[1], t[0], t[1]);
     } else if (wpn === 'tube') {
       // FGM-148 Javelin: launch tube on the shoulder, end caps, CLU sight in front of the face on the left side.
@@ -797,21 +829,21 @@ const Models = {
       const t = frame(ox, oy, a, 0.11, -0.035);
       arm(sh[0], sh[1], t[0], t[1]);
     } else if (wpn === 'shovel') {
-      this.L(ctx, 0.12, -0.06, 0.2, -0.46, '#6b4e2e', 0.025);
+      this.L(ctx, 0.12, -0.06, 0.2, -0.46, '#6b4e2e', 0.018);
       this.P(ctx, [[0.07, -0.02], [0.15, -0.06], [0.14, 0.04], [0.09, 0.05]], METAL);
       arm(sh[0], sh[1], 0.165, -0.33);
     } else if (wpn === 'detector') {
       // Mine detector (AN/PSS-14 / IMP-type): pole down to a search head sweeping over the ground.
-      this.L(ctx, 0.12, -0.34, 0.33, -0.04 - dy, G2, 0.018);
-      this.E(ctx, 0.35, -0.03 - dy, 0.075, 0.02, '#3d4136');
+      this.L(ctx, 0.12, -0.34, 0.33, -0.04 - up, G2, 0.014);
+      this.E(ctx, 0.35, -0.03 - up, 0.07, 0.018, '#3d4136');
       this.R(ctx, 0.11, -0.37, 0.05, 0.03, G, null, 0.008);
       arm(sh[0], sh[1], 0.13, -0.33);
     } else if (wpn === 'bino') {
-      this.R(ctx, 0.065, -0.545, 0.06, 0.04, G, null, 0.01);
-      this.glint(ctx, 0.12, -0.53, 0.007);
-      arm(sh[0], sh[1], 0.085, -0.5);
+      this.R(ctx, 0.06, -0.548, 0.055, 0.034, G, null, 0.009);
+      this.glint(ctx, 0.108, -0.535, 0.006);
+      arm(sh[0], sh[1], 0.08, -0.51);
     } else if (opt.hand) {
-      arm(sh[0], sh[1], opt.hand[0], opt.hand[1] - dy);
+      arm(sh[0], sh[1], opt.hand[0], opt.hand[1] - up);
     } else {
       arm(sh[0], sh[1], 0.04, -0.27);
     }
