@@ -54,6 +54,12 @@ const STR = {
     evEscJoin: 'Eskalation: {0} tritt gegen {1} in den Krieg ein!',
     objEsc: 'Netto eroberte Siegpunkte', objEscD: 'Ab {0} greift ein neutraler Nachbar gegen dein Bündnis ein. Das gilt genauso für den Feind.',
     objEscPend: '{0} mobilisiert gegen {1} – Kriegseintritt in {2}',
+    weariness: 'Kriegsmüdigkeit', wearyNone: 'ausgeruht', wearyTip: 'Kriegsmüdigkeit {0} % – Einnahmen −{1} %. Verluste erhöhen sie, Abschüsse, Eroberungen und Ruhe senken sie.',
+    evWeary1: 'Die Bevölkerung wird kriegsmüde ({0} %) – Einnahmen −{1} %. Schone deine Truppen!',
+    evWeary2: 'Starke Kriegsmüdigkeit ({0} %) – Einnahmen −{1} %! Gönne deinen Truppen eine Pause.',
+    objWeary: 'Deine Kriegsmüdigkeit', objWearyFoe: 'Kriegsmüdigkeit des Feindes', objWearyD: 'Bis zu −{0} % Einnahmen. Gilt genauso für die KI – hohe Verluste schwächen auch den Feind.',
+    rank: 'Erfahrung', rank0: 'Rekrut', rank1: 'Erfahren', rank2: 'Veteran', rank3: 'Elite', rankBonus: '(+{0} % Treffer, −{1} % Unterdrückung)',
+    rankMix: 'Erfahrene', evPromoted: '{0} ist jetzt {1}!',
     evRetreat: '{0} bricht den Angriff ab und zieht sich zurück',
     evCalledOff: 'Aufklärung: {0} bläst den Angriff ab – unsere Verteidigung ist zu stark',
     evLandingSail: 'Aufklärung: Landungsschiff aus {0} mit Truppen an Bord – Kurs auf {1}!', evLanding: '{0} landet Truppen bei {1}!',
@@ -188,6 +194,12 @@ const STR = {
     evEscJoin: 'Escalation: {0} enters the war against {1}!',
     objEsc: 'Net victory points conquered', objEscD: 'From {0} on a neutral neighbour turns against your alliance. The same applies to the enemy.',
     objEscPend: '{0} is mobilising against {1} – enters the war in {2}',
+    weariness: 'War weariness', wearyNone: 'rested', wearyTip: 'War weariness {0} % – income −{1} %. Losses raise it; kills, conquests and quiet time lower it.',
+    evWeary1: 'Your people are growing war-weary ({0} %) – income −{1} %. Spare your troops!',
+    evWeary2: 'Severe war weariness ({0} %) – income −{1} %! Give your troops a rest.',
+    objWeary: 'Your war weariness', objWearyFoe: 'Enemy war weariness', objWearyD: 'Up to −{0} % income. The same applies to the AI – heavy losses weaken the enemy too.',
+    rank: 'Experience', rank0: 'Recruit', rank1: 'Experienced', rank2: 'Veteran', rank3: 'Elite', rankBonus: '(+{0} % accuracy, −{1} % suppression)',
+    rankMix: 'Experienced', evPromoted: '{0} is now {1}!',
     evRetreat: '{0} breaks off the attack and falls back',
     evCalledOff: 'Intel: {0} calls off its attack – our defence is too strong',
     evLandingSail: 'Recon: landing ship from {0} with troops aboard – heading for {1}!', evLanding: '{0} is landing troops near {1}!',
@@ -306,6 +318,8 @@ const HELP = {
       <h3>Erobern</h3><p>Jede Provinz hat eine <b>Garnison</b>, die sich wehrt. Zerstöre sie mit Angriffen, dann erobern Bodentruppen ohne feindliche Verteidiger
       in der Nähe die Provinz. Infanterie und Pioniere erobern am schnellsten. Eroberte Provinzen verlieren eine Stufe.</p>
       <h3>Unterdrückung & Moral</h3><p>Beschuss unterdrückt Infanterie: Sie trifft schlechter, bewegt sich langsamer und flieht bei 100&nbsp;% ungeordnet.</p>
+      <h3>Veteranen</h3><p>Einheiten sammeln durch Treffer und Abschüsse Erfahrung: Erfahren, Veteran, Elite (goldene Winkel am Symbol). Jede Stufe gibt +10&nbsp;% Treffsicherheit und −10&nbsp;% Unterdrückung. Schone erfahrene Truppen – Ersatz beginnt wieder als Rekrut.</p>
+      <h3>Kriegsmüdigkeit</h3><p>Eigene Verluste und verlorene Provinzen machen dein Land kriegsmüde, Abschüsse, Eroberungen und Ruhe bauen das ab. Bei 100&nbsp;% sinken die Einnahmen um 20&nbsp;%. Für die KI gilt dasselbe.</p>
       <h3>Nebel des Krieges</h3><p>Du siehst Feinde nur in Sichtweite deiner Einheiten und Provinzen. Aufklärer, Scharfschützen und U-Boote sind schwer zu entdecken.</p>
       <h3>Versorgung</h3><p>Munition und Zustand regenerieren in eigenen Provinzen, bei Versorgungs-LKW, Sanitätern und Pionieren. Flugzeuge kehren zum Tanken zur Basis zurück. Mit <b>Dauereinsatz</b> fliegen sie danach von selbst wieder ins Einsatzgebiet; der gestrichelte Kreis beim Zielen zeigt, wie weit sie von ihrem Flugplatz kommen.</p>
       <h3>Über See</h3><p>Bodentruppen schiffen sich an der Küste automatisch ein, sind auf See aber sehr verwundbar. Sicherer ist das <b>Landungsschiff</b> (Werft): Truppen und Fahrzeuge mit dem Schiff wählen, <b>Verladen</b>, dann <b>Transport nach</b> und das Ufer antippen. Transportflugzeuge fliegen Truppen zwischen Flugplätzen.</p>
@@ -355,6 +369,8 @@ const HELP = {
       <h3>Capturing</h3><p>Every province has a <b>garrison</b> that fights back. Wear it down, then ground troops capture the province when no enemy defenders
       are nearby. Infantry and engineers capture fastest. Captured provinces lose one level.</p>
       <h3>Suppression & morale</h3><p>Incoming fire suppresses infantry: it shoots worse, moves slower and routs at 100&nbsp;%.</p>
+      <h3>Veterans</h3><p>Units gain experience from hits and kills: Experienced, Veteran, Elite (gold chevrons at the symbol). Every rank gives +10&nbsp;% accuracy and −10&nbsp;% suppression. Spare experienced troops – replacements start as recruits again.</p>
+      <h3>War weariness</h3><p>Own losses and lost provinces make your country war-weary; kills, conquests and quiet time reduce it. At 100&nbsp;% income drops by 20&nbsp;%. The same applies to the AI.</p>
       <h3>Fog of war</h3><p>You only see enemies within sight of your units and provinces. Recon, snipers and submarines are hard to spot.</p>
       <h3>Supply</h3><p>Ammo and condition recover in your own provinces, near supply trucks, medics and engineers. Aircraft return to base to refuel. With a <b>standing mission</b> they then fly back to the mission area on their own; the dashed circle while aiming shows how far they reach from their airfield.</p>
       <h3>Across the sea</h3><p>Ground troops embark automatically at the coast but are very vulnerable at sea. The <b>landing ship</b> (shipyard) is safer: select troops and vehicles together with the ship, <b>Load up</b>, then <b>Transport to</b> and tap the shore. Transport aircraft fly troops between airfields.</p>

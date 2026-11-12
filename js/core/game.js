@@ -35,7 +35,7 @@ const Game = {
   newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed, escalation = true }) {
     const pBloc = blocOf(country);
     const S = {
-      v: 5 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
+      v: 6 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
       mode, player: country, pBloc: pBloc ? pBloc.id : null, eBloc: mode === 'bloc' ? enemyBloc : null, nid: 1,
       side: {}, team: {}, war: {}, prov: [], units: [], shots: [], missiles: [], fallout: [], ai: {}, over: null, vp: null,
       // Escalation: on/off, earliest time of the next one, joins so far per leading team, pending entry { k, vs, t, need, x, y }.
@@ -76,7 +76,7 @@ const Game = {
     return S;
   },
 
-  newSide() { return { m: 0, i: 0, o: 0, inc: { m: 0, i: 0, o: 0 }, kills: 0, losses: 0, built: 0, captured: 0, nukes: 0 }; },
+  newSide() { return { m: 0, i: 0, o: 0, inc: { m: 0, i: 0, o: 0 }, kills: 0, losses: 0, built: 0, captured: 0, nukes: 0, ww: 0, wwL: 0 }; },
 
   // ---------- Factions, teams and wars ----------
   me() { return this.state.player; },
@@ -334,7 +334,7 @@ const Game = {
     const u = {
       id: S.nid++, t, s: side, x, y, hp: T.hp, sup: 0, ammo: T.w.map((w) => W[w].ammo || 0), cd: T.w.map(() => Math.random() * 2),
       ord: null, path: null, pi: 0, stance: 'free', tgt: null, tgtP: null, rt: Math.random(), inside: null, cargo: [], emb: false,
-      lastHit: -99, rev: 0, vm: this.vbit(side), kills: 0, rout: 0, hd: 0, mv: false,
+      lastHit: -99, rev: 0, vm: this.vbit(side), kills: 0, xp: 0, rout: 0, hd: 0, mv: false,
     };
     if (T.plane) u.air = { base: null, fuel: T.fuel || 400, st: 'fly' };
     if (T.slbm) u.slbm = T.slbm;
@@ -374,7 +374,7 @@ const Game = {
       const T = PROVINCE_TYPES[Geo.provinces[pid].type], k = pr.lvl * (pr.cap && pr.cap.s !== pr.o ? 0.5 : 1);
       inc.m += T.m * k; inc.i += T.i * k; inc.o += T.o * k;
     });
-    for (const sd in all) { const d = this.eK(sd, 'inc'); if (d !== 1) for (const r in all[sd]) all[sd][r] *= d; }
+    for (const sd in all) { const d = this.eK(sd, 'inc') * this.wearyK(sd); if (d !== 1) for (const r in all[sd]) all[sd][r] *= d; }
     return all;
   },
   income(side) { return this.incomeAll()[side] || { m: 0, i: 0, o: 0 }; },
@@ -399,6 +399,7 @@ const Game = {
       s.gross = g; s.upk = k;
       s.inc = { m: g.m - k.m, i: g.i, o: g.o - k.o };
       s.m = Math.max(0, s.m + s.inc.m * dtMin); s.i += s.inc.i * dtMin; s.o = Math.max(0, s.o + s.inc.o * dtMin);
+      if (s.ww) this.weary(sd, -WEARY.decay * dtMin);
     }
     // The player hears once when upkeep starts to exceed income (again only after a recovery and some time).
     const S = this.state, me = S.side[S.player];
@@ -407,6 +408,40 @@ const Game = {
       if (short && !S.upkW && S.t >= (S.upkT || 0)) { S.upkW = true; S.upkT = S.t + 120; this.emit('upkeepShort', me); }
       else if (!short) S.upkW = false;
     }
+  },
+
+  // ---------- War weariness (WEARY) and veterans (VET) ----------
+  unitValue(t) { const c = UNIT_TYPES[t].cost; return c.m + c.i; },
+  // Points of weariness the loss of `value` costs country k (bigger countries shrug off more).
+  wearyPts(k, value) { return 100 * value / (WEARY.loss * (1500 + 300 * Geo.byKey[k].power)); },
+  // Change the weariness of country k. s.wwL = warning levels already announced (falls back 10 points below a level).
+  weary(k, d) {
+    const S = this.state, s = S.side[k];
+    if (!s || !d) return;
+    s.ww = U.clamp((s.ww || 0) + d, 0, 100);
+    const L = s.wwL || 0, lv = WEARY.warn.filter((w) => s.ww >= w).length;
+    if (lv > L) { s.wwL = lv; if (k === S.player) this.emit('weary', { ww: s.ww, lv }); }
+    else if (L && s.ww < WEARY.warn[L - 1] - 10) s.wwL = L - 1;
+  },
+  // Income factor of country k (1 = rested, 1 − WEARY.inc = exhausted).
+  wearyK(k) { const s = this.state.side[k]; return 1 - WEARY.inc * ((s && s.ww) || 0) / 100; },
+  // A unit is gone for good (destroyed, crashed, went down with its transport). killer = side that destroyed it.
+  lose(u, killer) {
+    const S = this.state, v = this.unitValue(u.t);
+    if (!S.side[u.s]) return;
+    S.side[u.s].losses++;
+    this.weary(u.s, this.wearyPts(u.s, v));
+    if (killer && killer !== u.s && S.side[killer]) this.weary(killer, -WEARY.kill * this.wearyPts(killer, v));
+  },
+  // Rank 0–3 (Green, Experienced, Veteran, Elite) from the unit's experience.
+  rank(u) { const x = u.xp || 0; return x >= VET.xp[2] ? 3 : x >= VET.xp[1] ? 2 : x >= VET.xp[0] ? 1 : 0; },
+  // Experience for an attacker that destroyed share `frac` of target t (value-weighted), plus a bonus for the kill.
+  gainXp(a, t, frac, killed) {
+    if (!a || UNIT_TYPES[a.t].w.length === 0) return;
+    const r = this.rank(a);
+    a.xp = (a.xp || 0) + frac * U.clamp(this.unitValue(t.t) / this.unitValue(a.t), 0.5, 2) + (killed ? VET.kill : 0);
+    const n = this.rank(a);
+    if (n > r && a.s === this.state.player) this.emit('promoted', { u: a, rank: n });
   },
 
   afford(side, c) { const s = this.state.side[side]; return s.m >= (c.m || 0) && s.i >= (c.i || 0) && s.o >= (c.o || 0); },

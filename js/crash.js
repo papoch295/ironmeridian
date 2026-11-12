@@ -219,6 +219,44 @@ const SelfTest = {
     } catch (e) { return (e && e.stack) || String(e); }
   },
 
+  // War weariness (WEARY): losses raise it, kills lower it, it cuts income and fades; veterans (VET): experience from
+  // damage, rank bonuses; old saves come back with both at zero.
+  wearyTest() {
+    try {
+      const country = 'DE', foe = BLOCS.find((b) => b.id === 'EU');
+      Game.newGame({ country, mode: 'bloc', enemyBloc: foe.id, difficulty: 'normal', seed: 7 });
+      const S = Game.state, s = S.side[country];
+      S.paused = true;
+      if (s.ww) return 'Kriegsmüdigkeit schon zu Beginn';
+      const inc0 = Game.income(country).m;
+      const mine = S.units.filter((u) => u.s === country), enemy = S.units.find((u) => Game.hostile(u.s, country));
+      for (const u of mine.slice(0, 12)) { Game.lose(u, enemy.s); Game.removeUnit(u); }
+      if (!(s.ww > 0) || s.losses !== 12) return 'Verluste erhöhen die Kriegsmüdigkeit nicht';
+      const inc1 = Game.income(country).m;
+      if (Math.abs(inc1 / inc0 - Game.wearyK(country)) > 1e-6 || inc1 >= inc0) return 'Einkommen sinkt nicht (' + inc0 + ' → ' + inc1 + ')';
+      const w0 = s.ww;
+      Game.lose(enemy, country); Game.removeUnit(enemy);
+      if (!(s.ww < w0)) return 'Abschüsse senken die Kriegsmüdigkeit nicht';
+      Game.weary(country, 200);
+      if (s.ww !== 100 || s.wwL !== WEARY.warn.length) return 'Obergrenze oder Warnstufen falsch';
+      if (Math.abs(Game.wearyK(country) - (1 - WEARY.inc)) > 1e-9) return 'Einkommensabzug bei 100 % falsch';
+      Game.economyTick(10);
+      if (Math.abs(s.ww - (100 - 10 * WEARY.decay)) > 1e-6) return 'Kriegsmüdigkeit baut sich nicht ab';
+      // Veterans: a shooter that destroys enough enemy value climbs the ranks and hits better.
+      const a = S.units.find((u) => u.s === country && UNIT_TYPES[u.t].w.length && UNIT_TYPES[u.t].dom === 'land');
+      const t = S.units.find((u) => Game.hostile(u.s, country) && u.t === a.t) || S.units.find((u) => Game.hostile(u.s, country));
+      if (Game.rank(a)) return 'neue Einheit ist schon erfahren';
+      for (let i = 0; i < 40 && Game.rank(a) < 3; i++) Game.gainXp(a, t, 0.5, i % 2 === 1);
+      if (Game.rank(a) !== 3) return 'keine Elite-Stufe erreicht (xp ' + a.xp + ')';
+      const old = JSON.parse(JSON.stringify(S)); old.v = 5;
+      for (const k in old.side) { delete old.side[k].ww; delete old.side[k].wwL; }
+      for (const u of old.units) delete u.xp;
+      const mig = Saves.migrate({ state: old, keys: Saves.provKeys() });
+      if (!mig || mig.side[country].ww !== 0 || mig.units.some((u) => u.xp !== 0) || mig.v !== Saves.VERSION) return 'alter Spielstand ohne Kriegsmüdigkeit/Erfahrung';
+      return null;
+    } catch (e) { return (e && e.stack) || String(e); }
+  },
+
   // Army control: target strength, refill, leading several armies, merging, standing orders, old saves.
   armyTest() {
     try {
@@ -371,6 +409,9 @@ const SelfTest = {
     const esc = this.escTest();
     this.log(esc ? 'FEHL Eskalation: ' + esc : 'OK   Eskalation: Vorwarnung, Kriegseintritt, Abbruch, Schalter, alter Spielstand');
     allOk = allOk && !esc;
+    const ww = this.wearyTest();
+    this.log(ww ? 'FEHL Kriegsmüdigkeit/Veteranen: ' + ww : 'OK   Kriegsmüdigkeit, Einkommen, Abbau, Veteranen-Stufen, alter Spielstand');
+    allOk = allOk && !ww;
     this.active = false;
     window.SELFTEST = { ok: allOk, results: this.results };
     this.log(allOk ? 'ERGEBNIS: alles in Ordnung' : 'ERGEBNIS: Probleme gefunden');

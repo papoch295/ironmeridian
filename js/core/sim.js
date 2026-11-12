@@ -337,6 +337,7 @@ const Sim = {
     if (w.fx === 'missile' && this.jam.length && this.jammed(u.s, tx, ty)) acc *= SUPPORT_FX.jamAcc;
     if (w.aa && T.plane && this.aw.length && this.awacsNear(u)) acc *= SUPPORT_FX.awacsAcc;
     if (u.hqT > S.t) acc *= SUPPORT_FX.hqAcc;
+    if (u.xp) acc = Math.min(0.98, acc * (1 + VET.acc * Game.rank(u)));
     if (w.aoe) {
       const miss = Math.random() > acc;
       const sc = miss ? 0.08 + Math.random() * 0.25 : Math.random() * 0.04;
@@ -362,8 +363,11 @@ const Sim = {
     if (asp) dmg *= asp === 2 ? FLANK.rear : FLANK.side;
     const dig = t.dig ? DIG.max * t.dig * (w.indirect ? 0.5 : 1) * (asp === 2 ? FLANK.rearDig : asp ? FLANK.sideDig : 1) : 0;
     dmg *= 1 - dig;
+    const hp0 = t.hp;
     t.hp -= dmg;
-    t.sup = Math.min(100, t.sup + (w.sup || 5) * (cls === 'soft' ? 1 : 0.5) * (1 - dig) * (w.indirect ? ARTY_SUP : 1));
+    const steady = t.xp ? 1 - VET.sup * Game.rank(t) : 1;
+    t.sup = Math.min(100, t.sup + (w.sup || 5) * (cls === 'soft' ? 1 : 0.5) * (1 - dig) * (w.indirect ? ARTY_SUP : 1) * steady);
+    if (attacker && attacker.s !== t.s) Game.gainXp(attacker, t, Math.min(dmg, Math.max(0, hp0)) / UNIT_TYPES[t.t].hp * (w.aoe ? VET.aoe : 1), hp0 > 0 && t.hp <= 0);
     if (asp) t.flk = S.t; // shown on the map for a moment (renderer)
     t.lastHit = S.t;
     if (attacker) t.lastAtk = attacker.id;
@@ -406,14 +410,14 @@ const Sim = {
       const c = Game.unit(id);
       if (!c) continue;
       if (!T.plane && !t.emb && Geo.isLand(t.x, t.y)) { c.inside = null; c.hp *= 0.5; c.x = t.x + (Math.random() - 0.5) * 0.1; c.y = t.y + (Math.random() - 0.5) * 0.1; }
-      else { S.side[c.s].losses++; Game.removeUnit(c); }
+      else { Game.lose(c, killer && killer.s); Game.removeUnit(c); }
     }
     t.cargo = [];
     // A lost command post shocks the troops it was leading.
     if (T.hq) for (const f of Game.hash.query(t.x, t.y, T.hq, [])) {
       if (f !== t && f.s === t.s && UNIT_TYPES[f.t].dom === 'land') { f.sup = Math.min(100, f.sup + SUPPORT_FX.hqShock); f.lastHit = S.t; f.hqT = 0; }
     }
-    S.side[t.s].losses++;
+    Game.lose(t, killer && killer.s);
     if (killer) { S.side[killer.s].kills++; killer.kills++; }
     Game.removeUnit(t);
     Game.emit('killed', { u: t, killer });
@@ -426,7 +430,7 @@ const Sim = {
     if (!baseOk(a.base)) {
       const nb = Game.nearestOwnProvince(u.x, u.y, u.s, true, (pr) => pr.b.airfield > 0);
       if (nb) a.base = nb.id;
-      else if (a.st === 'ground') { S.side[u.s].losses++; Game.removeUnit(u); return; }
+      else if (a.st === 'ground') { Game.lose(u); Game.removeUnit(u); return; }
       else a.base = null;
     }
     if (a.st === 'ground') {
@@ -448,8 +452,8 @@ const Sim = {
     a.fuel -= dt;
     if (a.fuel <= 0) {
       Game.fx.push({ k: 'boom', x0: u.x, y0: u.y, t0: S.t, dur: 1.2, big: 1 });
-      S.side[u.s].losses++;
-      for (const id of u.cargo) { const c = Game.unit(id); if (c) Game.removeUnit(c); }
+      Game.lose(u);
+      for (const id of u.cargo) { const c = Game.unit(id); if (c) { Game.lose(c); Game.removeUnit(c); } }
       Game.removeUnit(u);
       if (u.s === S.player) Game.emit('crash', u);
       return;
@@ -710,6 +714,9 @@ const Sim = {
     pr.def = Math.round(Game.maxDef(pid) * 0.3);
     pr.calm = 0;
     S.side[side].captured++;
+    const vp = PROVINCE_TYPES[Geo.provinces[pid].type].vp;
+    if (prev) Game.weary(prev, WEARY.lost * vp);
+    Game.weary(side, -WEARY.won * vp);
     Game.emit('captured', { pid, side, prev });
   },
 

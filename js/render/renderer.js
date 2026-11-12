@@ -577,6 +577,15 @@ const Render = {
         ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 4; ctx.stroke();
         ctx.strokeStyle = '#ff5a3c'; ctx.lineWidth = 2; ctx.stroke();
       }
+      // Veterans (VET): gold chevrons left of the health bar, one per rank (best unit of the stack).
+      const rkv = c.units.reduce((a, x) => (x.xp ? Math.max(a, Game.rank(x)) : a), 0);
+      if (rkv) {
+        const cx = sx - bw / 2 - 6, cy = by - 3;
+        ctx.beginPath();
+        for (let i = 0; i < rkv; i++) { const y = cy + 2 - i * 3.6; ctx.moveTo(cx - 4, y); ctx.lineTo(cx, y - 3); ctx.lineTo(cx + 4, y); }
+        ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 3.5; ctx.stroke();
+        ctx.strokeStyle = rkv === 3 ? '#ffd75a' : '#e0b84a'; ctx.lineWidth = 1.6; ctx.stroke();
+      }
       if (n === 1 && u.sup > 20 && T.cls === 'soft') { rr(sx - bw / 2, by + 5, bw * u.sup / 100, 2, 1); ctx.fillStyle = 'rgba(255,214,90,0.9)'; ctx.fill(); }
       if (n > 1) {
         const tx = sx + s * 0.8, ty = sy - s * 0.58, txt = String(n);

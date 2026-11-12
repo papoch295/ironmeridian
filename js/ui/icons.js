@@ -6,6 +6,7 @@ const ICON = {
   money: svg('<circle cx="12" cy="12" r="9" stroke="#e8b54a"/><path d="M15 9.5c-.6-1-1.7-1.5-3-1.5-1.7 0-3 .9-3 2.1 0 2.9 6 1.4 6 4.3 0 1.2-1.3 2.1-3 2.1-1.4 0-2.6-.6-3.1-1.6M12 6.5v11" stroke="#e8b54a"/>'),
   industry: svg('<path d="M3 20V10l5 3V10l5 3V6h3v14z" stroke="#9fb6c4"/><path d="M18 20V4h3v16M2 20h20" stroke="#9fb6c4"/>'),
   oil: svg('<path d="M12 3c3 4.5 6 7.6 6 11a6 6 0 0 1-12 0c0-3.4 3-6.5 6-11z" stroke="#7ec0a8"/>'),
+  weary: svg('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" stroke="#d98a7a"/><path d="M12 7.5l-1.5 4 3 1.5-1.5 4" stroke="#d98a7a"/>'),
   pause: svg('<path d="M8 5v14M16 5v14"/>'),
   play: svg('<path d="M7 5l12 7-12 7z" fill="currentColor"/>'),
   menu: svg('<path d="M4 7h16M4 12h16M4 17h16"/>'),

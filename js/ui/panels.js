@@ -51,7 +51,7 @@ const Panels = {
       render = () => this.mslHtml();
     } else if (UI.sel.size) {
       const us = UI.selUnits();
-      sig = 'u' + us.map((u) => u.id + ':' + Math.round(u.hp) + ':' + u.ammo.join(',') + ':' + u.cargo.join(',') + (u.lift ? 'L' : '') + u.stance + Math.round(u.sup / 10) + (u.nuke ? 'N' : '') + (u.air ? u.air.st + Math.round(u.air.fuel / 5) : '')).join('|') +
+      sig = 'u' + us.map((u) => u.id + ':' + Math.round(u.hp) + ':' + u.ammo.join(',') + ':' + u.cargo.join(',') + (u.lift ? 'L' : '') + u.stance + Math.round(u.sup / 10) + (u.nuke ? 'N' : '') + (u.air ? u.air.st + Math.round(u.air.fuel / 5) : '') + 'x' + Math.round((u.xp || 0) * 10)).join('|') +
         JSON.stringify(UI.groups()) + Game.state.side[Game.me()].nukes;
       render = () => this.unitsHtml(us);
     } else if (Render.selProv !== null) {
@@ -352,6 +352,8 @@ const Panels = {
     h += `<div class="kv" style="margin-top:12px"><span>${U.esc(t('hp'))}</span><div><div class="bar ${hp < 0.35 ? 'bad' : hp < 0.7 ? 'warn' : ''}"><i style="width:${hp * 100}%"></i></div></div>`;
     const cap = us.filter((u) => UNIT_TYPES[u.t].cap);
     if (cap.length) h += `<span>${U.esc(t('cargo'))}</span><b>${cap.reduce((s, u) => s + Game.seatsUsed(u), 0)} / ${cap.reduce((s, u) => s + UNIT_TYPES[u.t].cap, 0)}</b>`;
+    const vets = [1, 2, 3].map((r) => us.filter((u) => u.xp && Game.rank(u) === r).length);
+    if (vets.some((n) => n)) h += `<span>${U.esc(t('rankMix'))}</span><b>${vets.map((n, i) => (n ? `<span class="rank r${i + 1}">${'︿'.repeat(i + 1)}</span>${n}` : '')).filter(Boolean).join(' · ')}</b>`;
     h += '</div>';
     // Every unit individually, so a single squad can be pulled out of a stack.
     h += `<h3>${U.esc(t('units'))}</h3><div class="ulist">` + us.slice(0, 60).map((u) => {
@@ -359,6 +361,14 @@ const Panels = {
       return `<button class="uchip" data-act="selu" data-id="${u.id}" title="${U.esc(unitName(u.t))}"><img src="${UnitIcon.get(u.t)}" alt="">${UNIT_TYPES[u.t].cap ? this.cargoTag(u) : ''}<div class="bar ${f < 0.35 ? 'bad' : f < 0.7 ? 'warn' : ''}"><i style="width:${f * 100}%"></i></div></button>`;
     }).join('') + '</div>';
     return h + '</div>';
+  },
+
+  // Rank name with its bonus and a bar towards the next rank (VET).
+  rankHtml(u) {
+    const r = Game.rank(u), x = u.xp || 0, lo = r ? VET.xp[r - 1] : 0, hi = VET.xp[r];
+    const bonus = r ? ` <span class="muted small">${U.esc(t('rankBonus', Math.round(VET.acc * r * 100), Math.round(VET.sup * r * 100)))}</span>` : '';
+    return `<span class="rank r${r}">${'︿'.repeat(r)}</span> ${U.esc(t('rank' + r))}${bonus}` +
+      (hi ? `<div class="bar gold"><i style="width:${Math.min(100, (x - lo) / (hi - lo) * 100)}%"></i></div>` : '');
   },
 
   unitHtml(u) {
@@ -371,7 +381,9 @@ const Panels = {
     if (T.cls === 'soft') h += `<span>${U.esc(t('sup'))}</span><div><div class="bar warn"><i style="width:${u.sup}%"></i></div></div>`;
     if (u.air) h += `<span>${U.esc(t('fuel'))}</span><div>${u.air.st === 'ground' ? U.esc(t('parked')) : ''}<div class="bar blue"><i style="width:${u.air.fuel / (T.fuel || 400) * 100}%"></i></div></div>`;
     if (T.cap) h += `<span>${U.esc(t('cargo'))}</span><b>${this.cargoTag(u)}${T.capVeh ? ` <span class="muted small">(${U.esc(t('vehOk'))})</span>` : ''}</b>`;
-    h += `<span>${U.esc(t('kills'))}</span><b>${u.kills}</b></div>`;
+    h += `<span>${U.esc(t('kills'))}</span><b>${u.kills}</b>`;
+    if (T.w.length) h += `<span>${U.esc(t('rank'))}</span><div>${this.rankHtml(u)}</div>`;
+    h += '</div>';
     if (u.nuke) h += `<p class="small warn-line">☢ ${U.esc(t('nukeAboard'))}</p>`;
     if (T.w.length) {
       h += `<h3>${U.esc(t('ammo'))}</h3>`;

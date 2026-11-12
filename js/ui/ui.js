@@ -41,6 +41,8 @@ const UI = {
     });
     $('#btnObj').onclick = () => { const o = $('#objBox'); o.hidden = !o.hidden; this.renderObjectives(); if (!o.hidden) this.tutDone('obj'); };
     for (const [id, k] of [['#resM', 'money'], ['#resI', 'industry'], ['#resO', 'oil']]) $(id).innerHTML = `${ICON[k]}<span class="num"><span class="v">0</span><span class="inc"></span></span>`;
+    $('#resW').innerHTML = `${ICON.weary}<span class="num"><span class="v">0 %</span><span class="inc"></span></span>`;
+    $('#resW').onclick = () => { const sd = Game.state && Game.state.side[Game.me()]; if (sd) this.toast(this.wearyTip(sd)); };
     this.applyLang();
     this.wireGameEvents();
   },
@@ -491,8 +493,16 @@ const UI = {
       el.title = s.gross ? t('incTip', U.fmt(s.gross[k]), U.fmt(s.upk[k] || 0)) : '';
       if (!el.onclick) el.onclick = () => { const sd = Game.state && Game.state.side[Game.me()]; if (sd && sd.gross) this.toast(t('incTip', U.fmt(sd.gross[k]), U.fmt(sd.upk[k] || 0)) + ' → ' + (sd.inc[k] < 0 ? '−' : '+') + U.fmt(Math.abs(sd.inc[k])) + t('perMin')); };
     }
+    // War weariness (WEARY): value and the income penalty; amber from the first warning level, red from the second.
+    const ww = Math.round(s.ww || 0), w = $('#resW');
+    w.querySelector('.v').textContent = ww + ' %';
+    w.querySelector('.inc').textContent = ww ? '−' + Math.round(WEARY.inc * ww) + ' % ' + t('income') : t('wearyNone');
+    w.classList.toggle('mid', ww >= WEARY.warn[0] && ww < WEARY.warn[1]);
+    w.classList.toggle('neg', ww >= WEARY.warn[1]);
+    w.title = this.wearyTip(s);
     this.renderTime();
   },
+  wearyTip(s) { const ww = Math.round(s.ww || 0); return t('wearyTip', ww, Math.round(WEARY.inc * ww)); },
 
   renderTime() {
     const S = Game.state;
@@ -536,7 +546,21 @@ const UI = {
       <div class="stat-line"><span>${U.esc(t('objUnits'))}</span><b>${eu}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv(me)}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourUnits'))}</span><b>${Game.countUnits(me)}</b></div>
-      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.escHtml()}`;
+      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.wearyHtml()}${this.escHtml()}`;
+  },
+
+  // War weariness in the objectives window: own value and the power-weighted average of the hostile countries at war.
+  wearyHtml() {
+    const S = Game.state, own = Math.round(S.side[S.player].ww || 0);
+    let sw = 0, sp = 0;
+    for (const k in S.side) if (Game.act[k] && Game.isFoe(k) && Game.countProv(k)) { const p = Geo.byKey[k].power || 1; sw += (S.side[k].ww || 0) * p; sp += p; }
+    const foe = sp ? Math.round(sw / sp) : 0;
+    const cls = (v) => (v >= WEARY.warn[1] ? 'neg' : v >= WEARY.warn[0] ? 'mid' : '');
+    return `<h3 class="obj-sub">${U.esc(t('weariness'))}</h3>
+      <div class="stat-line"><span>${U.esc(t('objWeary'))}</span><b class="${cls(own)}">${own} %</b></div>
+      <div class="meter weary"><i style="width:${own}%"></i></div>
+      <div class="stat-line"><span>${U.esc(t('objWearyFoe'))}</span><b class="${cls(foe)}">${foe} %</b></div>
+      <p class="desc small">${U.esc(t('objWearyD', Math.round(WEARY.inc * 100)))}</p>`;
   },
 
   // Escalation in the objectives window: own net conquests against the threshold, and a pending entry into the war.
@@ -671,6 +695,12 @@ const UI = {
       Sfx.play('alert');
       if (Render.selProv !== null) Panels.show();
     });
+    // War weariness crossed a warning level (WEARY.warn); veterans: only Veteran and Elite get a log line.
+    Game.on('weary', ({ ww, lv }) => {
+      const txt = t(lv >= 2 ? 'evWeary2' : 'evWeary1', Math.round(ww), Math.round(WEARY.inc * ww));
+      this.toast(txt, lv >= 2 ? 'bad' : 'warn'); this.log(txt, lv >= 2 ? 'bad' : 'warn'); Sfx.play('alert');
+    });
+    Game.on('promoted', ({ u, rank }) => { if (rank >= 2) this.log(t('evPromoted', unitName(u.t), t('rank' + rank)), 'good', u.x, u.y); });
     Game.on('casLost', (u) => this.log(t('evCasLost', unitName(u.t)), 'warn', u.x, u.y));
     Game.on('upkeepShort', (s) => {
       const k = s.inc.m < 0 ? 'm' : 'o', txt = t('evUpkeep', t(k === 'm' ? 'money' : 'oil'), U.fmt(-s.inc[k]));

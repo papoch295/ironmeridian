@@ -165,7 +165,7 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 .res svg { width: 18px; height: 18px; flex: none; }
 .res .v { font-size: 15px; font-weight: 700; min-width: 44px; line-height: 1; }
 .res .inc { font-size: 10px; color: var(--good); line-height: 1; letter-spacing: .02em; }
-.res .v, .res .inc { display: block; }
+.res .v, .res .inc { display: block; white-space: nowrap; }
 .res .inc.neg, .res.neg .v { color: var(--bad, #e2553c); }
 .res { cursor: pointer; }
 .res .num { display: flex; flex-direction: column; gap: 3px; }
@@ -187,6 +187,13 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 #objBox .meter.vp s { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent); box-shadow: 0 0 6px rgba(232,181,74,.8); }
 #objBox h3.obj-sub { margin: 12px 0 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
 #objBox .stat-line b.neg { color: var(--bad, #e2553c); }
+#objBox .stat-line b.mid { color: var(--warn); }
+#objBox .meter.weary i { background: linear-gradient(90deg, #c8901f, #e2553c); box-shadow: none; }
+.res.weary .inc { color: var(--muted); }
+.res.weary.mid .v { color: var(--warn); }
+.bar.gold i { background: linear-gradient(90deg, #b8902f, #ffd75a); }
+.rank { color: #e0b84a; font-weight: 700; letter-spacing: -2px; margin-right: 3px; }
+.rank.r3 { color: #ffd75a; text-shadow: 0 0 6px rgba(255,215,90,.5); }
 #objBox .desc.small { font-size: 11px; margin: 0 0 10px; }
 #objBox .vp-hold { margin: 0 0 8px; padding: 6px 10px; border-radius: 3px; font-weight: 700; font-size: 12px; background: rgba(143,209,106,.15); color: #c6efad; border: 1px solid rgba(143,209,106,.5); }
 #objBox .vp-hold.other { background: rgba(255,255,255,.06); color: inherit; border-color: var(--line); }
@@ -554,6 +561,10 @@ input[type=range] { accent-color: var(--accent); width: 170px; }
   .res { padding: 0 6px; gap: 5px; }
   .res svg { width: 14px; height: 14px; }
   .res .v { min-width: 0; font-size: 12px; }
+  .res-group { gap: 3px; }
+  .res { padding: 0 4px; gap: 4px; }
+  .res.weary { padding: 0 3px; gap: 2px; }
+  .res.weary .v { font-size: 11px; }
   #speedSeg button:nth-child(3) { display: none; }
   .tb-group.right { gap: 4px; }
   /* Narrow phones: everything in the top bar must fit next to the menu button. */
@@ -561,7 +572,7 @@ input[type=range] { accent-color: var(--accent); width: 170px; }
   .time-group { margin-left: 0; padding-left: 4px; gap: 4px; }
   .ibtn { width: 32px; }
   #btnPause { width: 34px; }
-  .seg.small button { padding: 0 7px; }
+  .seg.small button { padding: 0 5px; }
   .save-new { flex-wrap: wrap; }
   .save-new .input, .save-new .btn { flex-basis: 100%; }
   .slot { flex-wrap: wrap; }

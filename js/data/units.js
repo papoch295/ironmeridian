@@ -203,6 +203,17 @@ const VICTORY = { win: 0.7, world: 0.25, lose: 0.3, hold: 60 };
 // of a joining country, because neutral countries save money all game long.
 const ESCALATION = { gain: 12, step: 10, reach: 25, cancel: 0.75, pow: 1.2, forces: 0.6, cash: 2 };
 
+// War weariness of every country (0–100, Beta 2, #47). Lost units add 100 points per `loss` × the country's size
+// (1500 + 300 × power, like the starting money) in unit value (money + industry); destroyed enemy value lowers it by
+// `kill` times as much. A lost province adds `lost` × its victory points, a conquered one removes `won` × them; it
+// fades by `decay` points per minute. Income is reduced by up to `inc` (at 100), warnings for the player at `warn`.
+const WEARY = { loss: 10, kill: 0.4, lost: 3, won: 2, decay: 1.2, inc: 0.2, warn: [50, 80] };
+
+// Veterans (Beta 2, #50): experience = destroyed enemy share, weighted by value (0.5–2 × own value) plus `kill` per
+// kill; area weapons (artillery, rockets, bombs) earn only `aoe` of it. Ranks at `xp` (Experienced, Veteran, Elite)
+// give +`acc` accuracy and take −`sup` suppression per rank.
+const VET = { xp: [1.2, 3, 6], kill: 0.25, aoe: 0.4, acc: 0.1, sup: 0.1 };
+
 // Support effects of the Beta 2 units: accuracy factor for guided missiles fired into a hostile jamming area (jam),
 // for aircraft firing air-to-air inside a friendly AWACS radius, and for land units near their command post (hq);
 // hqSup = extra suppression recovery per second there, hqShock = suppression when the command post is destroyed,

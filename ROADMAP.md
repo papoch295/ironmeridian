@@ -249,10 +249,10 @@ Vorschläge (bitte bei F3 auswählen):
 | 44 | **Eskalation:** Weitere Länder treten nach Ereignissen in den Krieg ein (gegen den Stärksten) – ✔ 11. Nov. (Beta 2): ab 12 netto eroberten Siegpunkten, mit Vorwarnung, Schalter im Setup | Neue Gegner, wenn man zu stark wird | P1 |
 | 45 | **Besatzung und Widerstand:** eroberte Provinzen bringen anfangs wenig, Aufstände/Partisanen, Garnison nötig | Erobern kostet etwas, schnelles Durchrollen wird gebremst | P1 |
 | 46 | **Nachschublinien:** Armeen weit weg von Depots/Häfen verlieren Munition und Kampfkraft | Planung statt Spam, Fronten statt Blobs | P2 |
-| 47 | **Kriegsmüdigkeit / Moral der Nation:** hohe Verluste senken Einkommen, Siege heben es | Verluste haben Folgen | P2 |
+| 47 | **Kriegsmüdigkeit / Moral der Nation:** hohe Verluste senken Einkommen, Siege heben es – ✔ 12. Nov. (Beta 2): 0–100 % je Land, bis −20 % Einnahmen, Warnungen bei 50/80 % | Verluste haben Folgen | P2 |
 | 48 | **Missionen und Ziele** während der Partie (Hafen X halten, Hauptstadt in 20 min, Konvoi schützen) mit Belohnungen | ständig kurzfristige Ziele | P1 |
 | 49 | **Ereignisse:** Wetter, Sanktionen, Ölkrise, Putsch, Waffenlieferung, Atomalarm | Abwechslung, Entscheidungen | P2 |
-| 50 | **Erfahrung / Veteranen-Einheiten und Generäle** | Bindung an eigene Armeen, Anreiz sie zu schonen | P2 |
+| 50 | **Erfahrung / Veteranen-Einheiten und Generäle** – Veteranen ✔ 12. Nov. (Beta 2): Erfahren/Veteran/Elite, je +10 % Treffer und −10 % Unterdrückung; Generäle offen (#53) | Bindung an eigene Armeen, Anreiz sie zu schonen | P2 |
 | 51 | **Gegenoffensiven der KI** in festen Abständen, Spitzen-KI-Einheiten im Endspiel | Druck bleibt bestehen | P1 |
 | 52 | **Siegpunkte / Waffenstillstand:** Partie kann mit Punktesieg enden, statt jede letzte Einheit zu jagen (✔ Beta 1) | kein zähes Aufräumen am Ende | P1 |
 | 53 | **Automatisierung:** Fronten an „Generäle“ (Hilfs-KI) übergeben | weniger Klickarbeit bei großen Reichen | P2 |
@@ -451,7 +451,7 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 | **Zuerst: Transport** (Notiz 5. Nov.) – ✔ auf Branch `beta2-transport` | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
 | Regiment-Steuerung – ✔ 6. Nov. auf Branch `beta2-transport` | Mehrere Armeen gemeinsam führen, Zusammenlegen, Soll-Bestand mit Anzeige der Lücken, Auffrischen, Daueraufträge, Unterhalt-Warnung | Notiz 5. Nov., #71, #72 |
 | Taktik ausbauen – ✔ 7. Nov. auf Branch `beta2-transport` | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung | #61–#66 |
-| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Kriegsmüdigkeit (#47) und Veteranen (#50), Ereignisse (#49), Gegenoffensiven (#51), Missionen (#48), Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
+| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.), ✔ **Kriegsmüdigkeit** (#47) und **Veteranen** (#50) (12. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Ereignisse (#49), Gegenoffensiven (#51), Missionen (#48), Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
 | Diplomatie & Spionage | Krieg/Frieden/Bündnis, Spionage deckt KI-Angriffsmuster auf, Geheimdienstzentrale | #54, #16, 3.2 |
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
 | Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
@@ -465,6 +465,14 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 (`cmd`, `sup`, `flank`). Vergleich alt/neu, untätiger Spieler (Deutschland gegen Eurasien, 40 Spielminuten): auf Normal hält
 das eigene Bündnis 12–18 statt 12–15 Provinzen bei weniger Verlusten (Deckung, Frontabschnitte, Übermacht-Regel); auf Schwer
 ist die KI dank häufiger Umfassungen deutlich gefährlicher (9–11 statt 15–16 Provinzen). Selbsttest ohne Fehler.
+
+**Nachtrag 12. Nov. (Kriegsmüdigkeit und Veteranen):** Werte in `js/data/units.js` (`WEARY`, `VET`). Kriegsmüdigkeit je Land
+(0–100 %): Verluste nach Einheitenwert im Verhältnis zur Landesgröße, verlorene Provinzen nach Siegpunkten; Abschüsse,
+Eroberungen und Zeit (1,2 Punkte/min) senken sie; Einnahmen bis −20 %. Anzeige in der Kopfleiste und im Zielfenster (auch
+für den Feind). Veteranen: Erfahrung aus zerstörtem Feindwert (Flächenwaffen nur 40 %), goldene Winkel am Symbol, Stufe im
+Einheitenfenster. Messung untätiger Spieler (Deutschland gegen Eurasien, 40 Spielminuten): kleine Frontländer wie Polen
+erreichen 60–90 % (−12 bis −18 % Einnahmen), Großmächte bleiben meist unter 30 %; nach 40 min sind etwa 8 % der Einheiten
+erfahren oder besser. Spielstand-Format 6, Selbsttest um einen eigenen Block erweitert, ohne Fehler.
 
 ---
 
