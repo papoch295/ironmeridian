@@ -60,6 +60,10 @@ const STR = {
     objWeary: 'Deine Kriegsmüdigkeit', objWearyFoe: 'Kriegsmüdigkeit des Feindes', objWearyD: 'Bis zu −{0} % Einnahmen. Gilt genauso für die KI – hohe Verluste schwächen auch den Feind.',
     rank: 'Erfahrung', rank0: 'Rekrut', rank1: 'Erfahren', rank2: 'Veteran', rank3: 'Elite', rankBonus: '(+{0} % Treffer, −{1} % Unterdrückung)',
     rankMix: 'Erfahrene', evPromoted: '{0} ist jetzt {1}!',
+    counter: 'Gegenoffensive', evCtrWarn: 'Gegenoffensive! {0} will {1} zurückerobern – Angriff in {2} Minuten mit {3} Einheiten.',
+    evCtrWarnVet: 'Gegenoffensive! {0} will {1} mit Veteranen-Reserven zurückerobern – Angriff in {2} Minuten mit {3} Einheiten.',
+    evCtrAttack: 'Die Gegenoffensive von {0} auf {1} hat begonnen!', evCtrAlly: 'Verbündeter {0} startet eine Gegenoffensive auf {1}.',
+    objCtrGather: '{0} sammelt Reserven gegen {1} – Angriff in {2}', objCtrAttack: '{0} greift {1} an (Gegenoffensive)',
     events: 'Ereignisse', evOnD: 'Alle 6–9 Minuten ein Ereignis aus Wirtschaft oder Militär, bei dem du zwischen zwei Antworten wählst. Die KI bekommt genauso Ereignisse.',
     evOffD: 'Keine Ereignisse während der Partie.', evKindEco: 'WIRTSCHAFT', evKindMil: 'MILITÄR', evTooExpensive: 'zu teuer', evNoRoom: 'Kommandolimit erreicht',
     evNone: 'Keine laufenden Folgen.', evNext: 'Nächstes Ereignis in etwa {0}', evStrikeIn: 'Streik in {0}',
@@ -237,6 +241,10 @@ const STR = {
     objWeary: 'Your war weariness', objWearyFoe: 'Enemy war weariness', objWearyD: 'Up to −{0} % income. The same applies to the AI – heavy losses weaken the enemy too.',
     rank: 'Experience', rank0: 'Recruit', rank1: 'Experienced', rank2: 'Veteran', rank3: 'Elite', rankBonus: '(+{0} % accuracy, −{1} % suppression)',
     rankMix: 'Experienced', evPromoted: '{0} is now {1}!',
+    counter: 'Counteroffensive', evCtrWarn: 'Counteroffensive! {0} wants to retake {1} – attack in {2} minutes with {3} units.',
+    evCtrWarnVet: 'Counteroffensive! {0} wants to retake {1} with veteran reserves – attack in {2} minutes with {3} units.',
+    evCtrAttack: 'The counteroffensive of {0} against {1} has begun!', evCtrAlly: 'Ally {0} launches a counteroffensive against {1}.',
+    objCtrGather: '{0} is massing reserves against {1} – attack in {2}', objCtrAttack: '{0} is attacking {1} (counteroffensive)',
     events: 'Events', evOnD: 'Every 6–9 minutes an economic or military event where you choose between two answers. The AI gets events too.',
     evOffD: 'No events during the game.', evKindEco: 'ECONOMY', evKindMil: 'MILITARY', evTooExpensive: 'too expensive', evNoRoom: 'command limit reached',
     evNone: 'No effects running.', evNext: 'Next event in about {0}', evStrikeIn: 'Strike in {0}',
@@ -394,6 +402,7 @@ const HELP = {
       <h3>Unterdrückung & Moral</h3><p>Beschuss unterdrückt Infanterie: Sie trifft schlechter, bewegt sich langsamer und flieht bei 100&nbsp;% ungeordnet.</p>
       <h3>Veteranen</h3><p>Einheiten sammeln durch Treffer und Abschüsse Erfahrung: Erfahren, Veteran, Elite (goldene Winkel am Symbol). Jede Stufe gibt +10&nbsp;% Treffsicherheit und −10&nbsp;% Unterdrückung. Schone erfahrene Truppen – Ersatz beginnt wieder als Rekrut.</p>
       <h3>Kriegsmüdigkeit</h3><p>Eigene Verluste und verlorene Provinzen machen dein Land kriegsmüde, Abschüsse, Eroberungen und Ruhe bauen das ab. Bei 100&nbsp;% sinken die Einnahmen um 20&nbsp;%. Für die KI gilt dasselbe.</p>
+      <h3>Gegenoffensiven</h3><p>Erobert ihr Kernprovinzen eines Landes, ruft es Reserven auf und versucht sie zurückzuholen – mit Vorwarnung und Countdown. Je mehr es verloren hat, desto größer die Reserve; ab etwa 30 Minuten kommen schwere Waffen und Veteranen. Halte eroberte Provinzen also mit genug Truppen.</p>
       <h3>Ereignisse</h3><p>Alle 6–9 Minuten passiert etwas in Wirtschaft oder Militär (Ölkrise, Streik, Waffenlieferung, Sabotage …). Das Spiel pausiert, und du wählst eine von zwei Antworten. Laufende Folgen siehst du im Zielfenster. Abschaltbar beim Spielstart.</p>
       <h3>Nebel des Krieges</h3><p>Du siehst Feinde nur in Sichtweite deiner Einheiten und Provinzen. Aufklärer, Scharfschützen und U-Boote sind schwer zu entdecken.</p>
       <h3>Versorgung</h3><p>Munition und Zustand regenerieren in eigenen Provinzen, bei Versorgungs-LKW, Sanitätern und Pionieren. Flugzeuge kehren zum Tanken zur Basis zurück. Mit <b>Dauereinsatz</b> fliegen sie danach von selbst wieder ins Einsatzgebiet; der gestrichelte Kreis beim Zielen zeigt, wie weit sie von ihrem Flugplatz kommen.</p>
@@ -446,6 +455,7 @@ const HELP = {
       <h3>Suppression & morale</h3><p>Incoming fire suppresses infantry: it shoots worse, moves slower and routs at 100&nbsp;%.</p>
       <h3>Veterans</h3><p>Units gain experience from hits and kills: Experienced, Veteran, Elite (gold chevrons at the symbol). Every rank gives +10&nbsp;% accuracy and −10&nbsp;% suppression. Spare experienced troops – replacements start as recruits again.</p>
       <h3>War weariness</h3><p>Own losses and lost provinces make your country war-weary; kills, conquests and quiet time reduce it. At 100&nbsp;% income drops by 20&nbsp;%. The same applies to the AI.</p>
+      <h3>Counteroffensives</h3><p>If you take a country's home provinces, it calls up reserves and tries to win them back – with a warning and countdown. The more it has lost, the bigger the reserve; after about 30 minutes it brings heavy weapons and veterans. So hold conquered provinces with enough troops.</p>
       <h3>Events</h3><p>Every 6–9 minutes something happens in the economy or the military (oil crisis, strike, arms delivery, sabotage …). The game pauses and you choose one of two answers. Running effects are listed in the objectives window. Can be switched off when starting a game.</p>
       <h3>Fog of war</h3><p>You only see enemies within sight of your units and provinces. Recon, snipers and submarines are hard to spot.</p>
       <h3>Supply</h3><p>Ammo and condition recover in your own provinces, near supply trucks, medics and engineers. Aircraft return to base to refuel. With a <b>standing mission</b> they then fly back to the mission area on their own; the dashed circle while aiming shows how far they reach from their airfield.</p>

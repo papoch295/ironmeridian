@@ -253,7 +253,7 @@ Vorschläge (bitte bei F3 auswählen):
 | 48 | **Missionen und Ziele** während der Partie (Hafen X halten, Hauptstadt in 20 min, Konvoi schützen) mit Belohnungen | ständig kurzfristige Ziele | P1 |
 | 49 | **Ereignisse:** Wetter, Sanktionen, Ölkrise, Putsch, Waffenlieferung, Atomalarm – ✔ 12. Nov. (Beta 2): 8 Ereignisse aus Wirtschaft und Militär mit je zwei Antworten; Wetter und Politik offen | Abwechslung, Entscheidungen | P2 |
 | 50 | **Erfahrung / Veteranen-Einheiten und Generäle** – Veteranen ✔ 12. Nov. (Beta 2): Erfahren/Veteran/Elite, je +10 % Treffer und −10 % Unterdrückung; Generäle offen (#53) | Bindung an eigene Armeen, Anreiz sie zu schonen | P2 |
-| 51 | **Gegenoffensiven der KI** in festen Abständen, Spitzen-KI-Einheiten im Endspiel | Druck bleibt bestehen | P1 |
+| 51 | **Gegenoffensiven der KI** in festen Abständen, Spitzen-KI-Einheiten im Endspiel – ✔ 12. Nov. (Beta 2): nach Verlust von Kernprovinzen, mit Reserve und Countdown; ab 30 min Veteranen und schwere Waffen | Druck bleibt bestehen | P1 |
 | 52 | **Siegpunkte / Waffenstillstand:** Partie kann mit Punktesieg enden, statt jede letzte Einheit zu jagen (✔ Beta 1) | kein zähes Aufräumen am Ende | P1 |
 | 53 | **Automatisierung:** Fronten an „Generäle“ (Hilfs-KI) übergeben | weniger Klickarbeit bei großen Reichen | P2 |
 | 54 | **Diplomatie (einfach):** Bündnisangebote, Frieden, Kriegserklärung, Waffenlieferungen | Politische Ebene | P2 |
@@ -451,7 +451,7 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 | **Zuerst: Transport** (Notiz 5. Nov.) – ✔ auf Branch `beta2-transport` | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
 | Regiment-Steuerung – ✔ 6. Nov. auf Branch `beta2-transport` | Mehrere Armeen gemeinsam führen, Zusammenlegen, Soll-Bestand mit Anzeige der Lücken, Auffrischen, Daueraufträge, Unterhalt-Warnung | Notiz 5. Nov., #71, #72 |
 | Taktik ausbauen – ✔ 7. Nov. auf Branch `beta2-transport` | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung | #61–#66 |
-| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.), ✔ **Kriegsmüdigkeit** (#47) und **Veteranen** (#50), ✔ **Ereignisse** (#49) (12. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Gegenoffensiven (#51), Missionen (#48), Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
+| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.), ✔ **Kriegsmüdigkeit** (#47) und **Veteranen** (#50), ✔ **Ereignisse** (#49), ✔ **Gegenoffensiven** (#51) (12. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Missionen (#48), Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
 | Diplomatie & Spionage | Krieg/Frieden/Bündnis, Spionage deckt KI-Angriffsmuster auf, Geheimdienstzentrale | #54, #16, 3.2 |
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
 | Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
@@ -482,6 +482,15 @@ Gratis-Einheiten nur mit Platz im Kommandolimit). Die KI bekommt dieselben Ereig
 für den Spieler, das Fenster lässt sich nicht ohne Antwort schließen. Laufende Folgen im Zielfenster, Schalter im Setup, alte
 Spielstände ohne Ereignisse (Format 7). Messung untätiger Spieler (Deutschland gegen Eurasien, Normal, 40 min): 5 Ereignisse
 für den Spieler, Einheitenzahl im normalen Schwankungsbereich (±15 %). Selbsttest um einen Ereignis-Block erweitert, ohne Fehler.
+
+**Nachtrag 12. Nov. (Gegenoffensiven):** `AI.counter` in `js/core/ai.js`, Werte in `COUNTER` (`units.js`) und `DIFFICULTY`
+(`ctr`, `ctrEvery`). Entscheidung 12. Nov.: Auslöser sind verlorene Kernprovinzen (ab 2 Siegpunkten), Vorwarnung mit
+Countdown, im späten Spiel stärkere Reserven. Das Land ruft 1 Reserve-Einheit je verlorenem Siegpunkt auf (× 0,5/0,75/1 nach
+Schwierigkeit, höchstens 10), nimmt die Hälfte seiner freien Truppen in der Nähe dazu und greift nach 2 Minuten die wertvollste
+verlorene Provinz an – ohne Überlegenheits-Prüfung. Pause je Land 15/12/8 Minuten. Ab 30 Spielminuten Kampfpanzer, Artillerie
+und Flugabwehr als Veteranen. Gilt auch für verbündete KI-Länder. Messung (Deutschland erobert 3 Provinzen von Belarus mit der
+halben Armee, 20 Minuten): Leicht 3/3 gehalten, Normal 2/3 (eigene Einheiten 24 statt 35 ohne Gegenoffensive), Schwer 1/3.
+Selbsttest um einen eigenen Block erweitert, ohne Fehler.
 
 ---
 

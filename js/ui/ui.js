@@ -536,6 +536,17 @@ const UI = {
     Screens.closeModal();
     if (resume && Game.state && !Game.state.over) { Game.state.paused = false; this.renderTime(); }
   },
+  // Counteroffensives against the player's side in the objectives window: gathering (countdown) or attacking.
+  ctrHtml() {
+    const S = Game.state, rows = [];
+    for (const k in S.ai) {
+      const O = S.ai[k].off;
+      if (!O || !O.ctr || O.ph === 'wait' || O.main == null || !Game.hostile(k, S.player) || !Game.allied(S.prov[O.main].o, S.player)) continue;
+      const pn = provName(Geo.provinces[O.main]), who = countryName(Geo.byKey[k]);
+      rows.push(`<p class="vp-hold lose">${U.esc(O.ph === 'gather' ? t('objCtrGather', who, pn, this.clockStr(O.t - S.t)) : t('objCtrAttack', who, pn))}</p>`);
+    }
+    return rows.length ? `<h3 class="obj-sub">${U.esc(t('counter'))}</h3>${rows.join('')}` : '';
+  },
   // Running event effects of the player for the objectives window.
   eventsHtml() {
     const S = Game.state;
@@ -591,7 +602,7 @@ const UI = {
       <div class="stat-line"><span>${U.esc(t('objUnits'))}</span><b>${eu}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv(me)}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourUnits'))}</span><b>${Game.countUnits(me)}</b></div>
-      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.wearyHtml()}${this.eventsHtml()}${this.escHtml()}`;
+      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.ctrHtml()}${this.wearyHtml()}${this.eventsHtml()}${this.escHtml()}`;
   },
 
   // War weariness in the objectives window: own value and the power-weighted average of the hostile countries at war.
@@ -825,6 +836,23 @@ const UI = {
     });
     Game.on('aiLanding', ({ k, ev, x, y, pid }) => {
       const msg = t(ev === 'sail' ? 'evLandingSail' : 'evLanding', countryName(Geo.byKey[k]), pName(pid));
+      this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
+      Render.ping(x, y, 'attack');
+    });
+    // Counteroffensive (#51): loud warning with countdown when it targets the player's side, a log line for allies.
+    Game.on('ctrWarn', ({ k, pid, x, y, t: sec, n, vet }) => {
+      const S = Game.state, o = S.prov[pid].o;
+      if (Game.hostile(k, S.player) && Game.allied(o, S.player)) {
+        const msg = t(vet ? 'evCtrWarnVet' : 'evCtrWarn', countryName(Geo.byKey[k]), pName(pid), Math.round(sec / 60), n);
+        this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
+        Render.ping(x, y, 'attack');
+        this.renderObjectives();
+      } else if (Game.allied(k, S.player)) this.log(t('evCtrAlly', countryName(Geo.byKey[k]), pName(pid)), 'good', x, y);
+    });
+    Game.on('ctrAttack', ({ k, pid, x, y }) => {
+      const S = Game.state;
+      if (!Game.hostile(k, S.player) || !Game.allied(S.prov[pid].o, S.player)) return;
+      const msg = t('evCtrAttack', countryName(Geo.byKey[k]), pName(pid));
       this.toast(msg, 'bad'); this.log(msg, 'bad', x, y); Sfx.play('alert');
       Render.ping(x, y, 'attack');
     });

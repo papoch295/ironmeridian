@@ -10,9 +10,10 @@ const DIFFICULTY = {
   // strength at the target) an AI offensive needs before it attacks. flank: chance that an offensive tries an envelopment.
   // escEvery: seconds before the first and between two escalations (ESCALATION); escWarn: warning time before a neutral
   // alliance enters the war; escPow: how strong (relative to the player's alliance) an alliance joining against it may be.
-  easy:   { inc: 0.45, forces: 0.55, aiTick: 5,   aggr: 2.4, build: 0.6,  cap: 38,  grace: 480, pBonus: 1.6, missiles: 0,   air: 0.25, eDmg: 0.6, offEvery: 600, gather: 150, recGap: 45, mob: 240, probe: 150, cmd: 0.85, sup: 1.6, flank: 0.2, escEvery: 900, escWarn: 240, escPow: 0.8 },
-  normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 60,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75, offEvery: 450, gather: 120, recGap: 30, mob: 180, probe: 100, cmd: 1, sup: 1.35, flank: 0.5, escEvery: 600, escWarn: 180, escPow: 1.2 },
-  hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 128, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1, offEvery: 300, gather: 75, recGap: 12, mob: 90, probe: 60, cmd: 1.3, sup: 1.15, flank: 0.8, escEvery: 420, escWarn: 120, escPow: 2 },
+  // ctr: size factor of the reserve a counteroffensive brings (COUNTER); ctrEvery: seconds between two counteroffensives of one country.
+  easy:   { inc: 0.45, forces: 0.55, aiTick: 5,   aggr: 2.4, build: 0.6,  cap: 38,  grace: 480, pBonus: 1.6, missiles: 0,   air: 0.25, eDmg: 0.6, offEvery: 600, gather: 150, recGap: 45, mob: 240, probe: 150, cmd: 0.85, sup: 1.6, flank: 0.2, escEvery: 900, escWarn: 240, escPow: 0.8, ctr: 0.5, ctrEvery: 900 },
+  normal: { inc: 0.62, forces: 0.72, aiTick: 3.5, aggr: 1.85, build: 0.75, cap: 60,  grace: 330, pBonus: 1.35, missiles: 0.3, air: 0.4,  eDmg: 0.75, offEvery: 450, gather: 120, recGap: 30, mob: 180, probe: 100, cmd: 1, sup: 1.35, flank: 0.5, escEvery: 600, escWarn: 180, escPow: 1.2, ctr: 0.75, ctrEvery: 720 },
+  hard:   { inc: 1.3,  forces: 1.2,  aiTick: 1.5, aggr: 0.9, build: 1.25, cap: 128, grace: 90,  pBonus: 1,   missiles: 1,   air: 1,    eDmg: 1, offEvery: 300, gather: 75, recGap: 12, mob: 90, probe: 60, cmd: 1.3, sup: 1.15, flank: 0.8, escEvery: 420, escWarn: 120, escPow: 2, ctr: 1, ctrEvery: 480 },
 };
 const START_DATE = Date.UTC(2026, 2, 1, 6, 0);
 const blocOf = (k) => BLOCS.find((b) => b.members.includes(k)) || null;

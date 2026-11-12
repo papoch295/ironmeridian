@@ -150,6 +150,7 @@ const AI = {
       helpers.forEach((u) => used.add(u.id));
       if (helpers.length) Game.order(helpers, { k: 'amove', x: p.x, y: p.y });
     }
+    this.counter(S, D, me, mine, A, O, free.filter((u) => !used.has(u.id)));
     this.offensive(S, D, me, mine, enemy, land, heli, free.filter((u) => !used.has(u.id)), O);
     // Between offensives the idle troops man the front sections and dig in there.
     if (O.ph === 'wait') this.front(S, me, mine, enemy, land.filter((u) => !u.ord && !used.has(u.id)), A);
@@ -266,7 +267,7 @@ const AI = {
       groups.forEach((g, i) => { g.axis = i === groups.length - 1 ? (flank ? 'flank' : sideT !== null ? 'side' : 'main') : 'main'; });
       const ss = sideT === null ? null : this.stagingPoint(mine, Geo.provinces[sideT], force);
       Object.assign(O, { ph: 'gather', t: S.t + D.gather, next: S.t + D.offEvery, main, side: sideT, sx: st[0], sy: st[1],
-        ssx: ss && ss[0], ssy: ss && ss[1], flank, groups, warned: false, waits: 0, syncT: null });
+        ssx: ss && ss[0], ssy: ss && ss[1], flank, groups, warned: false, waits: 0, syncT: null, ctr: false });
       // Groups on the same axis assemble side by side, not on one spot.
       const n = { main: 0, side: 0 };
       for (const g of groups) {
@@ -291,7 +292,8 @@ const AI = {
       // Local superiority: too strong a defence (as far as the AI can see) makes it switch to a weaker target near
       // the staging point, wait up to twice for 30 s, or call the offensive off.
       const own = this.value(O.groups.flatMap((g) => Tactics.members(g)));
-      if (O.main != null && own < D.sup * this.foeValue(S, me, O.main)) {
+      // A counteroffensive is determined to retake its home province and does not wait for superiority.
+      if (O.main != null && !O.ctr && own < D.sup * this.foeValue(S, me, O.main)) {
         O.waits = (O.waits || 0) + 1;
         const alt = enemy.filter((pid) => pid !== O.main && U.dist(Geo.provinces[pid].x, Geo.provinces[pid].y, O.sx, O.sy) < 5)
           .map((pid) => ({ pid, v: this.foeValue(S, me, pid) })).filter((c) => own >= D.sup * c.v).sort((a, b) => a.v - b.v)[0];
@@ -302,7 +304,7 @@ const AI = {
         else {
           // Only a warned offensive is reported as called off (the player saw it coming).
           if (O.warned) Game.emit('aiCalledOff', { k: me, x: O.sx, y: O.sy });
-          Object.assign(O, { ph: 'wait', t: S.t + D.offEvery * 0.5, groups: [], warned: false, flank: null });
+          Object.assign(O, { ph: 'wait', t: S.t + D.offEvery * 0.5, groups: [], warned: false, flank: null, ctr: false });
           return;
         }
       }
@@ -318,12 +320,68 @@ const AI = {
       if (h.length && O.main != null) Game.order(h, { k: 'amove', x: Geo.provinces[O.main].x, y: Geo.provinces[O.main].y });
       O.ph = 'attack';
       O.t = S.t + 300;
+      if (O.ctr && O.main != null) Game.emit('ctrAttack', { k: me, pid: O.main, x: Geo.provinces[O.main].x, y: Geo.provinces[O.main].y });
       return;
     }
     // Attack: every group runs through its own phases; the offensive ends when all are done or time is up.
     for (const g of O.groups) this.groupStep(S, me, g, O, enemy);
     if (S.t >= O.t || O.groups.every((g) => g.ph === 'hold' || g.ph === 'retreat' || g.ph === 'done'))
-      Object.assign(O, { ph: 'wait', t: Math.max(O.next, S.t + 30), groups: [], warned: false, flank: null });
+      Object.assign(O, { ph: 'wait', t: Math.max(O.next, S.t + 30), groups: [], warned: false, flank: null, ctr: false });
+  },
+
+  // ---------- Counteroffensive (COUNTER, #51) ----------
+  // Victory points of country k's home provinces held by somebody hostile, and the most valuable of them
+  // (ties: the one closest to k's remaining territory).
+  homeLost(S, k, mine) {
+    let vp = 0, best = null, bs = -1e18;
+    for (const pid of Geo.byKey[k].provinces) {
+      const o = S.prov[pid].o;
+      if (!o || !Game.hostile(k, o)) continue;
+      const P = Geo.provinces[pid], v = PROVINCE_TYPES[P.type].vp;
+      vp += v;
+      let d = 1e9;
+      for (const m of mine) d = Math.min(d, U.dist(P.x, P.y, Geo.provinces[m].x, Geo.provinces[m].y));
+      const sc = v * 10 - d;
+      if (sc > bs) { bs = sc; best = pid; }
+    }
+    return { vp, pid: best };
+  },
+  // The reserve: a mixed force; late in the war (COUNTER.late) heavier and as veterans.
+  reserveTypes(S, n) {
+    const late = S.t >= COUNTER.late;
+    const mix = late ? ['mbt', 'ifv', 'arty', 'mbt', 'aa', 'inf', 'spg', 'ifv', 'at', 'mbt'] : ['inf', 'ifv', 'at', 'inf', 'mbt', 'mortar', 'apc', 'inf', 'aa', 'ifv'];
+    return { types: Array.from({ length: n }, (_, i) => mix[i % mix.length]), xp: late ? VET.xp[1] : 0 };
+  },
+  // An AI country that lost home provinces calls up a reserve near the most valuable one, adds part of its free
+  // troops and attacks after a warning time (run by offensive() with O.ctr set). One per D.ctrEvery seconds.
+  counter(S, D, me, mine, A, O, pool) {
+    if (O.ph !== 'wait' || S.t < (A.ctrT || 0) || !mine.length || S.over) return;
+    A.ctrT = S.t + 20; // check again soon
+    const L = this.homeLost(S, me, mine);
+    if (L.vp < COUNTER.min || L.pid == null) return;
+    const tp = Geo.provinces[L.pid];
+    const n = U.clamp(Math.round(L.vp * COUNTER.per * D.ctr * (S.mode === 'ffa' ? 0.5 : 1)), 2, COUNTER.max);
+    // The reserve gathers in the own province closest to the target.
+    let sp = null, bd = 1e18;
+    for (const pid of mine) { const p = Geo.provinces[pid], d = U.dist2(p.x, p.y, tp.x, tp.y); if (d < bd) { bd = d; sp = pid; } }
+    if (sp == null || !Path.find(Geo.provinces[sp].x, Geo.provinces[sp].y, tp.x, tp.y, 'land', Game.bell, 120000)) return;
+    const R = this.reserveTypes(S, n), res = [];
+    for (const t of R.types) { const u = Game.spawnAt(t, me, sp); if (R.xp) u.xp = R.xp; res.push(u); }
+    Game.cmdDirty();
+    const near = pool.filter((u) => U.dist(u.x, u.y, tp.x, tp.y) < 10).sort((a, b) => U.dist2(a.x, a.y, tp.x, tp.y) - U.dist2(b.x, b.y, tp.x, tp.y));
+    const force = res.concat(near.slice(0, Math.floor(near.length * COUNTER.pool)));
+    const groups = this.formGroups(force), st = this.stagingPoint(mine, tp, force);
+    Object.assign(O, { ph: 'gather', t: S.t + COUNTER.warn, next: S.t + D.offEvery, main: L.pid, side: null, sx: st[0], sy: st[1],
+      ssx: null, ssy: null, flank: null, groups, warned: true, waits: 0, syncT: null, ctr: true });
+    groups.forEach((g, i) => {
+      g.axis = 'main';
+      const a = Math.atan2(tp.y - st[1], tp.x - st[0]) + Math.PI / 2, off = (i - 0.5 * (groups.length - 1)) * 0.45;
+      g.x = st[0] + Math.cos(a) * off; g.y = st[1] + Math.sin(a) * off;
+      Game.order(Tactics.members(g), { k: 'amove', x: g.x, y: g.y, coh: 1 });
+    });
+    A.ctrT = S.t + D.ctrEvery;
+    A.ctrN = (A.ctrN || 0) + 1;
+    Game.emit('ctrWarn', { k: me, pid: L.pid, x: tp.x, y: tp.y, sx: st[0], sy: st[1], t: COUNTER.warn, n: force.length, vet: !!R.xp });
   },
 
   // Battle groups of 4–8 units: front units (tanks, infantry, IFVs) spread evenly, plus support (artillery, air

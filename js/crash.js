@@ -320,6 +320,61 @@ const SelfTest = {
     } catch (e) { return (e && e.stack) || String(e); }
   },
 
+  // Counteroffensive (#51): an AI country that lost home provinces calls up a reserve, warns, attacks the lost province,
+  // waits for its cooldown; late reserves are veterans; difficulty scales the reserve.
+  counterTest() {
+    try {
+      const country = 'DE', foe = BLOCS.find((b) => b.id === 'EU'), k = 'BY';
+      const setup = (diff) => {
+        Game.newGame({ country, mode: 'bloc', enemyBloc: foe.id, difficulty: diff, seed: 7, events: false });
+        const S = Game.state; S.paused = true;
+        // Hand Belarusian home provinces (not the capital) to the player until enough victory points are lost.
+        const home = Geo.byKey[k].provinces.filter((pid) => Geo.provinces[pid].type !== 'capital');
+        let vp = 0;
+        for (const pid of home) { if (vp >= COUNTER.min + 1) break; S.prov[pid].o = country; vp += PROVINCE_TYPES[Geo.provinces[pid].type].vp; }
+        return S;
+      };
+      const mineOf = (S) => S.prov.map((pr, i) => i).filter((i) => S.prov[i].o === k);
+      let S = setup('normal');
+      const A = AI.st(S, k), O = A.off = { ph: 'wait', t: 0 };
+      if (AI.homeLost(S, k, mineOf(S)).vp < COUNTER.min) return 'Testaufbau: zu wenig verloren';
+      let warn = null;
+      Game.on('ctrWarn', (e) => { if (e.k === k) warn = e; });
+      const n0 = S.units.filter((u) => u.s === k).length;
+      AI.counter(S, DIFFICULTY.normal, k, mineOf(S), A, O, []);
+      if (!O.ctr || O.ph !== 'gather' || S.prov[O.main].o !== country) return 'keine Gegenoffensive geplant';
+      if (!warn || warn.pid !== O.main || warn.t !== COUNTER.warn) return 'keine Vorwarnung';
+      const n1 = S.units.filter((u) => u.s === k).length;
+      if (n1 <= n0 || n1 - n0 > COUNTER.max) return 'Reserve fehlt oder zu groß: ' + (n1 - n0);
+      if (S.units.some((u) => u.s === k && u.xp)) return 'frühe Reserve schon erfahren';
+      if (JSON.stringify(JSON.parse(JSON.stringify(S.ai[k]))) !== JSON.stringify(S.ai[k])) return 'Zustand nicht speicherbar';
+      // Cooldown: no second counteroffensive right away.
+      Object.assign(O, { ph: 'wait', ctr: false });
+      AI.counter(S, DIFFICULTY.normal, k, mineOf(S), A, O, []);
+      if (O.ctr) return 'zweite Gegenoffensive ohne Pause';
+      // After the warning time the attack starts (no superiority check).
+      S = setup('normal');
+      const A2 = AI.st(S, k), O2 = A2.off = { ph: 'wait', t: 1e9 };
+      AI.counter(S, DIFFICULTY.normal, k, mineOf(S), A2, O2, []);
+      const tgt = O2.main;
+      S.paused = false;
+      for (let i = 0; i < (COUNTER.warn + 15) * 10 && O2.ph === 'gather'; i++) Sim.step(0.1);
+      if (O2.ph !== 'attack' || !O2.groups.length || O2.main !== tgt) return 'kein Angriff nach der Vorwarnzeit (' + O2.ph + ')';
+      // Late reserves are veterans; easy brings a smaller reserve than hard.
+      const size = (diff, late) => {
+        const S3 = setup(diff); S3.t = late ? COUNTER.late : 0;
+        const A3 = AI.st(S3, k), O3 = A3.off = { ph: 'wait', t: 1e9 }, b = S3.units.filter((u) => u.s === k).length;
+        AI.counter(S3, DIFFICULTY[diff], k, mineOf(S3), A3, O3, []);
+        const us = S3.units.filter((u) => u.s === k);
+        return { n: us.length - b, vet: us.slice(b).every((u) => Game.rank(u) >= 2) };
+      };
+      const e = size('easy'), h = size('hard'), l = size('normal', true);
+      if (!(e.n < h.n)) return `Schwierigkeit wirkt nicht (leicht ${e.n}, schwer ${h.n})`;
+      if (!l.vet) return 'späte Reserve ohne Veteranen';
+      return null;
+    } catch (e) { return (e && e.stack) || String(e); }
+  },
+
   // Army control: target strength, refill, leading several armies, merging, standing orders, old saves.
   armyTest() {
     try {
@@ -478,6 +533,9 @@ const SelfTest = {
     const ev = this.eventTest();
     this.log(ev ? 'FEHL Ereignisse: ' + ev : 'OK   Ereignisse: Termine, Entscheidung, alle Antworten, Folgen, Schalter, alter Spielstand');
     allOk = allOk && !ev;
+    const ctr = this.counterTest();
+    this.log(ctr ? 'FEHL Gegenoffensive: ' + ctr : 'OK   Gegenoffensive: Reserve, Vorwarnung, Angriff, Pause, Veteranen, Schwierigkeit');
+    allOk = allOk && !ctr;
     this.active = false;
     window.SELFTEST = { ok: allOk, results: this.results };
     this.log(allOk ? 'ERGEBNIS: alles in Ordnung' : 'ERGEBNIS: Probleme gefunden');

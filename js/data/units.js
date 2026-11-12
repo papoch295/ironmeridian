@@ -212,6 +212,11 @@ const WEARY = { loss: 10, kill: 0.4, lost: 3, won: 2, decay: 1.2, inc: 0.2, warn
 // Veterans (Beta 2, #50): experience = destroyed enemy share, weighted by value (0.5–2 × own value) plus `kill` per
 // kill; area weapons (artillery, rockets, bombs) earn only `aoe` of it. Ranks at `xp` (Experienced, Veteran, Elite)
 // give +`acc` accuracy and take −`sup` suppression per rank.
+// Counteroffensives (Beta 2, #51, AI.counter): an AI country that has lost at least `min` victory points of its home
+// provinces calls up a reserve of `per` units per lost point (× DIFFICULTY.ctr, at most `max`) and attacks to retake
+// them after a warning of `warn` seconds. From `late` seconds on the reserve brings heavy weapons and comes as veterans.
+const COUNTER = { min: 2, per: 1, max: 10, warn: 120, late: 1800, pool: 0.5 };
+
 // Events (Beta 2, #49, js/core/events.js): the first one `first` to `first + spread` seconds after a country enters
 // the war, then every `every` to `every + spread` seconds; the player has `answer` seconds before the free answer
 // applies on its own (only without the dialog).
