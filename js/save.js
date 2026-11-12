@@ -40,7 +40,7 @@ const SaveDB = {
 };
 
 const Saves = {
-  VERSION: 6,    // save format; older saves are migrated in migrate()
+  VERSION: 7,    // save format; older saves are migrated in migrate()
   AUTO_KEEP: 3,     // rotating autosaves
   index: [],        // [{ id, name, auto, when, country, eBloc, t, diff, prov }], newest first
   useDB: true,
@@ -175,6 +175,8 @@ const Saves = {
     // Format 5 → 6: war weariness per country and experience per unit start at zero.
     for (const sd in S.side) { S.side[sd].ww = S.side[sd].ww || 0; S.side[sd].wwL = S.side[sd].wwL || 0; }
     for (const u of S.units || []) u.xp = u.xp || 0;
+    // Format 6 → 7: events. Like escalation they stay off in running games from older versions.
+    S.ev = S.ev || { on: false, next: {}, last: {}, pend: null };
     S.v = this.VERSION;
     // Province layout changed since the save was made: map every current province onto the old one of the same
     // country closest to it. Without fingerprints (Alpha 0.1 saves) this is impossible.

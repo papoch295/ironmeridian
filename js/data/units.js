@@ -212,6 +212,11 @@ const WEARY = { loss: 10, kill: 0.4, lost: 3, won: 2, decay: 1.2, inc: 0.2, warn
 // Veterans (Beta 2, #50): experience = destroyed enemy share, weighted by value (0.5–2 × own value) plus `kill` per
 // kill; area weapons (artillery, rockets, bombs) earn only `aoe` of it. Ranks at `xp` (Experienced, Veteran, Elite)
 // give +`acc` accuracy and take −`sup` suppression per rank.
+// Events (Beta 2, #49, js/core/events.js): the first one `first` to `first + spread` seconds after a country enters
+// the war, then every `every` to `every + spread` seconds; the player has `answer` seconds before the free answer
+// applies on its own (only without the dialog).
+const EVENTS = { first: 300, every: 360, spread: 180, answer: 120 };
+
 const VET = { xp: [1.2, 3, 6], kill: 0.25, aoe: 0.4, acc: 0.1, sup: 0.1 };
 
 // Support effects of the Beta 2 units: accuracy factor for guided missiles fired into a hostile jamming area (jam),

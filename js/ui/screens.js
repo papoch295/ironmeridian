@@ -2,7 +2,7 @@
 'use strict';
 
 const Screens = {
-  setup: { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'normal', esc: true },
+  setup: { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'normal', esc: true, ev: true },
   attract: true,
 
   show(id) {
@@ -45,6 +45,7 @@ const Screens = {
     // The tutorial skips the setup: a fixed, easy scenario starts right away.
     if (tutorial) { Object.assign(this.setup, { country: 'DE', mode: 'bloc', enemy: 'EU', diff: 'easy' }); this.startGame(); return; }
     $$('#escSeg button').forEach((b) => (b.onclick = () => { this.setup.esc = b.dataset.esc === '1'; Sfx.play('click'); this.renderSetup(); }));
+    $$('#evSeg button').forEach((b) => (b.onclick = () => { this.setup.ev = b.dataset.ev === '1'; Sfx.play('click'); this.renderSetup(); }));
     this.show('#setup');
     $('#setupSearch').value = '';
     $('#setupSearch').oninput = () => this.renderNations();
@@ -108,6 +109,8 @@ const Screens = {
     $('#diffDesc').textContent = t(S.diff + 'D');
     $$('#escSeg button').forEach((b) => b.classList.toggle('on', (b.dataset.esc === '1') === !!S.esc));
     $('#escDesc').textContent = t(S.esc ? 'escOnD' : 'escOffD');
+    $$('#evSeg button').forEach((b) => b.classList.toggle('on', (b.dataset.ev === '1') === (S.ev !== false)));
+    $('#evDesc').textContent = t(S.ev !== false ? 'evOnD' : 'evOffD');
     // Preview on the map: own country, allies, enemies (world war: every other bloc).
     const foes = ffa ? BLOCS.filter((b) => b.id !== own.id).flatMap(members) : members(en);
     Render.preview = { P: new Set([S.country]), A: new Set(allies), E: new Set(foes) };
@@ -122,7 +125,7 @@ const Screens = {
     Sfx.unlock();
     Render.preview = null;
     const S = Game.newGame({ country: this.setup.country, mode: this.setup.mode, enemyBloc: this.setup.enemy, difficulty: this.setup.diff,
-      escalation: this.setup.esc && !this.tutorial }); // the tutorial stays a plain two-sided war
+      escalation: this.setup.esc && !this.tutorial, events: this.setup.ev !== false && !this.tutorial }); // the tutorial stays a plain two-sided war
     this.enterHud();
     S.paused = true;
     UI.renderTime();
@@ -156,6 +159,8 @@ const Screens = {
     if (any) Render.flyTo(any.x, any.y, 14);
     UI.log(t('evLoaded'), 'info');
     UI.renderTime();
+    // A decision that was open when the game was saved comes back.
+    if (S.ev && S.ev.pend) setTimeout(() => UI.eventDialog(), 0);
   },
 
   // ---------- Modals ----------
@@ -166,6 +171,9 @@ const Screens = {
     $('#modal').onclick = (e) => { if (e.target.id === 'modal') this.closeModal(); };
   },
   closeModal() {
+    // An open event decision cannot be dismissed (Escape, click beside the box): it needs an answer.
+    if (UI.evModal && Game.state && Game.state.ev && Game.state.ev.pend) return;
+    UI.evModal = false;
     $('#modal').hidden = true;
     this.capture = null;
     if (this.resumeOnClose && Game.state && !Game.state.over) { Game.state.paused = false; UI.renderTime(); }

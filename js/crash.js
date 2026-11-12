@@ -257,6 +257,69 @@ const SelfTest = {
     } catch (e) { return (e && e.stack) || String(e); }
   },
 
+  // Events (#49): timing, the player's decision, every answer of every event, modifiers, strike, unanswered
+  // decisions, the switch and old saves.
+  eventTest() {
+    try {
+      const country = 'DE', foe = BLOCS.find((b) => b.id === 'EU');
+      const setup = (events) => { Game.newGame({ country, mode: 'bloc', enemyBloc: foe.id, difficulty: 'normal', seed: 7, events }); Game.state.paused = true; return Game.state; };
+      let S = setup(true);
+      const s = S.side[country];
+      Events.tick();
+      const nx = S.ev.next[country];
+      if (nx === undefined || nx < EVENTS.first || nx > EVENTS.first + EVENTS.spread) return 'erster Termin falsch: ' + nx;
+      // The player's turn: a decision is pending, nothing has happened yet; an answer applies and clears it.
+      S.t = nx; Events.tick();
+      const P = S.ev.pend;
+      if (!P || !Events.LIST[P.id]) return 'keine Entscheidung offen';
+      if (JSON.stringify(JSON.parse(JSON.stringify(S.ev))) !== JSON.stringify(S.ev)) return 'Zustand nicht speicherbar';
+      if (S.ev.next[country] < S.t + EVENTS.every) return 'nächster Termin zu früh';
+      if (!Events.choose(Events.freeOpt(P.id)) || S.ev.pend) return 'Antwort wird nicht angenommen';
+      if (!Object.keys(S.ev.next).some((k) => k !== country && S.ev.last[k])) return 'KI-Länder bekommen keine Ereignisse';
+      // Every answer of every event works where it is possible and charges its price.
+      for (const id in Events.LIST) {
+        for (let i = 0; i < Events.LIST[id].opts.length; i++) {
+          S = setup(true);
+          const sd = S.side[country];
+          sd.m = sd.i = sd.o = 1e6; sd.ww = 40;
+          if (id === 'sanctions') S.prov[S.prov.findIndex((pr) => Game.hostile(pr.o, country))].o = country;
+          const ctx = Events.LIST[id].can(country);
+          if (!ctx) return `Ereignis ${id} nicht möglich`;
+          const o = Events.LIST[id].opts[i], m0 = sd.m, n0 = S.units.length;
+          if (!Events.ok(country, id, ctx, i)) return `${id}/${i} trotz Geld nicht wählbar`;
+          Events.apply(country, id, ctx, i);
+          if (o.cost && Math.abs(sd.m - (m0 - o.cost(country, ctx).m)) > 1e-6) return `${id}/${i} kostet nicht den Preis`;
+          if (o.units && S.units.length <= n0) return `${id}/${i} bringt keine Einheiten`;
+          if (!['m', 'i', 'o'].every((r) => Number.isFinite(sd[r]))) return `${id}/${i} macht die Kasse kaputt`;
+        }
+      }
+      // Too expensive answers cannot be chosen; the free one always can.
+      S = setup(true);
+      S.side[country].m = 0;
+      if (Events.ok(country, 'boom', {}, 0) || !Events.ok(country, 'boom', {}, 1)) return 'Preisprüfung falsch';
+      // Modifiers and strikes change the income and run out.
+      const inc0 = Game.income(country);
+      Events.mod(country, 'inc_m', 0.5, 1);
+      if (Math.abs(Game.income(country).m - inc0.m * 0.5) > 1e-6) return 'Einkommens-Modifikator wirkt nicht';
+      S.t += 61; Events.tick();
+      if (Math.abs(Game.income(country).m - inc0.m) > 1e-6 || S.side[country].mods.length) return 'Modifikator läuft nicht ab';
+      const ctx = Events.LIST.strike.can(country);
+      S.prov[ctx.pid].strike = S.t + 60;
+      if (!(Game.income(country).i < inc0.i)) return 'Streik senkt die Einnahmen nicht';
+      // Unanswered decisions apply the free answer after the answer time.
+      S.ev.pend = { id: 'boom', ctx: {}, t: S.t + EVENTS.answer };
+      S.t += EVENTS.answer; Events.tick();
+      if (S.ev.pend && S.ev.pend.id === 'boom') return 'offene Entscheidung verfällt nicht';
+      // Switch off: nothing happens. Old saves come back with events off.
+      S = setup(false); S.t = 5000; Events.tick();
+      if (S.ev.pend || Object.keys(S.ev.next).length) return 'Ereignisse trotz Schalter aus';
+      const old = JSON.parse(JSON.stringify(S)); delete old.ev; old.v = 6;
+      const mig = Saves.migrate({ state: old, keys: Saves.provKeys() });
+      if (!mig || !mig.ev || mig.ev.on || mig.v !== Saves.VERSION) return 'alter Spielstand ohne Ereignis-Zustand';
+      return null;
+    } catch (e) { return (e && e.stack) || String(e); }
+  },
+
   // Army control: target strength, refill, leading several armies, merging, standing orders, old saves.
   armyTest() {
     try {
@@ -412,6 +475,9 @@ const SelfTest = {
     const ww = this.wearyTest();
     this.log(ww ? 'FEHL Kriegsmüdigkeit/Veteranen: ' + ww : 'OK   Kriegsmüdigkeit, Einkommen, Abbau, Veteranen-Stufen, alter Spielstand');
     allOk = allOk && !ww;
+    const ev = this.eventTest();
+    this.log(ev ? 'FEHL Ereignisse: ' + ev : 'OK   Ereignisse: Termine, Entscheidung, alle Antworten, Folgen, Schalter, alter Spielstand');
+    allOk = allOk && !ev;
     this.active = false;
     window.SELFTEST = { ok: allOk, results: this.results };
     this.log(allOk ? 'ERGEBNIS: alles in Ordnung' : 'ERGEBNIS: Probleme gefunden');

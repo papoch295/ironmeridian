@@ -32,14 +32,16 @@ const Game = {
   // Every country is its own faction (owner key = country code) with its own economy and AI. Alliances (blocs)
   // form teams; wars are fought between teams. mode 'bloc': the player's bloc against one enemy bloc, everybody
   // else neutral. mode 'ffa': all blocs at war with each other (countries outside a bloc stay neutral).
-  newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed, escalation = true }) {
+  newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed, escalation = true, events = true }) {
     const pBloc = blocOf(country);
     const S = {
-      v: 6 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
+      v: 7 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
       mode, player: country, pBloc: pBloc ? pBloc.id : null, eBloc: mode === 'bloc' ? enemyBloc : null, nid: 1,
       side: {}, team: {}, war: {}, prov: [], units: [], shots: [], missiles: [], fallout: [], ai: {}, over: null, vp: null,
       // Escalation: on/off, earliest time of the next one, joins so far per leading team, pending entry { k, vs, t, need, x, y }.
       esc: { on: !!escalation, t: DIFFICULTY[difficulty].escEvery, n: {}, pend: null },
+      // Events: on/off, next event time per country, last two events per country, the player's open decision.
+      ev: { on: !!events, next: {}, last: {}, pend: null },
     };
     for (const c of Geo.countries) {
       if (!c.provinces.length) continue;
@@ -369,12 +371,15 @@ const Game = {
   incomeAll() {
     const S = this.state, all = {};
     S.prov.forEach((pr, pid) => {
-      if (!pr.o || Sim.inFallout(Geo.provinces[pid])) return;
+      if (!pr.o || Sim.inFallout(Geo.provinces[pid]) || pr.strike > S.t) return;
       const inc = all[pr.o] || (all[pr.o] = { m: 0, i: 0, o: 0 });
       const T = PROVINCE_TYPES[Geo.provinces[pid].type], k = pr.lvl * (pr.cap && pr.cap.s !== pr.o ? 0.5 : 1);
       inc.m += T.m * k; inc.i += T.i * k; inc.o += T.o * k;
     });
-    for (const sd in all) { const d = this.eK(sd, 'inc') * this.wearyK(sd); if (d !== 1) for (const r in all[sd]) all[sd][r] *= d; }
+    for (const sd in all) {
+      const d = this.eK(sd, 'inc') * this.wearyK(sd), a = all[sd];
+      a.m *= d * Events.modK(sd, 'inc_m'); a.i *= d * Events.modK(sd, 'inc_i'); a.o *= d * Events.modK(sd, 'inc_o');
+    }
     return all;
   },
   income(side) { return this.incomeAll()[side] || { m: 0, i: 0, o: 0 }; },
@@ -579,7 +584,7 @@ const Game = {
         this.pay(pr.o, it.cost);
         it.unpaid = false;
       }
-      const k = this.eK(pr.o, 'build');
+      const k = this.eK(pr.o, 'build') * Events.modK(pr.o, 'prod');
       it.t += dt * k * (pr.cap ? 0.3 : 1);
       if (it.t < it.total) return;
       // A batch produces one item after the other.

@@ -502,6 +502,51 @@ const UI = {
     w.title = this.wearyTip(s);
     this.renderTime();
   },
+  // Event decision (#49): title, situation, two answers with their effect and price. Unaffordable answers are greyed
+  // out; the dialog cannot be dismissed without an answer. The game pauses and resumes afterwards if it was running.
+  eventDialog() {
+    const S = Game.state, P = S.ev && S.ev.pend;
+    if (!P || S.over || SelfTest.active) return; // the self test plays an idle player: the free answer applies later
+    const E = Events.LIST[P.id], k = S.player, p = P.ctx.pid !== undefined ? Geo.provinces[P.ctx.pid] : null;
+    const pn = p ? provName(p) : '';
+    const cost = (c) => Object.entries(c).map(([r, v]) => `${ICON[{ m: 'money', i: 'industry', o: 'oil' }[r]]}${U.fmt(v)}`).join(' ');
+    const opts = E.opts.map((o, i) => {
+      const c = o.cost ? o.cost(k, P.ctx) : null, why = Events.why(k, P.id, P.ctx, i), ok = !why;
+      return `<button class="btn ev-opt ${i === 0 ? 'primary' : ''}" data-a="o${i}" ${ok ? '' : 'disabled'}>
+        <b>${U.esc(t('ev_' + P.id + '_' + 'ab'[i]))}</b>
+        <span>${U.esc(t('ev_' + P.id + '_' + 'ab'[i] + 'D', ...o.args(k, P.ctx)))}</span>
+        ${c || why ? `<span class="ev-cost">${c ? cost(c) : ''}${why ? (c ? ' · ' : '') + U.esc(t(why)) : ''}</span>` : ''}</button>`;
+    }).join('');
+    const wasRunning = !S.paused;
+    S.paused = true; this.renderTime();
+    this.evModal = true;
+    Screens.resumeOnClose = false;
+    Screens.modal(`<h2><span class="ev-kind ${E.kind}">${U.esc(t(E.kind === 'eco' ? 'evKindEco' : 'evKindMil'))}</span>${U.esc(t('ev_' + P.id))}</h2>
+      <p>${U.esc(t('ev_' + P.id + '_D', pn))}</p><div class="ev-opts">${opts}</div>`);
+    Sfx.play('alert');
+    if (p) Render.ping(p.x, p.y, 'move');
+    Screens.bindModal({
+      o0: () => this.answerEvent(0, wasRunning),
+      o1: () => this.answerEvent(1, wasRunning),
+    });
+  },
+  answerEvent(i, resume) {
+    if (!Events.choose(i)) return;
+    this.evModal = false;
+    Screens.closeModal();
+    if (resume && Game.state && !Game.state.over) { Game.state.paused = false; this.renderTime(); }
+  },
+  // Running event effects of the player for the objectives window.
+  eventsHtml() {
+    const S = Game.state;
+    if (!S.ev || !S.ev.on) return '';
+    const act = Events.active(S.player), strikes = S.prov.map((pr, i) => [pr, i]).filter(([pr]) => pr.o === S.player && pr.strike > S.t);
+    const rows = act.map((m) => `<div class="stat-line"><span>${U.esc(t('evMod_' + m.k))}</span><b class="${m.f < 1 ? 'neg' : ''}">${m.f > 1 ? '+' : '−'}${Math.round(Math.abs(m.f - 1) * 100)} % · ${this.clockStr(m.left)}</b></div>`)
+      .concat(strikes.map(([pr, i]) => `<div class="stat-line"><span>${U.esc(t('evStrikeIn', provName(Geo.provinces[i])))}</span><b class="neg">${this.clockStr(pr.strike - S.t)}</b></div>`));
+    const nx = S.ev.next[S.player];
+    return `<h3 class="obj-sub">${U.esc(t('events'))}</h3>${rows.join('') || `<p class="desc small">${U.esc(t('evNone'))}</p>`}
+      ${nx !== undefined && nx > S.t ? `<p class="desc small">${U.esc(t('evNext', this.clockStr(nx - S.t)))}</p>` : ''}`;
+  },
   wearyTip(s) { const ww = Math.round(s.ww || 0); return t('wearyTip', ww, Math.round(WEARY.inc * ww)); },
 
   renderTime() {
@@ -546,7 +591,7 @@ const UI = {
       <div class="stat-line"><span>${U.esc(t('objUnits'))}</span><b>${eu}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv(me)}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourUnits'))}</span><b>${Game.countUnits(me)}</b></div>
-      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.wearyHtml()}${this.escHtml()}`;
+      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.wearyHtml()}${this.eventsHtml()}${this.escHtml()}`;
   },
 
   // War weariness in the objectives window: own value and the power-weighted average of the hostile countries at war.
@@ -699,6 +744,14 @@ const UI = {
     Game.on('weary', ({ ww, lv }) => {
       const txt = t(lv >= 2 ? 'evWeary2' : 'evWeary1', Math.round(ww), Math.round(WEARY.inc * ww));
       this.toast(txt, lv >= 2 ? 'bad' : 'warn'); this.log(txt, lv >= 2 ? 'bad' : 'warn'); Sfx.play('alert');
+    });
+    // Events (#49): the decision dialog pauses the game; the answer's effect goes to the log.
+    Game.on('eventPend', () => this.eventDialog());
+    Game.on('eventDone', ({ id, i, ctx, res }) => {
+      const p = ctx && ctx.pid !== undefined ? Geo.provinces[ctx.pid] : null;
+      const txt = t('ev_' + id) + ': ' + t('ev_' + id + '_' + 'ab'[i] + 'R' + res, p ? provName(p) : '');
+      this.log(txt, res === 'Hit' ? 'bad' : 'info', p ? p.x : undefined, p ? p.y : undefined);
+      this.renderTop();
     });
     Game.on('promoted', ({ u, rank }) => { if (rank >= 2) this.log(t('evPromoted', unitName(u.t), t('rank' + rank)), 'good', u.x, u.y); });
     Game.on('casLost', (u) => this.log(t('evCasLost', unitName(u.t)), 'warn', u.x, u.y));

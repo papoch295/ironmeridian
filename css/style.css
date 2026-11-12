@@ -191,6 +191,14 @@ h3::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg
 #objBox .meter.weary i { background: linear-gradient(90deg, #c8901f, #e2553c); box-shadow: none; }
 .res.weary .inc { color: var(--muted); }
 .res.weary.mid .v { color: var(--warn); }
+.ev-opts { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.btn.ev-opt { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 12px 14px; white-space: normal; height: auto; line-height: 1.35; }
+.btn.ev-opt b { font-size: 14px; letter-spacing: .04em; }
+.btn.ev-opt span { font-size: 12px; font-weight: 400; opacity: .9; text-transform: none; letter-spacing: 0; }
+.btn.ev-opt .ev-cost { display: flex; align-items: center; gap: 4px; font-weight: 700; }
+.btn.ev-opt .ev-cost svg { width: 15px; height: 15px; }
+.ev-kind { display: inline-block; font-size: 10px; letter-spacing: .14em; padding: 3px 7px; border-radius: 3px; margin-right: 10px; vertical-align: middle; background: rgba(111,179,234,.18); color: var(--blue); }
+.ev-kind.mil { background: rgba(226,85,60,.18); color: #ff8a70; }
 .bar.gold i { background: linear-gradient(90deg, #b8902f, #ffd75a); }
 .rank { color: #e0b84a; font-weight: 700; letter-spacing: -2px; margin-right: 3px; }
 .rank.r3 { color: #ffd75a; text-shadow: 0 0 6px rgba(255,215,90,.5); }

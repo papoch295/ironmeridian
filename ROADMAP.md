@@ -251,7 +251,7 @@ Vorschläge (bitte bei F3 auswählen):
 | 46 | **Nachschublinien:** Armeen weit weg von Depots/Häfen verlieren Munition und Kampfkraft | Planung statt Spam, Fronten statt Blobs | P2 |
 | 47 | **Kriegsmüdigkeit / Moral der Nation:** hohe Verluste senken Einkommen, Siege heben es – ✔ 12. Nov. (Beta 2): 0–100 % je Land, bis −20 % Einnahmen, Warnungen bei 50/80 % | Verluste haben Folgen | P2 |
 | 48 | **Missionen und Ziele** während der Partie (Hafen X halten, Hauptstadt in 20 min, Konvoi schützen) mit Belohnungen | ständig kurzfristige Ziele | P1 |
-| 49 | **Ereignisse:** Wetter, Sanktionen, Ölkrise, Putsch, Waffenlieferung, Atomalarm | Abwechslung, Entscheidungen | P2 |
+| 49 | **Ereignisse:** Wetter, Sanktionen, Ölkrise, Putsch, Waffenlieferung, Atomalarm – ✔ 12. Nov. (Beta 2): 8 Ereignisse aus Wirtschaft und Militär mit je zwei Antworten; Wetter und Politik offen | Abwechslung, Entscheidungen | P2 |
 | 50 | **Erfahrung / Veteranen-Einheiten und Generäle** – Veteranen ✔ 12. Nov. (Beta 2): Erfahren/Veteran/Elite, je +10 % Treffer und −10 % Unterdrückung; Generäle offen (#53) | Bindung an eigene Armeen, Anreiz sie zu schonen | P2 |
 | 51 | **Gegenoffensiven der KI** in festen Abständen, Spitzen-KI-Einheiten im Endspiel | Druck bleibt bestehen | P1 |
 | 52 | **Siegpunkte / Waffenstillstand:** Partie kann mit Punktesieg enden, statt jede letzte Einheit zu jagen (✔ Beta 1) | kein zähes Aufräumen am Ende | P1 |
@@ -451,7 +451,7 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 | **Zuerst: Transport** (Notiz 5. Nov.) – ✔ auf Branch `beta2-transport` | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
 | Regiment-Steuerung – ✔ 6. Nov. auf Branch `beta2-transport` | Mehrere Armeen gemeinsam führen, Zusammenlegen, Soll-Bestand mit Anzeige der Lücken, Auffrischen, Daueraufträge, Unterhalt-Warnung | Notiz 5. Nov., #71, #72 |
 | Taktik ausbauen – ✔ 7. Nov. auf Branch `beta2-transport` | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung | #61–#66 |
-| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.), ✔ **Kriegsmüdigkeit** (#47) und **Veteranen** (#50) (12. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Ereignisse (#49), Gegenoffensiven (#51), Missionen (#48), Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
+| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.), ✔ **Kriegsmüdigkeit** (#47) und **Veteranen** (#50), ✔ **Ereignisse** (#49) (12. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Gegenoffensiven (#51), Missionen (#48), Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
 | Diplomatie & Spionage | Krieg/Frieden/Bündnis, Spionage deckt KI-Angriffsmuster auf, Geheimdienstzentrale | #54, #16, 3.2 |
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
 | Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
@@ -473,6 +473,15 @@ für den Feind). Veteranen: Erfahrung aus zerstörtem Feindwert (Flächenwaffen 
 Einheitenfenster. Messung untätiger Spieler (Deutschland gegen Eurasien, 40 Spielminuten): kleine Frontländer wie Polen
 erreichen 60–90 % (−12 bis −18 % Einnahmen), Großmächte bleiben meist unter 30 %; nach 40 min sind etwa 8 % der Einheiten
 erfahren oder besser. Spielstand-Format 6, Selbsttest um einen eigenen Block erweitert, ohne Fehler.
+
+**Nachtrag 12. Nov. (Ereignisse):** `js/core/events.js`, Takt in `EVENTS` (`units.js`). Entscheidung 12. Nov.: mit
+Entscheidungsfenster, alle 6–9 Minuten, nur Wirtschaft und Militär. Acht Ereignisse: Ölkrise, Rüstungskonjunktur, Streik,
+Sanktionen (nur wer erobert hat), Waffenlieferung, Freiwillige, Sabotagegefahr, Deserteure (ab 30 % Kriegsmüdigkeit). Jede
+Antwort hat eine klare Folge (Geld/Öl sofort, befristete Einnahmen- oder Produktions-Modifikatoren, Streik einer Provinz,
+Gratis-Einheiten nur mit Platz im Kommandolimit). Die KI bekommt dieselben Ereignisse und wählt gewichtet; das Spiel pausiert
+für den Spieler, das Fenster lässt sich nicht ohne Antwort schließen. Laufende Folgen im Zielfenster, Schalter im Setup, alte
+Spielstände ohne Ereignisse (Format 7). Messung untätiger Spieler (Deutschland gegen Eurasien, Normal, 40 min): 5 Ereignisse
+für den Spieler, Einheitenzahl im normalen Schwankungsbereich (±15 %). Selbsttest um einen Ereignis-Block erweitert, ohne Fehler.
 
 ---
 
