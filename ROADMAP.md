@@ -250,7 +250,7 @@ Vorschläge (bitte bei F3 auswählen):
 | 45 | **Besatzung und Widerstand:** eroberte Provinzen bringen anfangs wenig, Aufstände/Partisanen, Garnison nötig | Erobern kostet etwas, schnelles Durchrollen wird gebremst | P1 |
 | 46 | **Nachschublinien:** Armeen weit weg von Depots/Häfen verlieren Munition und Kampfkraft | Planung statt Spam, Fronten statt Blobs | P2 |
 | 47 | **Kriegsmüdigkeit / Moral der Nation:** hohe Verluste senken Einkommen, Siege heben es – ✔ 12. Nov. (Beta 2): 0–100 % je Land, bis −20 % Einnahmen, Warnungen bei 50/80 % | Verluste haben Folgen | P2 |
-| 48 | **Missionen und Ziele** während der Partie (Hafen X halten, Hauptstadt in 20 min, Konvoi schützen) mit Belohnungen | ständig kurzfristige Ziele | P1 |
+| 48 | **Missionen und Ziele** während der Partie (Hafen X halten, Hauptstadt in 20 min, Konvoi schützen) mit Belohnungen – ✔ 12. Nov. (Beta 2): Erobern, Halten, Vernichten; immer eine aktive Mission, nur Belohnung | ständig kurzfristige Ziele | P1 |
 | 49 | **Ereignisse:** Wetter, Sanktionen, Ölkrise, Putsch, Waffenlieferung, Atomalarm – ✔ 12. Nov. (Beta 2): 8 Ereignisse aus Wirtschaft und Militär mit je zwei Antworten; Wetter und Politik offen | Abwechslung, Entscheidungen | P2 |
 | 50 | **Erfahrung / Veteranen-Einheiten und Generäle** – Veteranen ✔ 12. Nov. (Beta 2): Erfahren/Veteran/Elite, je +10 % Treffer und −10 % Unterdrückung; Generäle offen (#53) | Bindung an eigene Armeen, Anreiz sie zu schonen | P2 |
 | 51 | **Gegenoffensiven der KI** in festen Abständen, Spitzen-KI-Einheiten im Endspiel – ✔ 12. Nov. (Beta 2): nach Verlust von Kernprovinzen, mit Reserve und Countdown; ab 30 min Veteranen und schwere Waffen | Druck bleibt bestehen | P1 |
@@ -451,7 +451,7 @@ Testpartien mit den neuen Einheiten (6 × 120 min, KI gegen KI): stabil; der Kam
 | **Zuerst: Transport** (Notiz 5. Nov.) – ✔ auf Branch `beta2-transport` | Transport mit Flugzeug/Helikopter weiter vereinfachen; bessere UI, um einzelne Flugzeuge/Helikopter zu unterscheiden (voll/leer, welche Truppen an Bord); mehr Kapazität für alle Transporte (Land, Luft, Wasser) | aus Notiz 5. Nov. |
 | Regiment-Steuerung – ✔ 6. Nov. auf Branch `beta2-transport` | Mehrere Armeen gemeinsam führen, Zusammenlegen, Soll-Bestand mit Anzeige der Lücken, Auffrischen, Daueraufträge, Unterhalt-Warnung | Notiz 5. Nov., #71, #72 |
 | Taktik ausbauen – ✔ 7. Nov. auf Branch `beta2-transport` | Kommandolimit, teurere schwere Einheiten, KI-Frontabschnitte, echte Umfassung, Flanken- und Rückenbonus, Städte als Verteidigung | #61–#66 |
-| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.), ✔ **Kriegsmüdigkeit** (#47) und **Veteranen** (#50), ✔ **Ereignisse** (#49), ✔ **Gegenoffensiven** (#51) (12. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Missionen (#48), Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
+| **Jetzt: Spieltiefe** (seit 11. Nov.) | ✔ **Eskalation** (11. Nov.), ✔ **Kriegsmüdigkeit** (#47) und **Veteranen** (#50), ✔ **Ereignisse** (#49), ✔ **Gegenoffensiven** (#51), ✔ **Missionen** (#48) (12. Nov.). Danach in dieser Reihenfolge (Entscheidung 11. Nov.): Besatzung und Widerstand (#45), Technologiebaum (#43), Nachschublinien (#46), zuletzt Automatisierung und Generäle (#53) | #43–#51, #53 |
 | Diplomatie & Spionage | Krieg/Frieden/Bündnis, Spionage deckt KI-Angriffsmuster auf, Geheimdienstzentrale | #54, #16, 3.2 |
 | Optik | Luftfahrzeuge, Schiffe und Infanterie im Referenzstil, Gefechtseffekte, Menüs | #32, #33, #35 |
 | Bedienung | strategische Übersicht (Frontlinien, Armeepfeile), Ereignis-Meldungen, ausführliches Tutorial (Armee-Befehle sind in Beta 1 als #68 enthalten) | #22, #23, #25, #29–#31 |
@@ -491,6 +491,15 @@ verlorene Provinz an – ohne Überlegenheits-Prüfung. Pause je Land 15/12/8 Mi
 und Flugabwehr als Veteranen. Gilt auch für verbündete KI-Länder. Messung (Deutschland erobert 3 Provinzen von Belarus mit der
 halben Armee, 20 Minuten): Leicht 3/3 gehalten, Normal 2/3 (eigene Einheiten 24 statt 35 ohne Gegenoffensive), Schwer 1/3.
 Selbsttest um einen eigenen Block erweitert, ohne Fehler.
+
+**Nachtrag 12. Nov. (Missionen):** `js/core/missions.js`, Werte in `MISSIONS` (`units.js`). Entscheidung 12. Nov.: Arten Erobern,
+Halten und Vernichten; immer genau eine aktive Mission; Erfolg bringt eine Belohnung, Misserfolg nichts. Erobern: feindliche
+Provinz bis 6 Einheiten vom Gebiet des eigenen Bündnisses (Städte, Häfen, Industrie bevorzugt, Hauptstädte selten), 10 min,
+4 Minuten Geld-Einkommen und −8 Kriegsmüdigkeit. Halten: eigene Provinz, auf die eine KI-Offensive zielt oder vor der Feinde
+stehen (sonst die wertvollste an der Front), 8 min, Industrie + Geld, −5. Vernichten: Kampffahrzeuge, Luftfahrzeuge oder
+Bodeneinheiten (Anzahl nach Feindbestand), 10 min, Öl + Geld, −5. Erste Mission nach 3 min, danach 1–2 min Pause. Anzeige
+rechts oben unter der Kopfleiste (antippen springt zum Ziel), Abschnitt im Zielfenster. Alte Spielstände bekommen Missionen
+(Format 8); im Tutorial aus. Selbsttest um einen eigenen Block erweitert, ohne Fehler.
 
 ---
 

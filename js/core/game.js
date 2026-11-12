@@ -33,16 +33,18 @@ const Game = {
   // Every country is its own faction (owner key = country code) with its own economy and AI. Alliances (blocs)
   // form teams; wars are fought between teams. mode 'bloc': the player's bloc against one enemy bloc, everybody
   // else neutral. mode 'ffa': all blocs at war with each other (countries outside a bloc stay neutral).
-  newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed, escalation = true, events = true }) {
+  newGame({ country, mode = 'bloc', enemyBloc, difficulty, seed, escalation = true, events = true, missions = true }) {
     const pBloc = blocOf(country);
     const S = {
-      v: 7 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
+      v: 8 /* = Saves.VERSION */, seed: seed || (Math.random() * 1e9) | 0, t: 0, speed: 1, paused: false, diff: difficulty,
       mode, player: country, pBloc: pBloc ? pBloc.id : null, eBloc: mode === 'bloc' ? enemyBloc : null, nid: 1,
       side: {}, team: {}, war: {}, prov: [], units: [], shots: [], missiles: [], fallout: [], ai: {}, over: null, vp: null,
       // Escalation: on/off, earliest time of the next one, joins so far per leading team, pending entry { k, vs, t, need, x, y }.
       esc: { on: !!escalation, t: DIFFICULTY[difficulty].escEvery, n: {}, pend: null },
       // Events: on/off, next event time per country, last two events per country, the player's open decision.
       ev: { on: !!events, next: {}, last: {}, pend: null },
+      // Missions: on/off, the running one, time of the next, last kind, missions ended and won.
+      mis: { on: !!missions, cur: null, next: MISSIONS.first, last: null, n: 0, ok: 0 },
     };
     for (const c of Geo.countries) {
       if (!c.provinces.length) continue;

@@ -576,6 +576,40 @@ const UI = {
     vt.hidden = !S.vp || !!S.over;
     if (S.vp) { vt.className = S.vp.r; vt.textContent = t(S.vp.r === 'win' ? 'vpTagWin' : 'vpTagLose', this.clockStr(S.vp.t - S.t)); }
     $$('#speedSeg button').forEach((b) => b.classList.toggle('on', !S.paused && +b.dataset.speed === S.speed));
+    this.renderMission();
+  },
+
+  // ---------- Missions (#48) ----------
+  // Short text of the running mission (target, progress), used in the pill under the top bar and in the objectives.
+  missionText(C) {
+    if (C.k === 'destroy') return t('misDestroy_' + C.cls, C.need) + ' (' + C.got + '/' + C.need + ')';
+    return t(C.k === 'capture' ? 'misCapture' : 'misHold', provName(Geo.provinces[C.pid]));
+  },
+  rewardText(C) {
+    const r = Object.entries(C.rew).map(([k, v]) => '+' + U.fmt(v) + ' ' + t({ m: 'money', i: 'industry', o: 'oil' }[k]));
+    return r.concat(t('misRewWeary', C.ww)).join(', ');
+  },
+  // Pill under the top bar: the mission with its countdown; a tap flies to the target and opens the objectives.
+  renderMission() {
+    const S = Game.state, el = $('#misTag'), C = S.mis && S.mis.on && !S.over ? S.mis.cur : null;
+    el.hidden = !C;
+    el.classList.toggle('low', !!C && !!S.vp);
+    if (!C) return;
+    const left = C.t - S.t;
+    el.innerHTML = `${ICON.target}<span>${U.esc(this.missionText(C))}</span><b class="${left < 60 ? 'neg' : ''}">${this.clockStr(left)}</b>`;
+    if (!el.onclick) el.onclick = () => {
+      const c = Game.state.mis && Game.state.mis.cur;
+      if (c && c.pid != null) { const p = Geo.provinces[c.pid]; Render.flyTo(p.x, p.y, Math.max(Render.cam.z, 14)); Render.ping(p.x, p.y, 'move'); }
+      const o = $('#objBox'); o.hidden = false; this.renderObjectives();
+    };
+  },
+  missionHtml() {
+    const S = Game.state, M = S.mis;
+    if (!M || !M.on) return '';
+    const C = M.cur;
+    const body = C ? `<p class="vp-hold">${U.esc(this.missionText(C))} – ${this.clockStr(C.t - S.t)}</p><p class="desc small">${U.esc(t('misReward', this.rewardText(C)))}</p>`
+      : `<p class="desc small">${U.esc(t('misNext', this.clockStr(M.next - S.t)))}</p>`;
+    return `<h3 class="obj-sub">${U.esc(t('mission'))}</h3>${body}<div class="stat-line"><span>${U.esc(t('misDone'))}</span><b>${M.ok || 0} / ${M.n || 0}</b></div>`;
   },
 
   // Seconds as m:ss (countdowns).
@@ -602,7 +636,7 @@ const UI = {
       <div class="stat-line"><span>${U.esc(t('objUnits'))}</span><b>${eu}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourProv'))}</span><b>${Game.countProv(me)}</b></div>
       <div class="stat-line"><span>${U.esc(t('objYourUnits'))}</span><b>${Game.countUnits(me)}</b></div>
-      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.ctrHtml()}${this.wearyHtml()}${this.eventsHtml()}${this.escHtml()}`;
+      <div class="stat-line"><span>${U.esc(t('objAllies'))}</span><b>${allies}</b></div>${this.missionHtml()}${this.ctrHtml()}${this.wearyHtml()}${this.eventsHtml()}${this.escHtml()}`;
   },
 
   // War weariness in the objectives window: own value and the power-weighted average of the hostile countries at war.
@@ -848,6 +882,18 @@ const UI = {
         Render.ping(x, y, 'attack');
         this.renderObjectives();
       } else if (Game.allied(k, S.player)) this.log(t('evCtrAlly', countryName(Geo.byKey[k]), pName(pid)), 'good', x, y);
+    });
+    Game.on('missionNew', (C) => {
+      const p = C.pid != null ? Geo.provinces[C.pid] : null, msg = t('evMisNew', this.missionText(C), Math.round((C.t - C.t0) / 60));
+      this.toast(msg, 'warn'); this.log(msg, 'warn', p ? p.x : undefined, p ? p.y : undefined); Sfx.play('click');
+      if (p) Render.ping(p.x, p.y, 'move');
+      this.renderMission();
+    });
+    Game.on('missionProgress', () => this.renderMission());
+    Game.on('missionEnd', ({ C, ok }) => {
+      const msg = ok ? t('evMisOk', this.missionText(C), this.rewardText(C)) : t('evMisFail', this.missionText(C));
+      this.toast(msg, ok ? 'good' : 'warn'); this.log(msg, ok ? 'good' : 'info'); if (ok) Sfx.play('capture');
+      this.renderTop();
     });
     Game.on('ctrAttack', ({ k, pid, x, y }) => {
       const S = Game.state;

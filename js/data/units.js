@@ -217,6 +217,11 @@ const WEARY = { loss: 10, kill: 0.4, lost: 3, won: 2, decay: 1.2, inc: 0.2, warn
 // them after a warning of `warn` seconds. From `late` seconds on the reserve brings heavy weapons and comes as veterans.
 const COUNTER = { min: 2, per: 1, max: 10, warn: 120, late: 1800, pool: 0.5 };
 
+// Missions (Beta 2, #48, js/core/missions.js): the first one at `first` seconds, then `pause` to 2 × `pause` seconds after
+// the previous one ended; time limits per kind, `reach` = how far from own territory a capture target may lie, `threat` =
+// radius for enemy troops that make an own province 'threatened'; `ww` = war weariness removed on success.
+const MISSIONS = { first: 180, pause: 60, reach: 6, threat: 2.5, time: { capture: 600, hold: 480, destroy: 600 }, ww: { capture: 8, hold: 5, destroy: 5 } };
+
 // Events (Beta 2, #49, js/core/events.js): the first one `first` to `first + spread` seconds after a country enters
 // the war, then every `every` to `every + spread` seconds; the player has `answer` seconds before the free answer
 // applies on its own (only without the dialog).

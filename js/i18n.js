@@ -60,6 +60,10 @@ const STR = {
     objWeary: 'Deine Kriegsmüdigkeit', objWearyFoe: 'Kriegsmüdigkeit des Feindes', objWearyD: 'Bis zu −{0} % Einnahmen. Gilt genauso für die KI – hohe Verluste schwächen auch den Feind.',
     rank: 'Erfahrung', rank0: 'Rekrut', rank1: 'Erfahren', rank2: 'Veteran', rank3: 'Elite', rankBonus: '(+{0} % Treffer, −{1} % Unterdrückung)',
     rankMix: 'Erfahrene', evPromoted: '{0} ist jetzt {1}!',
+    mission: 'Mission', misCapture: 'Erobere {0}', misHold: 'Halte {0}', misDestroy_armor: 'Zerstöre {0} Kampffahrzeuge',
+    misDestroy_air: 'Schieße {0} Luftfahrzeuge ab', misDestroy_land: 'Zerstöre {0} feindliche Bodeneinheiten',
+    misRewWeary: '−{0} Kriegsmüdigkeit', misReward: 'Belohnung: {0}', misNext: 'Nächste Mission in etwa {0}', misDone: 'Missionen erfüllt',
+    evMisNew: 'Neue Mission: {0} – {1} Minuten Zeit.', evMisOk: 'Mission erfüllt: {0}! {1}', evMisFail: 'Mission verfehlt: {0}.',
     counter: 'Gegenoffensive', evCtrWarn: 'Gegenoffensive! {0} will {1} zurückerobern – Angriff in {2} Minuten mit {3} Einheiten.',
     evCtrWarnVet: 'Gegenoffensive! {0} will {1} mit Veteranen-Reserven zurückerobern – Angriff in {2} Minuten mit {3} Einheiten.',
     evCtrAttack: 'Die Gegenoffensive von {0} auf {1} hat begonnen!', evCtrAlly: 'Verbündeter {0} startet eine Gegenoffensive auf {1}.',
@@ -241,6 +245,10 @@ const STR = {
     objWeary: 'Your war weariness', objWearyFoe: 'Enemy war weariness', objWearyD: 'Up to −{0} % income. The same applies to the AI – heavy losses weaken the enemy too.',
     rank: 'Experience', rank0: 'Recruit', rank1: 'Experienced', rank2: 'Veteran', rank3: 'Elite', rankBonus: '(+{0} % accuracy, −{1} % suppression)',
     rankMix: 'Experienced', evPromoted: '{0} is now {1}!',
+    mission: 'Mission', misCapture: 'Capture {0}', misHold: 'Hold {0}', misDestroy_armor: 'Destroy {0} combat vehicles',
+    misDestroy_air: 'Shoot down {0} aircraft', misDestroy_land: 'Destroy {0} enemy ground units',
+    misRewWeary: '−{0} war weariness', misReward: 'Reward: {0}', misNext: 'Next mission in about {0}', misDone: 'Missions completed',
+    evMisNew: 'New mission: {0} – {1} minutes.', evMisOk: 'Mission accomplished: {0}! {1}', evMisFail: 'Mission failed: {0}.',
     counter: 'Counteroffensive', evCtrWarn: 'Counteroffensive! {0} wants to retake {1} – attack in {2} minutes with {3} units.',
     evCtrWarnVet: 'Counteroffensive! {0} wants to retake {1} with veteran reserves – attack in {2} minutes with {3} units.',
     evCtrAttack: 'The counteroffensive of {0} against {1} has begun!', evCtrAlly: 'Ally {0} launches a counteroffensive against {1}.',
@@ -402,6 +410,7 @@ const HELP = {
       <h3>Unterdrückung & Moral</h3><p>Beschuss unterdrückt Infanterie: Sie trifft schlechter, bewegt sich langsamer und flieht bei 100&nbsp;% ungeordnet.</p>
       <h3>Veteranen</h3><p>Einheiten sammeln durch Treffer und Abschüsse Erfahrung: Erfahren, Veteran, Elite (goldene Winkel am Symbol). Jede Stufe gibt +10&nbsp;% Treffsicherheit und −10&nbsp;% Unterdrückung. Schone erfahrene Truppen – Ersatz beginnt wieder als Rekrut.</p>
       <h3>Kriegsmüdigkeit</h3><p>Eigene Verluste und verlorene Provinzen machen dein Land kriegsmüde, Abschüsse, Eroberungen und Ruhe bauen das ab. Bei 100&nbsp;% sinken die Einnahmen um 20&nbsp;%. Für die KI gilt dasselbe.</p>
+      <h3>Missionen</h3><p>Es läuft immer eine Mission mit Zeitlimit: eine Provinz erobern, eine bedrohte Provinz halten oder feindliche Einheiten zerstören. Erfolg bringt Rohstoffe und senkt die Kriegsmüdigkeit, ein Misserfolg kostet nichts. Tippe auf die Mission unter der Kopfleiste, um zum Ziel zu springen.</p>
       <h3>Gegenoffensiven</h3><p>Erobert ihr Kernprovinzen eines Landes, ruft es Reserven auf und versucht sie zurückzuholen – mit Vorwarnung und Countdown. Je mehr es verloren hat, desto größer die Reserve; ab etwa 30 Minuten kommen schwere Waffen und Veteranen. Halte eroberte Provinzen also mit genug Truppen.</p>
       <h3>Ereignisse</h3><p>Alle 6–9 Minuten passiert etwas in Wirtschaft oder Militär (Ölkrise, Streik, Waffenlieferung, Sabotage …). Das Spiel pausiert, und du wählst eine von zwei Antworten. Laufende Folgen siehst du im Zielfenster. Abschaltbar beim Spielstart.</p>
       <h3>Nebel des Krieges</h3><p>Du siehst Feinde nur in Sichtweite deiner Einheiten und Provinzen. Aufklärer, Scharfschützen und U-Boote sind schwer zu entdecken.</p>
@@ -455,6 +464,7 @@ const HELP = {
       <h3>Suppression & morale</h3><p>Incoming fire suppresses infantry: it shoots worse, moves slower and routs at 100&nbsp;%.</p>
       <h3>Veterans</h3><p>Units gain experience from hits and kills: Experienced, Veteran, Elite (gold chevrons at the symbol). Every rank gives +10&nbsp;% accuracy and −10&nbsp;% suppression. Spare experienced troops – replacements start as recruits again.</p>
       <h3>War weariness</h3><p>Own losses and lost provinces make your country war-weary; kills, conquests and quiet time reduce it. At 100&nbsp;% income drops by 20&nbsp;%. The same applies to the AI.</p>
+      <h3>Missions</h3><p>There is always one mission with a time limit: capture a province, hold a threatened province or destroy enemy units. Success brings resources and lowers war weariness; failure costs nothing. Tap the mission under the top bar to jump to its target.</p>
       <h3>Counteroffensives</h3><p>If you take a country's home provinces, it calls up reserves and tries to win them back – with a warning and countdown. The more it has lost, the bigger the reserve; after about 30 minutes it brings heavy weapons and veterans. So hold conquered provinces with enough troops.</p>
       <h3>Events</h3><p>Every 6–9 minutes something happens in the economy or the military (oil crisis, strike, arms delivery, sabotage …). The game pauses and you choose one of two answers. Running effects are listed in the objectives window. Can be switched off when starting a game.</p>
       <h3>Fog of war</h3><p>You only see enemies within sight of your units and provinces. Recon, snipers and submarines are hard to spot.</p>

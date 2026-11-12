@@ -125,7 +125,7 @@ const Screens = {
     Sfx.unlock();
     Render.preview = null;
     const S = Game.newGame({ country: this.setup.country, mode: this.setup.mode, enemyBloc: this.setup.enemy, difficulty: this.setup.diff,
-      escalation: this.setup.esc && !this.tutorial, events: this.setup.ev !== false && !this.tutorial }); // the tutorial stays a plain two-sided war
+      escalation: this.setup.esc && !this.tutorial, events: this.setup.ev !== false && !this.tutorial, missions: !this.tutorial }); // the tutorial stays a plain two-sided war
     this.enterHud();
     S.paused = true;
     UI.renderTime();

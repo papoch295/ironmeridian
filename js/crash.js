@@ -275,6 +275,8 @@ const SelfTest = {
       if (JSON.stringify(JSON.parse(JSON.stringify(S.ev))) !== JSON.stringify(S.ev)) return 'Zustand nicht speicherbar';
       if (S.ev.next[country] < S.t + EVENTS.every) return 'nächster Termin zu früh';
       if (!Events.choose(Events.freeOpt(P.id)) || S.ev.pend) return 'Antwort wird nicht angenommen';
+      // By the latest possible first date every AI country at war has had its first event.
+      S.t = EVENTS.first + EVENTS.spread + 1; Events.tick();
       if (!Object.keys(S.ev.next).some((k) => k !== country && S.ev.last[k])) return 'KI-Länder bekommen keine Ereignisse';
       // Every answer of every event works where it is possible and charges its price.
       for (const id in Events.LIST) {
@@ -371,6 +373,67 @@ const SelfTest = {
       const e = size('easy'), h = size('hard'), l = size('normal', true);
       if (!(e.n < h.n)) return `Schwierigkeit wirkt nicht (leicht ${e.n}, schwer ${h.n})`;
       if (!l.vet) return 'späte Reserve ohne Veteranen';
+      return null;
+    } catch (e) { return (e && e.stack) || String(e); }
+  },
+
+  // Missions (#48): first mission on time, capture / hold / destroy succeed and fail correctly, rewards are paid
+  // only on success, kills count only when they fit, the switch, old saves.
+  missionTest() {
+    try {
+      const country = 'DE', foe = BLOCS.find((b) => b.id === 'EU');
+      const setup = (missions) => { Game.newGame({ country, mode: 'bloc', enemyBloc: foe.id, difficulty: 'normal', seed: 7, events: false, missions }); Game.state.paused = true; return Game.state; };
+      let S = setup(true);
+      const M = S.mis, s = S.side[country];
+      Missions.tick();
+      if (M.cur) return 'Mission vor dem ersten Termin';
+      S.t = MISSIONS.first; Missions.tick();
+      if (!M.cur || !M.cur.k || !(M.cur.t > S.t)) return 'keine erste Mission';
+      if (JSON.stringify(JSON.parse(JSON.stringify(M))) !== JSON.stringify(M)) return 'Zustand nicht speicherbar';
+      const run = (C) => { M.cur = Object.assign({ t0: S.t, rew: { m: 100 }, ww: 3 }, C); };
+      // Capture: success when the province is ours (reward paid), failure after the deadline (nothing paid).
+      const cp = Missions.captureTarget(S);
+      if (cp === null || !Game.hostile(country, S.prov[cp].o)) return 'kein Eroberungsziel';
+      run({ k: 'capture', pid: cp, t: S.t + 600 });
+      const m0 = s.m, n0 = M.n;
+      S.prov[cp].o = country; Missions.tick();
+      if (M.cur || M.ok !== 1 || M.n !== n0 + 1 || s.m !== m0 + 100 || !(M.next > S.t)) return 'Eroberung wird nicht belohnt';
+      const cp2 = Missions.captureTarget(S);
+      run({ k: 'capture', pid: cp2, t: S.t + 1 });
+      const m1 = s.m; S.t += 2; Missions.tick();
+      if (M.cur || M.ok !== 1 || s.m !== m1) return 'verfehlte Eroberung wird belohnt oder bleibt offen';
+      // Hold: success after the time, failure as soon as the province is lost.
+      const hp = Missions.holdTarget(S);
+      if (hp === null || !Game.allied(S.prov[hp].o, country)) return 'kein Halteziel';
+      run({ k: 'hold', pid: hp, t: S.t + 10 });
+      Missions.tick();
+      if (!M.cur) return 'Halten endet zu früh';
+      S.t += 10; Missions.tick();
+      if (M.cur || M.ok !== 2) return 'gehaltene Provinz wird nicht belohnt';
+      run({ k: 'hold', pid: hp, t: S.t + 100 });
+      const enemyK = Object.keys(S.side).find((k) => Game.hostile(country, k) && Game.countProv(k));
+      const hpO = S.prov[hp].o;
+      S.prov[hp].o = enemyK; Missions.tick();
+      if (M.cur || M.ok !== 2) return 'verlorene Provinz beendet die Mission nicht';
+      S.prov[hp].o = hpO;
+      // Destroy: only fitting kills by the player's units count.
+      run({ k: 'destroy', cls: 'armor', need: 2, got: 0, t: S.t + 600 });
+      const shooter = S.units.find((u) => u.s === country);
+      const ally = S.units.find((u) => u.s !== country && Game.allied(u.s, country));
+      const veh = S.units.filter((u) => Game.hostile(country, u.s) && Missions.fits('armor', u));
+      const soft = S.units.find((u) => Game.hostile(country, u.s) && UNIT_TYPES[u.t].cls === 'soft');
+      if (veh.length < 3 || !soft) return 'Testaufbau: zu wenige Feindeinheiten';
+      Sim.kill(soft, shooter);
+      if (ally) Sim.kill(veh[2], ally);
+      if (M.cur.got !== 0) return 'unpassende Abschüsse zählen';
+      Sim.kill(veh[0], shooter); Sim.kill(veh[1], shooter); Missions.tick();
+      if (M.cur || M.ok !== 3) return 'Vernichtung wird nicht erkannt';
+      // Switch off; old saves get missions.
+      S = setup(false); S.t = 5000; Missions.tick();
+      if (S.mis.cur) return 'Mission trotz Schalter aus';
+      const old = JSON.parse(JSON.stringify(S)); delete old.mis; old.v = 7;
+      const mig = Saves.migrate({ state: old, keys: Saves.provKeys() });
+      if (!mig || !mig.mis || !mig.mis.on || mig.v !== Saves.VERSION) return 'alter Spielstand ohne Missionen';
       return null;
     } catch (e) { return (e && e.stack) || String(e); }
   },
@@ -536,6 +599,9 @@ const SelfTest = {
     const ctr = this.counterTest();
     this.log(ctr ? 'FEHL Gegenoffensive: ' + ctr : 'OK   Gegenoffensive: Reserve, Vorwarnung, Angriff, Pause, Veteranen, Schwierigkeit');
     allOk = allOk && !ctr;
+    const mis = this.missionTest();
+    this.log(mis ? 'FEHL Missionen: ' + mis : 'OK   Missionen: Termin, Erobern, Halten, Vernichten, Belohnung, Schalter, alter Spielstand');
+    allOk = allOk && !mis;
     this.active = false;
     window.SELFTEST = { ok: allOk, results: this.results };
     this.log(allOk ? 'ERGEBNIS: alles in Ordnung' : 'ERGEBNIS: Probleme gefunden');

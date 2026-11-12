@@ -40,7 +40,7 @@ const SaveDB = {
 };
 
 const Saves = {
-  VERSION: 7,    // save format; older saves are migrated in migrate()
+  VERSION: 8,    // save format; older saves are migrated in migrate()
   AUTO_KEEP: 3,     // rotating autosaves
   index: [],        // [{ id, name, auto, when, country, eBloc, t, diff, prov }], newest first
   useDB: true,
@@ -177,6 +177,8 @@ const Saves = {
     for (const u of S.units || []) u.xp = u.xp || 0;
     // Format 6 → 7: events. Like escalation they stay off in running games from older versions.
     S.ev = S.ev || { on: false, next: {}, last: {}, pend: null };
+    // Format 7 → 8: missions. They only reward, so running games get them too (the first one shortly after loading).
+    S.mis = S.mis || { on: true, cur: null, next: S.t + 60, last: null, n: 0, ok: 0 };
     S.v = this.VERSION;
     // Province layout changed since the save was made: map every current province onto the old one of the same
     // country closest to it. Without fingerprints (Alpha 0.1 saves) this is impossible.
